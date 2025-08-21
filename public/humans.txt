@@ -1,0 +1,14 @@
+/* TEAM */
+Developer: Matthew O'Neill
+Contact: spam@matthewoneill.com
+
+/* SITE */
+Last update: 2025
+Language: English
+Doctype: HTML5
+IDE: Cursor, VS Code
+
+/* THANKS */
+Built with Next.js
+Styled with CSS Modules
+Hosted on Vercel
