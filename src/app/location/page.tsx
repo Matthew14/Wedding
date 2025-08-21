@@ -14,8 +14,9 @@ export default function LocationPage() {
   return (
     <>
       <Navigation />
-      <Box style={{ paddingTop: 56 }}>
-        <Container size="lg" py="xl">
+      <main id="main-content">
+        <Box style={{ paddingTop: 56 }}>
+          <Container size="lg" py="xl">
           <Stack gap="xl">
             <Box style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Title 
@@ -51,14 +52,15 @@ export default function LocationPage() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Gran Villa Rosa Location"
+                title="Gran Villa Rosa Location Map"
+                aria-label="Interactive map showing the location of Gran Villa Rosa wedding venue in Vilanova i la Geltrú, Spain"
               />
             </Box>
 
             {/* Venue Information */}
             <Card withBorder radius="md" p="xl" style={{ marginBottom: '2rem' }}>
               <Group align="flex-start" gap="lg">
-                <IconMapPin size={32} color="#8b7355" />
+                <IconMapPin size={32} color="#8b7355" aria-hidden="true" />
                 <Stack gap="sm" style={{ flex: 1 }}>
                   <Title order={3} style={{ color: '#495057' }}>
                     Venue Details
@@ -74,7 +76,7 @@ export default function LocationPage() {
             {/* Travel Information */}
             <Card withBorder radius="md" p="xl" style={{ marginBottom: '2rem' }}>
               <Group align="flex-start" gap="lg">
-                <IconPlane size={32} color="#8b7355" />
+                <IconPlane size={32} color="#8b7355" aria-hidden="true" />
                 <Stack gap="sm" style={{ flex: 1 }}>
                   <Title order={3} style={{ color: '#495057' }}>
                     Getting There
@@ -94,7 +96,7 @@ export default function LocationPage() {
             {/* Parking Information */}
             <Card withBorder radius="md" p="xl">
               <Group align="flex-start" gap="lg">
-                <IconCar size={32} color="#8b7355" />
+                <IconCar size={32} color="#8b7355" aria-hidden="true" />
                 <Stack gap="sm" style={{ flex: 1 }}>
                   <Title order={3} style={{ color: '#495057' }}>
                     Parking & Accessibility
@@ -119,6 +121,7 @@ export default function LocationPage() {
           </Stack>
         </Container>
       </Box>
+      </main>
     </>
   );
 }

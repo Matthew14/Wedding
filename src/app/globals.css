@@ -61,6 +61,30 @@ html {
   color: #ffffff;
 }
 
+/* Improved color contrast for better accessibility */
+.text-secondary {
+  color: #495057 !important; /* Darker than the original #6c757d for better contrast */
+}
+
+/* Focus indicators for all interactive elements */
+button:focus,
+[role="button"]:focus {
+  outline: 2px solid #8b7355;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  a {
+    text-decoration: underline;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+    font-weight: bold;
+  }
+}
+
 /* Hyperlink Styles */
 a {
   color: #8b7355;
@@ -83,6 +107,39 @@ a:focus {
   outline: 2px solid #8b7355;
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Skip Navigation Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #8b7355;
+  color: #ffffff;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 600;
+  z-index: 9999;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 6px;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Improved Button Focus States */
+.primary-cta-button:focus,
+.secondary-cta-button:focus {
+  outline: 3px solid #8b7355;
+  outline-offset: 2px;
+  border-radius: 30px;
+}
+
+.primary-cta-button:focus {
+  outline-color: #ffffff;
 }
 
 /* CTA Button Hover Effects */

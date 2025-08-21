@@ -41,7 +41,10 @@ export function Navigation() {
   ));
 
   return (
-    <header className={classes.header}>
+    <header className={classes.header} role="banner">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Container size="lg" className={classes.inner}>
         <Anchor
           component={Link}
@@ -56,15 +59,32 @@ export function Navigation() {
         >
           Rebecca & Matthew
         </Anchor>
-        <Group gap={5} visibleFrom="xs">
-          {items}
-        </Group>
+        <nav role="navigation" aria-label="Main navigation">
+          <Group gap={5} visibleFrom="xs">
+            {items}
+          </Group>
+        </nav>
 
-        <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
+        <Burger 
+          opened={opened} 
+          onClick={toggle} 
+          hiddenFrom="xs" 
+          size="sm"
+          aria-label={opened ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={opened}
+          aria-controls="mobile-navigation"
+        />
 
         <Transition transition="pop-top-right" duration={200} mounted={opened}>
           {(styles) => (
-            <Paper className={classes.dropdown} withBorder style={styles}>
+            <Paper 
+              className={classes.dropdown} 
+              withBorder 
+              style={styles}
+              id="mobile-navigation"
+              role="navigation"
+              aria-label="Mobile navigation menu"
+            >
               {items}
             </Paper>
           )}

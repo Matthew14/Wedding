@@ -26,8 +26,9 @@ export default function SchedulePage() {
   return (
     <>
       <Navigation />
-      <Box style={{ paddingTop: 56 }}>
-        <Container size="lg" py="xl">
+      <main id="main-content">
+        <Box style={{ paddingTop: 56 }}>
+          <Container size="lg" py="xl">
           <Stack gap="xl">
             <Box style={{ textAlign: 'center', marginBottom: '1rem' }}>
               <Title 
@@ -48,7 +49,7 @@ export default function SchedulePage() {
               <Stack gap="lg">
                 <Group align="center" gap="md">
                   <ThemeIcon size={50} radius="xl" style={{ backgroundColor: '#8b7355', color: '#ffffff' }}>
-                    <IconCalendar size={25} />
+                    <IconCalendar size={25} aria-hidden="true" />
                   </ThemeIcon>
                   <Title order={2} style={{ color: '#495057', fontFamily: 'serif' }}>
                     Day 1 - Welcome & Rehearsal
@@ -58,7 +59,7 @@ export default function SchedulePage() {
                 <Stack gap="md" style={{ marginLeft: '4rem' }}>
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#ffffff', color: '#8b7355' }}>
-                      <IconClock size={18} />
+                      <IconClock size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>14:00 onwards</Text>
@@ -68,7 +69,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#ffffff', color: '#8b7355' }}>
-                      <IconPool size={18} />
+                      <IconPool size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Pool Bar & BBQ</Text>
@@ -78,7 +79,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#ffffff', color: '#8b7355' }}>
-                      <IconToolsKitchen2 size={18} />
+                      <IconToolsKitchen2 size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Evening - Rehearsal Dinner</Text>
@@ -88,7 +89,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#ffffff', color: '#8b7355' }}>
-                      <IconMusic size={18} />
+                      <IconMusic size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Entertainment</Text>
@@ -104,7 +105,7 @@ export default function SchedulePage() {
               <Stack gap="lg">
                 <Group align="center" gap="md">
                   <ThemeIcon size={50} radius="xl" style={{ backgroundColor: '#8b7355', color: '#ffffff' }}>
-                    <IconHeart size={25} />
+                    <IconHeart size={25} aria-hidden="true" />
                   </ThemeIcon>
                   <Title order={2} style={{ color: '#495057', fontFamily: 'serif' }}>
                     Day 2 - Wedding Day
@@ -114,7 +115,7 @@ export default function SchedulePage() {
                 <Stack gap="md" style={{ marginLeft: '4rem' }}>
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#f8f9fa', color: '#8b7355' }}>
-                      <IconChefHat size={18} />
+                      <IconChefHat size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Morning</Text>
@@ -124,7 +125,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#f8f9fa', color: '#8b7355' }}>
-                      <IconGlass size={18} />
+                      <IconGlass size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Pre-Ceremony</Text>
@@ -134,7 +135,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#f8f9fa', color: '#8b7355' }}>
-                      <IconToolsKitchen2 size={18} />
+                      <IconToolsKitchen2 size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Reception Dinner</Text>
@@ -144,7 +145,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#f8f9fa', color: '#8b7355' }}>
-                      <IconMicrophone2 size={18} />
+                      <IconMicrophone2 size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Laguna Stage & Bar</Text>
@@ -154,7 +155,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#f8f9fa', color: '#8b7355' }}>
-                      <IconMusic size={18} />
+                      <IconMusic size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Private Night Club</Text>
@@ -170,7 +171,7 @@ export default function SchedulePage() {
               <Stack gap="lg">
                 <Group align="center" gap="md">
                   <ThemeIcon size={50} radius="xl" style={{ backgroundColor: '#8b7355', color: '#ffffff' }}>
-                    <IconSun size={25} />
+                    <IconSun size={25} aria-hidden="true" />
                   </ThemeIcon>
                   <Title order={2} style={{ color: '#495057', fontFamily: 'serif' }}>
                     Day 3 - Farewell Celebration
@@ -180,7 +181,7 @@ export default function SchedulePage() {
                 <Stack gap="md" style={{ marginLeft: '4rem' }}>
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#ffffff', color: '#8b7355' }}>
-                      <IconChefHat size={18} />
+                      <IconChefHat size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Morning</Text>
@@ -190,7 +191,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#ffffff', color: '#8b7355' }}>
-                      <IconGlass size={18} />
+                      <IconGlass size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>10:00 onwards</Text>
@@ -200,7 +201,7 @@ export default function SchedulePage() {
 
                   <Group align="flex-start" gap="md">
                     <ThemeIcon size={35} radius="xl" style={{ backgroundColor: '#ffffff', color: '#8b7355' }}>
-                      <IconPool size={18} />
+                      <IconPool size={18} aria-hidden="true" />
                     </ThemeIcon>
                     <Stack gap="xs" style={{ flex: 1 }}>
                       <Text fw={500} style={{ color: '#495057' }}>Poolside Celebration</Text>
@@ -227,6 +228,7 @@ export default function SchedulePage() {
           </Stack>
         </Container>
       </Box>
+      </main>
     </>
   );
 }

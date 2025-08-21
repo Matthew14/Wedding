@@ -16,9 +16,10 @@ export default function HomePage() {
   return (
     <>
       <Navigation />
-      <Box style={{ paddingTop: 56 }}>
-        {/* Hero Section */}
-        <Box
+      <main id="main-content">
+        <Box style={{ paddingTop: 56 }}>
+          {/* Hero Section */}
+          <Box
           style={{
             minHeight: '100vh',
             backgroundColor: '#ffffff',
@@ -44,7 +45,7 @@ export default function HomePage() {
               >
                 <Image
                   src="/rebecca-matthew-wedding-photo.jpeg"
-                  alt="Rebecca & Matthew"
+                  alt="Rebecca and Matthew, the couple getting married, in their engagement photo"
                   fill
                   style={{
                     objectFit: 'cover',
@@ -141,6 +142,7 @@ export default function HomePage() {
           </Container>
         </Box>
       </Box>
+      </main>
     </>
   );
 }

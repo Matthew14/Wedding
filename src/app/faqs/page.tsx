@@ -22,8 +22,9 @@ export default function FAQsPage() {
   return (
     <>
       <Navigation />
-      <Box style={{ paddingTop: 56 }}>
-        <Container size="lg" py="xl">
+      <main id="main-content">
+        <Box style={{ paddingTop: 56 }}>
+          <Container size="lg" py="xl">
           <Stack gap="xl">
             <Box style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Title 
@@ -100,6 +101,7 @@ export default function FAQsPage() {
           </Stack>
         </Container>
       </Box>
+      </main>
     </>
   );
 }
