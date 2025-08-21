@@ -15,7 +15,7 @@ export default function LocationPage() {
     <>
       <Navigation />
       <Box style={{ paddingTop: 56 }}>
-        <Container size="md" py="xl">
+        <Container size="lg" py="xl">
           <Stack gap="xl">
             <Box style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Title 
@@ -64,7 +64,7 @@ export default function LocationPage() {
                     Venue Details
                   </Title>
                   <Text style={{ color: '#6c757d', lineHeight: 1.6 }}>
-                    We&apos;ll be celebrating at the beautiful Gran Villa Rosa in Vilanova i la Geltrú. 
+                    We&apos;ll be celebrating at the beautiful <a href="https://www.granvillarosa.com/" target="_blank" rel="noopener noreferrer">Gran Villa Rosa</a> in Vilanova i la Geltrú. 
                     See the map above for the exact location and use the interactive features for directions.
                   </Text>
                 </Stack>

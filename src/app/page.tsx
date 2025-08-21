@@ -27,7 +27,7 @@ export default function HomePage() {
             position: 'relative',
           }}
         >
-          <Container size="lg" style={{ textAlign: 'center', zIndex: 1 }}>
+          <Container size="xl" style={{ textAlign: 'center', zIndex: 1 }}>
             <Stack gap="xl" align="center">
               {/* Hero Image */}
               <Box
@@ -38,7 +38,7 @@ export default function HomePage() {
                   overflow: 'hidden',
                   border: '4px solid white',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                  marginBottom: '2rem',
+                  marginBottom: '1.5rem',
                   position: 'relative',
                 }}
               >
@@ -60,11 +60,25 @@ export default function HomePage() {
                 style={{
                   fontWeight: 300,
                   color: '#495057',
-                  marginBottom: '1rem',
+                  marginBottom: '0.5rem',
                   fontFamily: 'serif',
                 }}
               >
                 Rebecca & Matthew
+              </Title>
+
+              <Title
+                order={2}
+                size="1.5rem"
+                style={{
+                  fontWeight: 300,
+                  color: '#8b7355',
+                  marginBottom: '1.5rem',
+                  fontFamily: 'serif',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                May, 2026
               </Title>
 
               <Text
@@ -73,14 +87,14 @@ export default function HomePage() {
                   color: '#6c757d',
                   maxWidth: 600,
                   lineHeight: 1.6,
-                  marginBottom: '2rem',
+                  marginBottom: '1.5rem',
                 }}
               >
                 Join us as we celebrate our love and begin our journey together as husband and wife.
                 We can&apos;t wait to share this special day with you!
               </Text>
 
-              <Group gap="lg" justify="center" style={{ marginTop: '1rem' }}>
+              <Group gap="lg" justify="center" style={{ marginTop: '0.75rem' }}>
                 <Button
                   component={Link}
                   href="/location"
@@ -92,7 +106,7 @@ export default function HomePage() {
                     borderColor: '#8b7355',
                     color: '#ffffff',
                     borderRadius: 30,
-                    padding: '16px 40px',
+                    padding: '12px 30px',
                     fontSize: '18px',
                     fontWeight: 600,
                     boxShadow: '0 4px 16px rgba(139, 115, 85, 0.3)',
@@ -112,7 +126,7 @@ export default function HomePage() {
                     backgroundColor: '#ffffff',
                     color: '#8b7355',
                     borderRadius: 30,
-                    padding: '16px 40px',
+                    padding: '12px 30px',
                     fontSize: '18px',
                     fontWeight: 600,
                     borderWidth: '2px',

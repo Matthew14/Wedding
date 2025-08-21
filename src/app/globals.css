@@ -61,6 +61,30 @@ html {
   color: #ffffff;
 }
 
+/* Hyperlink Styles */
+a {
+  color: #8b7355;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: #6d5a44;
+  border-bottom-color: #8b7355;
+  text-decoration: none;
+}
+
+a:visited {
+  color: #8b7355;
+}
+
+a:focus {
+  outline: 2px solid #8b7355;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* CTA Button Hover Effects */
 .primary-cta-button:hover {
   transform: translateY(-2px);

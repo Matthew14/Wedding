@@ -42,7 +42,7 @@ export function Navigation() {
 
   return (
     <header className={classes.header}>
-      <Container size="md" className={classes.inner}>
+      <Container size="lg" className={classes.inner}>
         <Anchor
           component={Link}
           href="/"

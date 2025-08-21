@@ -23,7 +23,7 @@ export default function FAQsPage() {
     <>
       <Navigation />
       <Box style={{ paddingTop: 56 }}>
-        <Container size="md" py="xl">
+        <Container size="lg" py="xl">
           <Stack gap="xl">
             <Box style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Title 
