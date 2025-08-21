@@ -28,13 +28,15 @@ export default function HomePage() {
             position: 'relative',
           }}
         >
-          <Container size="xl" style={{ textAlign: 'center', zIndex: 1 }}>
+          <Container size="xl" style={{ textAlign: 'center', zIndex: 1, padding: '0 1rem' }}>
             <Stack gap="xl" align="center">
               {/* Hero Image */}
               <Box
                 style={{
-                  width: 450,
-                  height: 450,
+                  width: 'min(450px, 80vw)',
+                  height: 'min(450px, 80vw)',
+                  maxWidth: '450px',
+                  maxHeight: '450px',
                   borderRadius: '50%',
                   overflow: 'hidden',
                   border: '4px solid white',
@@ -57,12 +59,13 @@ export default function HomePage() {
 
               <Title
                 order={1}
-                size="3.5rem"
                 style={{
+                  fontSize: 'clamp(2.5rem, 8vw, 3.5rem)',
                   fontWeight: 300,
                   color: '#495057',
                   marginBottom: '0.5rem',
                   fontFamily: 'serif',
+                  lineHeight: 1.2,
                 }}
               >
                 Rebecca & Matthew
@@ -70,13 +73,14 @@ export default function HomePage() {
 
               <Title
                 order={2}
-                size="1.5rem"
                 style={{
+                  fontSize: 'clamp(1.2rem, 4vw, 1.5rem)',
                   fontWeight: 300,
                   color: '#8b7355',
                   marginBottom: '1.5rem',
                   fontFamily: 'serif',
                   letterSpacing: '0.1em',
+                  lineHeight: 1.3,
                 }}
               >
                 May, 2026
@@ -95,7 +99,7 @@ export default function HomePage() {
                 We can&apos;t wait to share this special day with you!
               </Text>
 
-              <Group gap="lg" justify="center" style={{ marginTop: '0.75rem' }}>
+              <Group gap="lg" justify="center" style={{ marginTop: '0.75rem', flexWrap: 'wrap' }}>
                 <Button
                   component={Link}
                   href="/location"

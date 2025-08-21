@@ -30,13 +30,16 @@ export const metadata: Metadata = {
     description: "Join us for our special day! Find all the details about our wedding celebration.",
     type: "website",
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-  },
   other: {
     'color-scheme': 'light',
   },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
