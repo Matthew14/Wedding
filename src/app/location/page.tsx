@@ -100,16 +100,18 @@ export default function LocationPage() {
                     Parking & Accessibility
                   </Title>
                   <Text style={{ color: '#6c757d', lineHeight: 1.6 }}>
-                    <strong>Ample parking is available on-site</strong> at Gran Villa Rosa, making driving a convenient option for guests.
+                    <strong>Ample parking is available on-site</strong> at Gran Villa Rosa, making driving a 
+                    convenient option for guests.
                   </Text>
                   <Text style={{ color: '#6c757d', lineHeight: 1.6, marginTop: '0.5rem' }}>
-                    <strong>For international guests:</strong> Consider renting a car for flexibility in exploring the beautiful 
-                    Catalonian coast. The venue is easily accessible by car, and having your own transport allows you to enjoy 
-                    nearby Sitges and other coastal towns at your own pace.
+                    <strong>For international guests:</strong> Consider renting a car for flexibility in exploring 
+                    the beautiful Catalonian coast. The venue is easily accessible by car, and having your own 
+                    transport allows you to enjoy nearby Sitges and other coastal towns at your own pace.
                   </Text>
                   <Text style={{ color: '#6c757d', lineHeight: 1.6, marginTop: '0.5rem' }}>
-                    <strong>Alternative options:</strong> Taxis and ride-sharing services are also available for those who prefer 
-                    not to drive. We&apos;re committed to ensuring all our guests can comfortably attend our celebration.
+                    <strong>Alternative options:</strong> Taxis and ride-sharing services are also available for 
+                    those who prefer not to drive. We&apos;re committed to ensuring all our guests can comfortably 
+                    attend our celebration.
                   </Text>
                 </Stack>
               </Group>

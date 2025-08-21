@@ -9,41 +9,39 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
-const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-  {
-    ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
+const eslintConfig = [{
+  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"]
+}, ...compat.extends("next/core-web-vitals", "next/typescript"), {
+  ignores: [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ],
+}, {
+  rules: {
+    "max-len": [
+      "error",
+      {
+        code: 120,
+        tabWidth: 2,
+        ignoreUrls: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
+        ignoreRegExpLiterals: true,
+      },
+    ],
+    "object-curly-newline": [
+      "error",
+      {
+        ImportDeclaration: {
+          multiline: true,
+          minProperties: 4,
+        },
+      },
     ],
   },
-  {
-    rules: {
-      "max-len": [
-        "error",
-        {
-          code: 120,
-          tabWidth: 2,
-          ignoreUrls: true,
-          ignoreStrings: true,
-          ignoreTemplateLiterals: true,
-          ignoreRegExpLiterals: true,
-        },
-      ],
-      "object-curly-newline": [
-        "error",
-        {
-          ImportDeclaration: {
-            multiline: true,
-            minProperties: 4,
-          },
-        },
-      ],
-    },
-  },
-];
+}];
 
 export default eslintConfig;
