@@ -95,8 +95,7 @@ export default function HomePage() {
                   marginBottom: '1.5rem',
                 }}
               >
-                Join us as we celebrate our love and begin our journey together as husband and wife.
-                We can&apos;t wait to share this special day with you!
+                Join us for our special day! You can find all the details you need on this website.
               </Text>
 
               <Group gap="lg" justify="center" style={{ marginTop: '0.75rem', flexWrap: 'wrap' }}>

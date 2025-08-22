@@ -7,23 +7,22 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
+
     "prepare": "husky"
   },
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@mantine/core": "^7.15.2",
     "@mantine/hooks": "^7.15.2",
-    "@prisma/client": "^6.1.0",
+
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.1",
     "@tabler/icons-react": "^3.26.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
     "next": "^15.5.0",
     "openai": "^5.15.0",
-    "prisma": "^6.1.0",
+
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },

@@ -17,7 +17,7 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **UI Library**: Mantine Components v7.15.2
-- **Database**: Supabase with Prisma ORM (PostgreSQL)
+- **Database**: Supabase (PostgreSQL)
 - **Styling**: Tailwind CSS + Custom CSS with Mantine integration
 - **Icons**: Tabler Icons
 - **Fonts**: Geist Sans & Geist Mono
@@ -34,21 +34,14 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
    ```bash
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   DATABASE_URL=your_database_url
    ```
 
-3. **Set up database**:
-   ```bash
-   npm run db:generate
-   npm run db:push
-   ```
-
-4. **Run development server**:
+3. **Run development server**:
    ```bash
    npm run dev
    ```
 
-5. **Open [http://localhost:3000](http://localhost:3000)** in your browser
+4. **Open [http://localhost:3000](http://localhost:3000)** in your browser
 
 ## Project Structure
 
@@ -66,10 +59,7 @@ Wedding/
 │   │   ├── Navigation.tsx  # Responsive navigation bar
 │   │   └── Navigation.module.css
 │   └── lib/               # Utility libraries
-│       ├── prisma.ts      # Prisma client setup
 │       └── supabase.ts    # Supabase client setup
-├── prisma/
-│   └── schema.prisma      # Database schema with RSVP model
 ├── public/
 │   ├── favicon.svg        # Custom wedding favicon
 │   └── rebecca-matthew-wedding-photo.jpeg # Hero image
@@ -90,27 +80,9 @@ Wedding/
 - **FAQs**: Add more questions and answers in `src/app/faqs/page.tsx`
 - **Schedule**: Customize the 3-day timeline with your specific activities and timing
 
-## Database Schema
+## Database
 
-The site includes a ready-to-use RSVP model in `prisma/schema.prisma` with PostgreSQL:
-
-```prisma
-model RSVP {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  attending Boolean
-  guestCount Int     @default(1)
-  dietaryRestrictions String?
-  message   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("rsvps")
-}
-```
-
-**Note**: The RSVP functionality is set up but not yet implemented in the UI. The database structure is ready for when you want to add an RSVP form.
+The site uses Supabase as the database backend. You'll need to create the necessary tables in your Supabase project for features like RSVPs and FAQs.
 
 ## Current Pages & Content
 
@@ -123,7 +95,7 @@ model RSVP {
 
 ✅ **Complete**: Homepage, Location, Schedule pages with full content and styling  
 ✅ **Complete**: Responsive navigation, custom styling, and animations  
-✅ **Complete**: Database schema and connection setup  
+✅ **Complete**: Database connection setup  
 🔄 **In Progress**: FAQ content (structure ready, needs more questions/answers)  
 ⏳ **Planned**: RSVP form implementation  
 ⏳ **Planned**: Additional interactive features
@@ -132,7 +104,7 @@ model RSVP {
 
 The following features are planned but not yet implemented:
 
-- **RSVP System**: A complete RSVP form where guests can confirm attendance, specify guest count, dietary restrictions, and leave messages. The database schema is ready in `prisma/schema.prisma`.
+- **RSVP System**: A complete RSVP form where guests can confirm attendance, specify guest count, dietary restrictions, and leave messages.
 
 - **Gallery**: A photo gallery section to showcase photos once the wedding has taken place
  
