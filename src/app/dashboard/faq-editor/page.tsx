@@ -25,7 +25,7 @@ import {
   IconRefresh,
   IconAlertCircle 
 } from '@tabler/icons-react';
-import { getQuestionId } from './getId';
+import { getQuestionId } from './getQuestionId';
 
 
 // Define the FAQ data type based on the API
