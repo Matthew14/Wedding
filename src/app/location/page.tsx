@@ -1,6 +1,7 @@
 import { Container, Title, Text, Stack, Box, Card, Group } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
 import { IconMapPin, IconPlane, IconCar } from "@tabler/icons-react";
+import { travelCopy } from "./strings";
 
 export default function LocationPage() {
     return (
@@ -27,7 +28,7 @@ export default function LocationPage() {
                                     Location
                                 </Title>
                                 <Text size="lg" style={{ color: "#6c757d", maxWidth: 600, margin: "0 auto" }}>
-                                    Join us in beautiful Vilanova i la Geltrú, Spain for our special celebration
+                                    Join us in Vilanova i la Geltrú, Spain for our special celebration
                                 </Text>
                             </Box>
 
@@ -62,7 +63,7 @@ export default function LocationPage() {
                                             Venue Details
                                         </Title>
                                         <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>
-                                            We&apos;ll be celebrating at the beautiful{" "}
+                                            We&apos;ll be celebrating at{" "}
                                             <a
                                                 href="https://www.granvillarosa.com/"
                                                 target="_blank"
@@ -89,9 +90,7 @@ export default function LocationPage() {
                                             <strong>Nearest Airport:</strong> Barcelona-El Prat Airport (BCN)
                                         </Text>
                                         <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>
-                                            The nearest airport is Barcelona-El Prat, which is well-connected with
-                                            direct flights from major cities worldwide. From the airport, you can easily
-                                            reach the city centre by metro, bus, or taxi.
+                                            {travelCopy}
                                         </Text>
                                     </Stack>
                                 </Group>

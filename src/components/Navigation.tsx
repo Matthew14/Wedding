@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import classes from "./Navigation.module.css";
 
 const links = [
-    { link: "/", label: "Home" },
     { link: "/location", label: "Location" },
     { link: "/schedule", label: "Schedule" },
     { link: "/faqs", label: "FAQs" },
@@ -49,6 +48,8 @@ export function Navigation() {
                     style={{
                         color: "#8b7355",
                         textDecoration: "none",
+                        fontFamily: "cursive",
+                        fontStyle: "italic",
                     }}
                     onClick={() => {}}
                 >

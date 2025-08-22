@@ -49,7 +49,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" data-mantine-color-scheme="light">
+        <html lang="en" data-mantine-color-scheme="light" data-scroll-behavior="smooth">
             <head>
                 <ColorSchemeScript />
             </head>

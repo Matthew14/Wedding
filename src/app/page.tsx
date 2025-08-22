@@ -40,6 +40,7 @@ export default function HomePage() {
                                         src="/rebecca-matthew-wedding-photo.jpeg"
                                         alt="Rebecca and Matthew, the couple getting married, in their engagement photo"
                                         fill
+                                        sizes="(max-width: 768px) 80vw, 450px"
                                         style={{
                                             objectFit: "cover",
                                             objectPosition: "75% center",
