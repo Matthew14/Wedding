@@ -8,6 +8,11 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@mantine/core', '@mantine/hooks'],
   },
+  // Skip static optimization in CI to avoid needing real API keys
+  ...(process.env.CI && {
+    output: 'standalone',
+    trailingSlash: true,
+  }),
   async headers() {
     return [
       {
