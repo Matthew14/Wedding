@@ -21,14 +21,18 @@ export default function LocationPage() {
             <Box style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Title 
                 order={1} 
-                size="3rem" 
                 style={{ 
                   color: '#495057', 
                   marginBottom: '1rem',
-                  fontFamily: 'serif' 
+                  fontFamily: 'serif',
+                  fontSize: 'clamp(2rem, 8vw, 3rem)',
+                  lineHeight: 1.2,
+                  hyphens: 'none',
+                  wordBreak: 'keep-all',
+                  whiteSpace: 'pre-line'
                 }}
               >
-                Wedding Location
+                Location
               </Title>
               <Text size="lg" style={{ color: '#6c757d', maxWidth: 600, margin: '0 auto' }}>
                 Join us in beautiful Vilanova i la Geltrú, Spain for our special celebration

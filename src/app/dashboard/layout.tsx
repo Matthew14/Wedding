@@ -6,11 +6,13 @@ import {
   Box,
   Anchor,
   Group,
-  Title
+  Title,
+  Button
 } from '@mantine/core';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardLayout({
   children,
@@ -20,6 +22,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const { signOut, loading } = useAuth();
 
   useEffect(() => {
     // Set active tab based on current path
@@ -41,6 +44,11 @@ export default function DashboardLayout({
       router.push('/dashboard');
     }
     setActiveTab(value);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
   };
 
   return (
@@ -66,18 +74,29 @@ export default function DashboardLayout({
             >
               Wedding Dashboard
             </Title>
-            <Anchor
-              component={Link}
-              href="/"
-              style={{
-                color: '#8b7355',
-                textDecoration: 'none',
-                fontSize: '16px',
-                fontWeight: 500,
-              }}
-            >
-              ← Back to Home
-            </Anchor>
+            <Group gap="md">
+              <Anchor
+                component={Link}
+                href="/"
+                style={{
+                  color: '#8b7355',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                }}
+              >
+                ← Back to Home
+              </Anchor>
+              <Button
+                variant="subtle"
+                color="red"
+                onClick={handleSignOut}
+                loading={loading}
+                size="sm"
+              >
+                Sign Out
+              </Button>
+            </Group>
           </Group>
         </Container>
       </Box>

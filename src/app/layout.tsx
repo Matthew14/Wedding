@@ -5,6 +5,7 @@ import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import '@mantine/core/styles.css';
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const geist = Geist({
   subsets: ["latin"],
@@ -54,7 +55,9 @@ export default function RootLayout({
       </head>
       <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
         <MantineProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </MantineProvider>
         <Analytics />
         <SpeedInsights />
