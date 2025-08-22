@@ -1,5 +1,5 @@
 export interface RSVPFormData {
-    coming: boolean;
+    accepted: boolean;
     invitees: { id: number; name: string; coming: boolean }[];
     staying_villa: string;
     dietary_restrictions: string;
@@ -16,8 +16,8 @@ export interface Invitee {
 
 export interface DatabaseRSVPResponse {
     invitees: Invitee[];
-    coming: boolean;
-    stayingVilla: string;
+    accepted: boolean;
+    stayingVilla: boolean;
     dietaryRestrictions: string;
     songRequest: string;
     travelPlans: string;
