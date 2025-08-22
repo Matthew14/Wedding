@@ -30,6 +30,8 @@ export default function DashboardLayout({
       setActiveTab('rsvps');
     } else if (pathname.includes('/dashboard/faq-editor')) {
       setActiveTab('faq-editor');
+    } else if (pathname.includes('/dashboard/invitations')) {
+      setActiveTab('invitations');
     } else {
       setActiveTab('overview');
     }
@@ -40,6 +42,8 @@ export default function DashboardLayout({
       router.push('/dashboard/rsvps');
     } else if (value === 'faq-editor') {
       router.push('/dashboard/faq-editor');
+    } else if (value === 'invitations') {
+      router.push('/dashboard/invitations');
     } else if (value === 'overview') {
       router.push('/dashboard');
     }
@@ -134,6 +138,9 @@ export default function DashboardLayout({
               </Tabs.Tab>
               <Tabs.Tab value="faq-editor">
                 FAQ Editor
+              </Tabs.Tab>
+              <Tabs.Tab value="invitations">
+                Invitations
               </Tabs.Tab>
             </Tabs.List>
 
