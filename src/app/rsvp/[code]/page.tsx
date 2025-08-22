@@ -78,9 +78,9 @@ export default function RSVPFormPage() {
                         })) || [];
 
                         form.setValues({
-                            coming: data.coming,
+                            accepted: data.accepted,
                             invitees: inviteesWithResponses,
-                            staying_villa: data.stayingVilla,
+                            staying_villa: data.stayingVilla ? "yes" : "no",
                             dietary_restrictions: data.dietaryRestrictions,
                             song_request: data.songRequest,
                             travel_plans: data.travelPlans,
@@ -112,6 +112,7 @@ export default function RSVPFormPage() {
         if (params.code) {
             fetchRSVPData();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [params.code]);
 
     const handleSubmit = async (values: RSVPFormData) => {
@@ -131,7 +132,7 @@ export default function RSVPFormPage() {
             if (response.ok) {
                 setSuccess(true);
                 setTimeout(() => {
-                    router.push(`/rsvp/success?coming=${values.coming ? 'yes' : 'no'}&code=${params.code}`);
+                    router.push(`/rsvp/success?accepted=${values.accepted ? 'yes' : 'no'}&code=${params.code}`);
                 }, 500);
             } else {
                 const errorData = await response.json();
@@ -156,7 +157,7 @@ export default function RSVPFormPage() {
     useEffect(() => {
         // Only run this effect after initial load is complete to avoid overriding pre-populated data
         if (!isInitialLoad && form.values.invitees.length > 0) {
-            if (!form.values.coming) {
+            if (!form.values.accepted) {
                 // Uncheck all invitees when not coming
                 form.setFieldValue("invitees", 
                     form.values.invitees.map(inv => ({ ...inv, coming: false }))
@@ -168,7 +169,8 @@ export default function RSVPFormPage() {
                 );
             }
         }
-    }, [form.values.coming, isInitialLoad]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [form.values.accepted, isInitialLoad]);
 
     if (loading) {
         return (
@@ -250,8 +252,8 @@ export default function RSVPFormPage() {
                                                 </Text>
                                             </Group>
                                             <Radio.Group
-                                                value={form.values.coming ? "yes" : "no"}
-                                                onChange={(value) => form.setFieldValue("coming", value === "yes")}
+                                                value={form.values.accepted ? "yes" : "no"}
+                                                onChange={(value) => form.setFieldValue("accepted", value === "yes")}
                                                 required
                                             >
                                                 <Group gap="lg">
@@ -262,7 +264,7 @@ export default function RSVPFormPage() {
                                         </Box>
 
                                         {/* Form fields - Only visible when 'coming' is Yes */}
-                                        {form.values.coming && (
+                                        {form.values.accepted && (
                                             <>
                                                 {/* 
                                                     Is everyone coming? - Only visible when there are multiple invitees 
@@ -422,12 +424,12 @@ export default function RSVPFormPage() {
                     <List size="sm" spacing="xs">
                         <List.Item>
                             <Text fw={500}>Attendance:</Text>
-                            <Text c={form.values.coming ? "green" : "red"}>
-                                {form.values.coming ? "Yes, I'm coming!" : "No, I can't make it"}
+                            <Text c={form.values.accepted ? "green" : "red"}>
+                                {form.values.accepted ? "Yes, I'm coming!" : "No, I can't make it"}
                             </Text>
                         </List.Item>
 
-                        {form.values.coming && (
+                        {form.values.accepted && (
                             <>
                                 {form.values.invitees.length > 1 && (
                                     <List.Item>

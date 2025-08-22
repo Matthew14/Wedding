@@ -4,7 +4,7 @@ import { RSVPFormData } from "@/types";
 export const useRSVPForm = () => {
     const form = useForm<RSVPFormData>({
         initialValues: {
-            coming: true,
+            accepted: true,
             invitees: [],
             staying_villa: "yes",
             dietary_restrictions: "",
@@ -13,7 +13,7 @@ export const useRSVPForm = () => {
             message: "",
         },
         validate: {
-            coming: (value) => (value === undefined ? "Please select whether you're coming" : null),
+            accepted: (value) => (value === undefined ? "Please select whether you're coming" : null),
             staying_villa: (value) => (value === undefined ? "Please select accommodation preference" : null),
             dietary_restrictions: (value) => (value && value.length > 500 ? "Dietary restrictions must be less than 500 characters" : null),
             song_request: (value) => (value && value.length > 200 ? "Song request must be less than 200 characters" : null),

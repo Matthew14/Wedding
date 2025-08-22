@@ -5,10 +5,11 @@ import { IconCheck, IconHeart, IconHeartBroken } from "@tabler/icons-react";
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function RSVPSuccessPage() {
+function RSVPSuccessContent() {
     const searchParams = useSearchParams();
-    const isComing = searchParams.get("coming") === "yes";
+    const isComing = searchParams.get("accepted") === "yes";
     const rsvpCode = searchParams.get("code");
     return (
         <>
@@ -82,5 +83,19 @@ export default function RSVPSuccessPage() {
                 </Box>
             </main>
         </>
+    );
+}
+
+export default function RSVPSuccessPage() {
+    return (
+        <Suspense fallback={
+            <Container size="sm" py="xl">
+                <Stack gap="xl" align="center">
+                    <Text>Loading...</Text>
+                </Stack>
+            </Container>
+        }>
+            <RSVPSuccessContent />
+        </Suspense>
     );
 }

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Get the RSVP record
         const { data: rsvpData, error: rsvpError } = await supabase
             .from("RSVPs")
-            .select("id, invitation_id, updated_at, staying_villa, dietary_restrictions, song_request, travel_plans, message")
+            .select("id, invitation_id, updated_at, staying_villa, dietary_restrictions, song_request, travel_plans, message, accepted")
             .eq("short_url", code.toUpperCase())
             .single();
 
@@ -35,6 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         return NextResponse.json({
+            accepted: rsvpData.accepted,
             rsvpId: rsvpData.id,
             invitationId: rsvpData.invitation_id,
             updatedAt: rsvpData.updated_at,
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const { error: updateError } = await supabase
             .from("RSVPs")
             .update({
-                coming: body.coming,
+                accepted: body.accepted,
                 staying_villa: body.staying_villa,
                 dietary_restrictions: body.dietary_restrictions || null,
                 song_request: body.song_request || null,
