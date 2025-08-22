@@ -22,9 +22,9 @@ export const metadata: Metadata = {
   description: "Join us for our special day! Find all the details about our wedding celebration.",
   keywords: ["wedding", "Rebecca", "Matthew", "celebration", "Vilanova i la Geltrú"],
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
   openGraph: {
     title: "Rebecca & Matthew's Wedding",

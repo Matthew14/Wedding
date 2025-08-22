@@ -61,7 +61,7 @@ Wedding/
 │   └── lib/               # Utility libraries
 │       └── supabase.ts    # Supabase client setup
 ├── public/
-│   ├── favicon.svg        # Custom wedding favicon
+│   ├── favicon.ico        # Custom wedding favicon
 │   └── rebecca-matthew-wedding-photo.jpeg # Hero image
 ├── package.json           # Dependencies and scripts
 ├── next.config.ts         # Next.js configuration
