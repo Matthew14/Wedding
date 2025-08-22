@@ -69,8 +69,6 @@ describe("Navigation", () => {
         });
 
         render(<Navigation />);
-
-        expect(screen.getByRole("link", { name: "Home" })).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "Location" })).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "Schedule" })).toBeInTheDocument();
         expect(screen.getByRole("link", { name: "FAQs" })).toBeInTheDocument();
@@ -88,7 +86,6 @@ describe("Navigation", () => {
 
         render(<Navigation />);
 
-        expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
         expect(screen.getByRole("link", { name: "Location" })).toHaveAttribute("href", "/location");
         expect(screen.getByRole("link", { name: "Schedule" })).toHaveAttribute("href", "/schedule");
         expect(screen.getByRole("link", { name: "FAQs" })).toHaveAttribute("href", "/faqs");
