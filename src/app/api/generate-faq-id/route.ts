@@ -5,8 +5,48 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY 
 });
 
+// Simple in-memory rate limiter
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_REQUESTS = 10; // requests per window
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute in milliseconds
+
+function checkRateLimit(clientId: string): { allowed: boolean; resetTime?: number } {
+  const now = Date.now();
+  const clientData = rateLimitStore.get(clientId);
+
+  if (!clientData || now > clientData.resetTime) {
+    // Reset or initialize
+    rateLimitStore.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return { allowed: true };
+  }
+
+  if (clientData.count >= RATE_LIMIT_REQUESTS) {
+    return { allowed: false, resetTime: clientData.resetTime };
+  }
+
+  // Increment count
+  clientData.count++;
+  return { allowed: true };
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting based on IP address
+    const clientId = request.headers.get('x-forwarded-for') || 
+                    request.headers.get('x-real-ip') || 
+                    'unknown';
+    
+    const rateCheck = checkRateLimit(clientId);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Too many requests. Please try again later.',
+          resetTime: rateCheck.resetTime 
+        },
+        { status: 429 }
+      );
+    }
+
     const { question } = await request.json();
 
     if (!question || typeof question !== 'string') {

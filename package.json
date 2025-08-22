@@ -7,22 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-
     "prepare": "husky"
   },
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@mantine/core": "^7.15.2",
     "@mantine/hooks": "^7.15.2",
-
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.1",
     "@tabler/icons-react": "^3.26.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "isomorphic-dompurify": "^2.26.0",
     "next": "^15.5.0",
     "openai": "^5.15.0",
-
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
@@ -30,6 +28,7 @@
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3.2.0",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",

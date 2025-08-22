@@ -1,5 +1,6 @@
-import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
+import DOMPurify from 'isomorphic-dompurify';
 
 export interface FAQ {
   id?: string;
@@ -44,15 +45,15 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
     
-    // Prepare the insert data
+    // Prepare the insert data with sanitization
     const insertData: Partial<FAQ> = {
-      question: question.trim(),
-      answer: answer.trim()
+      question: DOMPurify.sanitize(question.trim()),
+      answer: DOMPurify.sanitize(answer.trim())
     };
     
-    // Only include id if it's provided
+    // Only include id if it's provided (sanitize ID too)
     if (id && id.trim()) {
-      insertData.id = id.trim();
+      insertData.id = DOMPurify.sanitize(id.trim());
     }
     
     const { data: faq, error } = await supabase

@@ -7,17 +7,22 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   const { data: { session }, error } = await supabase.auth.getSession();
   
-  console.log(`[MIDDLEWARE] ${request.nextUrl.pathname} - Session: ${session ? 'authenticated' : 'not authenticated'}`);
-  
-  if (error) {
-    console.log(`[MIDDLEWARE] Session error:`, error);
+  // Only log in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[MIDDLEWARE] ${request.nextUrl.pathname} - Session: ${session ? 'authenticated' : 'not authenticated'}`);
+    
+    if (error) {
+      console.log(`[MIDDLEWARE] Session error:`, error);
+    }
   }
 
   // Check if the user is accessing dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
     // If no session and trying to access dashboard, redirect to login
     if (!session) {
-      console.log(`[MIDDLEWARE] No session, redirecting to login`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[MIDDLEWARE] No session, redirecting to login`);
+      }
       const redirectUrl = new URL('/login', request.url);
       redirectUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname);
       return NextResponse.redirect(redirectUrl);
@@ -26,7 +31,9 @@ export async function middleware(request: NextRequest) {
 
   // If logged in and trying to access login page, redirect to dashboard
   if (request.nextUrl.pathname === '/login' && session) {
-    console.log(`[MIDDLEWARE] Logged in user accessing login page, redirecting to dashboard`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[MIDDLEWARE] Logged in user accessing login page, redirecting to dashboard`);
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
