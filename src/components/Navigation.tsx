@@ -20,6 +20,7 @@ const links = [
   { link: '/location', label: 'Location' },
   { link: '/schedule', label: 'Schedule' },
   { link: '/faqs', label: 'FAQs' },
+  { link: '/rsvp', label: 'RSVP' },
 ];
 
 export function Navigation() {
