@@ -1,104 +1,222 @@
+'use client';
+
 import {
   Title,
   Text,
   Group,
   Stack,
   Paper,
-  SimpleGrid,
   Box
 } from '@mantine/core';
+import { useState, useEffect } from 'react';
 
 export default function DashboardPage() {
-  // Sample overview data - you can replace this with real data later
-  const stats = {
-    totalInvited: 150,
-    totalResponded: 6,
-    totalAttending: 4,
-    totalNotAttending: 1,
-    totalMaybe: 1,
-    totalPlusOnes: 3,
-    responseRate: 4
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const weddingDate = new Date('2026-05-23T00:00:00');
+    
+    const timer = setInterval(() => {
+      const now = new Date();
+      const difference = weddingDate.getTime() - now.getTime();
+      
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        setTimeLeft({ days, hours, minutes, seconds });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatNumber = (num: number) => {
+    return num.toString().padStart(2, '0');
   };
 
   return (
-    <Stack gap="xl">
-      <Box>
+    <Stack gap="xl" align="center">
+      {/* Main Countdown Title */}
+      <Box style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <Title
           order={1}
           style={{
-            fontSize: 'clamp(1.8rem, 5vw, 2.2rem)',
+            fontSize: 'clamp(2rem, 6vw, 3rem)',
             fontWeight: 300,
             color: '#495057',
-            marginBottom: '0.5rem',
+            marginBottom: '1rem',
             fontFamily: 'serif',
           }}
         >
-          Wedding Dashboard
+          Countdown to Our Wedding
         </Title>
-        <Text size="lg" style={{ color: '#6c757d' }}>
-          Overview of your wedding planning progress
+        <Text size="xl" style={{ color: '#8b7355', fontWeight: 500 }}>
+          May 23rd, 2026
         </Text>
       </Box>
 
-      {/* Overview Stats */}
-      <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="lg">
-        <Paper shadow="sm" radius="md" p="lg" style={{ textAlign: 'center' }}>
-          <Text size="xl" fw={700} color="#8b7355">{stats.totalInvited}</Text>
-          <Text size="sm" color="#6c757d">Total Invited</Text>
-        </Paper>
-        
-        <Paper shadow="sm" radius="md" p="lg" style={{ textAlign: 'center' }}>
-          <Text size="xl" fw={700} color="#3b82f6">{stats.totalResponded}</Text>
-          <Text size="sm" color="#6c757d">Responded</Text>
-        </Paper>
-        
-        <Paper shadow="sm" radius="md" p="lg" style={{ textAlign: 'center' }}>
-          <Text size="xl" fw={700} color="#22c55e">{stats.totalAttending}</Text>
-          <Text size="sm" color="#6c757d">Attending</Text>
-        </Paper>
-        
-        <Paper shadow="sm" radius="md" p="lg" style={{ textAlign: 'center' }}>
-          <Text size="xl" fw={700} color="#ef4444">{stats.totalNotAttending}</Text>
-          <Text size="sm" color="#6c757d">Not Attending</Text>
-        </Paper>
-        
-        <Paper shadow="sm" radius="md" p="lg" style={{ textAlign: 'center' }}>
-          <Text size="xl" fw={700} color="#eab308">{stats.totalMaybe}</Text>
-          <Text size="sm" color="#6c757d">Maybe</Text>
-        </Paper>
-        
-        <Paper shadow="sm" radius="md" p="lg" style={{ textAlign: 'center' }}>
-          <Text size="xl" fw={700} color="#8b7355">{stats.totalPlusOnes}</Text>
-          <Text size="sm" color="#6c757d">Plus Ones</Text>
-        </Paper>
-        
-        <Paper shadow="sm" radius="md" p="lg" style={{ textAlign: 'center' }}>
-          <Text size="xl" fw={700} color="#8b7355">{stats.responseRate}%</Text>
-          <Text size="sm" color="#6c757d">Response Rate</Text>
-        </Paper>
-      </SimpleGrid>
-
-      {/* Quick Actions or Summary */}
-      <Paper shadow="md" radius="lg" p="xl" style={{ backgroundColor: '#ffffff' }}>
-        <Stack gap="md">
-          <Title order={3} style={{ color: '#495057', fontFamily: 'serif' }}>
-            Planning Summary
+      {/* Countdown Timer */}
+      <Paper 
+        shadow="xl" 
+        radius="xl" 
+        p="xl" 
+        style={{ 
+          backgroundColor: '#ffffff',
+          border: '2px solid #f1f3f4',
+          minWidth: '600px',
+          maxWidth: '800px'
+        }}
+      >
+        <Stack gap="xl" align="center">
+          <Title order={2} style={{ color: '#495057', fontFamily: 'serif', marginBottom: '1rem' }}>
+            Time Remaining
           </Title>
-          <Group gap="xl">
-            <Box>
-              <Text size="sm" fw={500} color="#495057">RSVP Deadline</Text>
-              <Text size="lg" color="#8b7355">March 1, 2026</Text>
+          
+          <Group gap="lg" justify="center" wrap="wrap">
+            {/* Days */}
+            <Box style={{ textAlign: 'center', minWidth: '120px' }}>
+              <Paper 
+                shadow="md" 
+                radius="lg" 
+                p="xl" 
+                style={{ 
+                  backgroundColor: '#8b7355',
+                  color: 'white',
+                  minWidth: '100px'
+                }}
+              >
+                <Text size="3rem" fw={700} style={{ lineHeight: 1 }}>
+                  {formatNumber(timeLeft.days)}
+                </Text>
+                <Text size="sm" fw={500} style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Days
+                </Text>
+              </Paper>
             </Box>
-            <Box>
-              <Text size="sm" fw={500} color="#495057">Wedding Date</Text>
-              <Text size="lg" color="#8b7355">May 2026</Text>
+
+            {/* Hours */}
+            <Box style={{ textAlign: 'center', minWidth: '120px' }}>
+              <Paper 
+                shadow="md" 
+                radius="lg" 
+                p="xl" 
+                style={{ 
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  minWidth: '100px'
+                }}
+              >
+                <Text size="3rem" fw={700} style={{ lineHeight: 1 }}>
+                  {formatNumber(timeLeft.hours)}
+                </Text>
+                <Text size="sm" fw={500} style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Hours
+                </Text>
+              </Paper>
             </Box>
-            <Box>
-              <Text size="sm" fw={500} color="#495057">Expected Guests</Text>
-              <Text size="lg" color="#8b7355">{stats.totalAttending + stats.totalPlusOnes} confirmed</Text>
+
+            {/* Minutes */}
+            <Box style={{ textAlign: 'center', minWidth: '120px' }}>
+              <Paper 
+                shadow="md" 
+                radius="lg" 
+                p="xl" 
+                style={{ 
+                  backgroundColor: '#22c55e',
+                  color: 'white',
+                  minWidth: '100px'
+                }}
+              >
+                <Text size="3rem" fw={700} style={{ lineHeight: 1 }}>
+                  {formatNumber(timeLeft.minutes)}
+                </Text>
+                <Text size="sm" fw={500} style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Minutes
+                </Text>
+              </Paper>
+            </Box>
+
+            {/* Seconds */}
+            <Box style={{ textAlign: 'center', minWidth: '120px' }}>
+              <Paper 
+                shadow="md" 
+                radius="lg" 
+                p="xl" 
+                style={{ 
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  minWidth: '100px'
+                }}
+              >
+                <Text size="3rem" fw={700} style={{ lineHeight: 1 }}>
+                  {formatNumber(timeLeft.seconds)}
+                </Text>
+                <Text size="sm" fw={500} style={{ textTransform: 'uppercase', letterSpacing: '1px' }}>
+                  Seconds
+                </Text>
+              </Paper>
             </Box>
           </Group>
         </Stack>
+      </Paper>
+
+      {/* Wedding Details */}
+      <Paper 
+        shadow="md" 
+        radius="lg" 
+        p="xl" 
+        style={{ 
+          backgroundColor: '#ffffff',
+          border: '1px solid #e9ecef',
+          maxWidth: '600px'
+        }}
+      >
+        <Stack gap="md" align="center">
+          <Title order={3} style={{ color: '#495057', fontFamily: 'serif' }}>
+            Wedding Details
+          </Title>
+          <Group gap="xl" justify="center" wrap="wrap">
+            <Box style={{ textAlign: 'center' }}>
+              <Text size="sm" fw={500} color="#495057">Date</Text>
+              <Text size="lg" color="#8b7355" fw={600}>May 23rd, 2026</Text>
+            </Box>
+            <Box style={{ textAlign: 'center' }}>
+              <Text size="sm" fw={500} color="#495057">Day of Week</Text>
+              <Text size="lg" color="#8b7355" fw={600}>Friday</Text>
+            </Box>
+            <Box style={{ textAlign: 'center' }}>
+              <Text size="sm" fw={500} color="#495057">Season</Text>
+              <Text size="lg" color="#8b7355" fw={600}>Spring</Text>
+            </Box>
+          </Group>
+        </Stack>
+      </Paper>
+
+      {/* Inspirational Message */}
+      <Paper 
+        shadow="sm" 
+        radius="lg" 
+        p="lg" 
+        style={{ 
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #e9ecef',
+          maxWidth: '500px',
+          textAlign: 'center'
+        }}
+      >
+        <Text size="lg" style={{ color: '#6c757d', fontStyle: 'italic' }}>
+          &quot;Every love story is beautiful, but ours is my favorite.&quot;
+        </Text>
       </Paper>
     </Stack>
   );
