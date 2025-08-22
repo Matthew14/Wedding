@@ -25,21 +25,24 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
 ## Getting Started
 
 1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+
+    ```bash
+    npm install
+    ```
 
 2. **Set up environment variables**:
    Copy `.env.local` and add your Supabase credentials:
-   ```bash
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
+
+    ```bash
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
 
 3. **Run development server**:
-   ```bash
-   npm run dev
-   ```
+
+    ```bash
+    npm run dev
+    ```
 
 4. **Open [http://localhost:3000](http://localhost:3000)** in your browser
 
@@ -107,7 +110,6 @@ The following features are planned but not yet implemented:
 - **RSVP System**: A complete RSVP form where guests can confirm attendance, specify guest count, dietary restrictions, and leave messages.
 
 - **Gallery**: A photo gallery section to showcase photos once the wedding has taken place
- 
 
 ## Deployment
 

@@ -1,51 +1,46 @@
-import {
- describe, it, expect, vi 
-} from 'vitest'
+import { describe, it, expect, vi } from "vitest";
 
 // Mock @supabase/ssr
-vi.mock('@supabase/ssr', () => ({
-  createBrowserClient: vi.fn(),
-}))
+vi.mock("@supabase/ssr", () => ({
+    createBrowserClient: vi.fn(),
+}));
 
-import { createClient } from '../client'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from "../client";
+import { createBrowserClient } from "@supabase/ssr";
 
-const mockCreateBrowserClient = vi.mocked(createBrowserClient)
+const mockCreateBrowserClient = vi.mocked(createBrowserClient);
 
-describe('Supabase Client Utils', () => {
-  it('creates browser client with correct environment variables', () => {
-    const mockClient = { auth: {}, from: vi.fn() }
-    mockCreateBrowserClient.mockReturnValue(mockClient)
+describe("Supabase Client Utils", () => {
+    it("creates browser client with correct environment variables", () => {
+        const mockClient = { auth: {}, from: vi.fn() };
+        mockCreateBrowserClient.mockReturnValue(mockClient);
 
-    const client = createClient()
+        const client = createClient();
 
-    expect(mockCreateBrowserClient).toHaveBeenCalledWith(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    )
-    expect(client).toBe(mockClient)
-  })
+        expect(mockCreateBrowserClient).toHaveBeenCalledWith(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        );
+        expect(client).toBe(mockClient);
+    });
 
-  it('handles missing environment variables gracefully', () => {
-    // Temporarily clear env vars
-    const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const originalKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    delete process.env.NEXT_PUBLIC_SUPABASE_URL
-    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    it("handles missing environment variables gracefully", () => {
+        // Temporarily clear env vars
+        const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const originalKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    const mockClient = { auth: {}, from: vi.fn() }
-    mockCreateBrowserClient.mockReturnValue(mockClient)
+        delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+        delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    createClient()
+        const mockClient = { auth: {}, from: vi.fn() };
+        mockCreateBrowserClient.mockReturnValue(mockClient);
 
-    expect(mockCreateBrowserClient).toHaveBeenCalledWith(
-      undefined,
-      undefined
-    )
+        createClient();
 
-    // Restore env vars
-    process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = originalKey
-  })
-})
+        expect(mockCreateBrowserClient).toHaveBeenCalledWith(undefined, undefined);
+
+        // Restore env vars
+        process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl;
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = originalKey;
+    });
+});

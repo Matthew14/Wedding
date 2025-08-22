@@ -55,18 +55,21 @@ npm run test:ui
 ## Test Configuration
 
 ### Vitest Config (`vitest.config.ts`)
+
 - Configured for React/JSX support
 - jsdom environment for DOM testing
 - Path aliases matching the project structure
 - Coverage reporting (text, JSON, HTML)
 
 ### Setup File (`src/test/setup.ts`)
+
 - Imports `@testing-library/jest-dom` for additional matchers
 - Mocks Next.js router and image components
 - Mocks environment variables for testing
 - Sets up window.matchMedia for Mantine components
 
 ### Test Utils (`src/test/test-utils.tsx`)
+
 - Custom render function with providers
 - Mocked Supabase client for consistent testing
 - Re-exports all React Testing Library utilities
@@ -74,6 +77,7 @@ npm run test:ui
 ## Testing Patterns
 
 ### Component Tests
+
 ```typescript
 import { render, screen } from '@/test/test-utils'
 import { Navigation } from '../Navigation'
@@ -85,51 +89,56 @@ it('renders navigation links', () => {
 ```
 
 ### API Route Tests
-```typescript
-import { describe, it, expect, vi } from 'vitest'
-import { NextRequest } from 'next/server'
-import { GET } from '../route'
 
-it('returns FAQs successfully', async () => {
-  const request = new NextRequest('http://localhost:3000/api/faqs')
-  const response = await GET(request)
-  expect(response.status).toBe(200)
-})
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { NextRequest } from "next/server";
+import { GET } from "../route";
+
+it("returns FAQs successfully", async () => {
+    const request = new NextRequest("http://localhost:3000/api/faqs");
+    const response = await GET(request);
+    expect(response.status).toBe(200);
+});
 ```
 
 ### Hook Tests
-```typescript
-import { renderHook, act } from '@testing-library/react'
-import { useAuth } from '../AuthContext'
 
-it('handles sign in', async () => {
-  const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper })
-  await act(async () => {
-    await result.current.signIn('test@example.com', 'password')
-  })
-})
+```typescript
+import { renderHook, act } from "@testing-library/react";
+import { useAuth } from "../AuthContext";
+
+it("handles sign in", async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper });
+    await act(async () => {
+        await result.current.signIn("test@example.com", "password");
+    });
+});
 ```
 
 ## Mocking Strategy
 
 ### Supabase
+
 - Mocked at the client level in `test-utils.tsx`
 - Consistent mock responses across all tests
 - Easy to override for specific test scenarios
 
 ### Next.js Features
+
 - Router: Mocked in setup file
 - Image: Mocked to render standard img elements
 - Environment variables: Mocked with test values
 
 ### External APIs
+
 - Fetch: Mocked globally for API route tests
 - OpenAI: Mocked in specific test files
 
 ## Coverage Goals
 
 - **Components**: >90% coverage
-- **API Routes**: >95% coverage  
+- **API Routes**: >95% coverage
 - **Utilities**: >95% coverage
 - **Hooks/Contexts**: >90% coverage
 
@@ -145,6 +154,7 @@ it('handles sign in', async () => {
 ## Common Testing Scenarios
 
 ### Loading States
+
 ```typescript
 it('shows loading state', () => {
   mockFetch.mockImplementation(() => new Promise(() => {}))
@@ -154,6 +164,7 @@ it('shows loading state', () => {
 ```
 
 ### Error Handling
+
 ```typescript
 it('handles API errors', async () => {
   mockFetch.mockRejectedValue(new Error('API Error'))
@@ -165,6 +176,7 @@ it('handles API errors', async () => {
 ```
 
 ### User Interactions
+
 ```typescript
 it('handles button click', async () => {
   const user = userEvent.setup()
@@ -184,6 +196,7 @@ it('handles button click', async () => {
 ## CI/CD Integration
 
 Tests run automatically on:
+
 - Git commits (pre-commit hook)
 - Pull requests
 - Main branch pushes

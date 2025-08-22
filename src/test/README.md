@@ -5,7 +5,9 @@ This directory contains testing utilities and setup files for the wedding websit
 ## Files
 
 ### `setup.ts`
+
 Global test setup file that:
+
 - Configures jest-dom matchers
 - Mocks Next.js components (router, image)
 - Mocks window.matchMedia for Mantine compatibility
@@ -13,7 +15,9 @@ Global test setup file that:
 - Handles cleanup after each test
 
 ### `test-utils.tsx`
+
 Testing utilities that provide:
+
 - Custom render function with all providers (Mantine, Auth)
 - Mocked Supabase client with consistent behavior
 - Re-exports of all React Testing Library utilities
@@ -39,6 +43,7 @@ expect(screen.getByText('Hello')).toBeInTheDocument()
 - **Environment Variables**: Test-specific values provided
 
 This setup ensures tests are:
+
 - Fast and isolated
 - Consistent across different environments
 - Free from external dependencies
