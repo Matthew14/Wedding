@@ -26,9 +26,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     // Set active tab based on current path
-    if (pathname.includes('/dashboard/rsvps')) {
-      setActiveTab('rsvps');
-    } else if (pathname.includes('/dashboard/faq-editor')) {
+    if (pathname.includes('/dashboard/faq-editor')) {
       setActiveTab('faq-editor');
     } else if (pathname.includes('/dashboard/invitations')) {
       setActiveTab('invitations');
@@ -38,9 +36,7 @@ export default function DashboardLayout({
   }, [pathname]);
 
   const handleTabChange = (value: string | null) => {
-    if (value === 'rsvps') {
-      router.push('/dashboard/rsvps');
-    } else if (value === 'faq-editor') {
+    if (value === 'faq-editor') {
       router.push('/dashboard/faq-editor');
     } else if (value === 'invitations') {
       router.push('/dashboard/invitations');
@@ -132,9 +128,6 @@ export default function DashboardLayout({
             <Tabs.List>
               <Tabs.Tab value="overview">
                 Overview
-              </Tabs.Tab>
-              <Tabs.Tab value="rsvps">
-                RSVPs
               </Tabs.Tab>
               <Tabs.Tab value="faq-editor">
                 FAQ Editor

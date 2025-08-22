@@ -228,6 +228,7 @@ export default function InvitationsPage() {
               <th style={{ textAlign: 'center', padding: '16px 12px', fontWeight: 600, color: '#495057' }}>ID</th>
               <th style={{ textAlign: 'center', padding: '16px 12px', fontWeight: 600, color: '#495057' }}>Side</th>
               <th style={{ textAlign: 'center', padding: '16px 12px', fontWeight: 600, color: '#495057' }}>Invitees</th>
+              <th style={{ textAlign: 'center', padding: '16px 12px', fontWeight: 600, color: '#495057' }}>RSVP</th>
             </tr>
           </thead>
           <tbody>
@@ -266,6 +267,20 @@ export default function InvitationsPage() {
                         No invitees assigned
                       </Text>
                     )}
+                  </td>
+                  <td style={{ textAlign: 'center', padding: '20px 12px', verticalAlign: 'middle' }}>
+                    <Button
+                      variant="outline"
+                      color="#8b7355"
+                      size="sm"
+                      onClick={() => {
+                        // TODO: Implement RSVP drill-down functionality
+                        console.log(`Drill down to RSVP for invitation #${invitation.id}`);
+                      }}
+                      style={{ minWidth: '80px' }}
+                    >
+                      View RSVP
+                    </Button>
                   </td>
                 </tr>
               );
