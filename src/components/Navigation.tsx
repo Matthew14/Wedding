@@ -6,11 +6,13 @@ import {
   Burger,
   Paper,
   Transition,
-  Anchor
+  Anchor,
+  Button
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import classes from './Navigation.module.css';
 
 const links = [
@@ -23,6 +25,7 @@ const links = [
 export function Navigation() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const pathname = usePathname();
+  const { user } = useAuth();
 
   const items = links.map((link) => (
     <Anchor
@@ -62,6 +65,23 @@ export function Navigation() {
         <nav role="navigation" aria-label="Main navigation">
           <Group gap={5} visibleFrom="xs">
             {items}
+            {user && (
+              <Button
+                component={Link}
+                href="/dashboard"
+                variant="filled"
+                color="#8b7355"
+                size="sm"
+                style={{ 
+                  backgroundColor: '#8b7355',
+                  color: '#ffffff',
+                  textDecoration: 'none'
+                }}
+                onClick={() => close()}
+              >
+                Dashboard
+              </Button>
+            )}
           </Group>
         </nav>
 
@@ -86,6 +106,25 @@ export function Navigation() {
               aria-label="Mobile navigation menu"
             >
               {items}
+              {user && (
+                <Button
+                  component={Link}
+                  href="/dashboard"
+                  variant="filled"
+                  color="#8b7355"
+                  size="sm"
+                  fullWidth
+                  style={{ 
+                    backgroundColor: '#8b7355',
+                    color: '#ffffff',
+                    textDecoration: 'none',
+                    marginTop: '0.5rem'
+                  }}
+                  onClick={() => close()}
+                >
+                  Dashboard
+                </Button>
+              )}
             </Paper>
           )}
         </Transition>
