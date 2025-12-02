@@ -1,32 +1,120 @@
 "use client";
 
-import { Title, Text, Stack, Paper, Button, Box, Container, TextInput } from "@mantine/core";
-import { useState } from "react";
+import { Title, Text, Stack, Paper, Button, Box, Container, TextInput, Alert } from "@mantine/core";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { IconMail } from "@tabler/icons-react";
+import { IconMail, IconCheck, IconX, IconAlertCircle } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
+
+type ValidationState = "idle" | "validating" | "valid" | "invalid";
 
 export default function RSVPPage() {
     const [rsvpCode, setRsvpCode] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [validationState, setValidationState] = useState<ValidationState>("idle");
+    const [validationMessage, setValidationMessage] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
+    const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const router = useRouter();
+
+    // Auto-focus input on mount
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
+
+    // Handle code input with auto-uppercase and real-time validation
+    const handleCodeChange = (value: string) => {
+        // Convert to uppercase and remove any non-alphanumeric characters
+        const cleaned = value.replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 6);
+        setRsvpCode(cleaned);
+        setError("");
+
+        // Clear previous validation timeout
+        if (validationTimeoutRef.current) {
+            clearTimeout(validationTimeoutRef.current);
+        }
+
+        // Reset validation state for empty input
+        if (cleaned.length === 0) {
+            setValidationState("idle");
+            setValidationMessage("");
+            return;
+        }
+
+        // Show format hint while typing
+        if (cleaned.length < 6) {
+            setValidationState("idle");
+            setValidationMessage(`${6 - cleaned.length} character${6 - cleaned.length > 1 ? "s" : ""} remaining`);
+            return;
+        }
+
+        // Validate when 6 characters are entered (debounced)
+        setValidationState("validating");
+        setValidationMessage("Checking code...");
+
+        validationTimeoutRef.current = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/rsvp/validate/${cleaned}`);
+                
+                if (response.ok) {
+                    setValidationState("valid");
+                    setValidationMessage("Code found! Click continue to proceed.");
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    setValidationState("invalid");
+                    setValidationMessage(
+                        errorData.suggestion || "Code not found. Please check your invitation and try again."
+                    );
+                }
+            } catch {
+                setValidationState("invalid");
+                setValidationMessage("Unable to verify code. Please try again.");
+            }
+        }, 500); // 500ms debounce
+    };
+
+    // Handle paste events
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const pastedText = e.clipboardData.getData("text");
+        handleCodeChange(pastedText);
+    };
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (validationTimeoutRef.current) {
+                clearTimeout(validationTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!rsvpCode.trim()) {
             setError("Please enter your RSVP code");
+            setValidationState("invalid");
             return;
         }
 
         if (rsvpCode.trim().length !== 6) {
-            setError("RSVP code must be exactly 6 characters");
+            setError(`RSVP code must be exactly 6 characters (you entered ${rsvpCode.length})`);
+            setValidationState("invalid");
+            return;
+        }
+
+        // If already validated as valid, proceed immediately
+        if (validationState === "valid") {
+            router.push(`/rsvp/${rsvpCode.trim()}`);
             return;
         }
 
         setLoading(true);
         setError("");
+        setValidationState("validating");
+        setValidationMessage("Verifying code...");
 
         try {
             // Check if the RSVP code exists
@@ -36,10 +124,15 @@ export default function RSVPPage() {
                 // Redirect to the RSVP form page
                 router.push(`/rsvp/${rsvpCode.trim()}`);
             } else {
-                setError("Invalid RSVP code. Please check and try again.");
+                const errorData = await response.json().catch(() => ({}));
+                setError(errorData.suggestion || "Invalid RSVP code. Please check and try again.");
+                setValidationState("invalid");
+                setValidationMessage(errorData.suggestion || "Code not found");
             }
         } catch {
             setError("Something went wrong. Please try again.");
+            setValidationState("invalid");
+            setValidationMessage("Unable to verify code");
         } finally {
             setLoading(false);
         }
@@ -77,20 +170,91 @@ export default function RSVPPage() {
                             <Paper shadow="md" radius="lg" p="xl" style={{ width: "100%", maxWidth: "400px" }}>
                                 <form onSubmit={handleSubmit}>
                                     <Stack gap="lg">
-                                        <TextInput
-                                            label="RSVP Code"
-                                            placeholder="Enter your 6-character code"
-                                            value={rsvpCode}
-                                            onChange={e => setRsvpCode(e.target.value)}
-                                            maxLength={6}
-                                            size="lg"
-                                            leftSection={<IconMail size={20} />}
-                                            error={error}
-                                            required
-                                            style={{ textTransform: "uppercase" }}
-                                        />
+                                        <Box>
+                                            <TextInput
+                                                ref={inputRef}
+                                                label="RSVP Code"
+                                                placeholder="ABC123"
+                                                description="Enter the 6-character code from your invitation"
+                                                value={rsvpCode}
+                                                onChange={e => handleCodeChange(e.target.value)}
+                                                onPaste={handlePaste}
+                                                maxLength={6}
+                                                size="lg"
+                                                leftSection={<IconMail size={20} />}
+                                                rightSection={
+                                                    validationState === "valid" ? (
+                                                        <IconCheck size={20} color="green" />
+                                                    ) : validationState === "invalid" ? (
+                                                        <IconX size={20} color="red" />
+                                                    ) : null
+                                                }
+                                                error={error || (validationState === "invalid" ? validationMessage : undefined)}
+                                                required
+                                                style={{
+                                                    textTransform: "uppercase",
+                                                    fontFamily: "monospace",
+                                                    letterSpacing: "0.1em",
+                                                }}
+                                                styles={{
+                                                    input: {
+                                                        borderColor:
+                                                            validationState === "valid"
+                                                                ? "var(--mantine-color-green-6)"
+                                                                : validationState === "invalid"
+                                                                ? "var(--mantine-color-red-6)"
+                                                                : undefined,
+                                                        "&:focus": {
+                                                            borderColor:
+                                                                validationState === "valid"
+                                                                    ? "var(--mantine-color-green-6)"
+                                                                    : "#8b7355",
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                            {validationState === "validating" && (
+                                                <Text size="xs" c="dimmed" mt={4}>
+                                                    {validationMessage}
+                                                </Text>
+                                            )}
+                                            {validationState === "valid" && (
+                                                <Text size="xs" c="green" mt={4} fw={500}>
+                                                    {validationMessage}
+                                                </Text>
+                                            )}
+                                            {validationState === "idle" && validationMessage && (
+                                                <Text size="xs" c="dimmed" mt={4}>
+                                                    {validationMessage}
+                                                </Text>
+                                            )}
+                                        </Box>
 
-                                        <Button type="submit" size="lg" loading={loading} color="#8b7355" fullWidth>
+                                        {/* Format hint */}
+                                        {rsvpCode.length === 0 && (
+                                            <Alert
+                                                icon={<IconAlertCircle size={16} />}
+                                                color="blue"
+                                                variant="light"
+                                                radius="md"
+                                            >
+                                                <Text size="sm">
+                                                    Your code is 6 characters long (letters and numbers only). Example:{" "}
+                                                    <Text span fw={700} style={{ fontFamily: "monospace" }}>
+                                                        ABC123
+                                                    </Text>
+                                                </Text>
+                                            </Alert>
+                                        )}
+
+                                        <Button
+                                            type="submit"
+                                            size="lg"
+                                            loading={loading || validationState === "validating"}
+                                            disabled={rsvpCode.length !== 6 || validationState === "invalid"}
+                                            color="#8b7355"
+                                            fullWidth
+                                        >
                                             Continue to RSVP Form
                                         </Button>
                                     </Stack>

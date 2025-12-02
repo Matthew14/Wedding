@@ -19,7 +19,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             .single();
 
         if (error || !data) {
-            return NextResponse.json({ error: "RSVP code not found" }, { status: 404 });
+            // Provide helpful suggestions for common mistakes
+            const suggestions = [];
+            
+            // Check for common formatting issues
+            if (code.length === 6) {
+                suggestions.push("Double-check that you've entered all characters correctly.");
+                suggestions.push("Make sure you're using the code from your invitation (not a confirmation code).");
+            }
+            
+            return NextResponse.json(
+                {
+                    error: "RSVP code not found",
+                    suggestion: suggestions.length > 0 ? suggestions[0] : "Please check your invitation and try again. If you continue to have issues, please contact us.",
+                },
+                { status: 404 }
+            );
         }
 
         return NextResponse.json({
