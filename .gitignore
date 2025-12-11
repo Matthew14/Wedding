@@ -35,4 +35,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# Cypress
+cypress/screenshots
+cypress/videos
+cypress.env.json
+cypress/downloads
+
 markdowns/

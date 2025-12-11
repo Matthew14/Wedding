@@ -1,0 +1,20 @@
+{
+  "validUser": {
+    "email": "admin@wedding.test",
+    "password": "TestPassword123!"
+  },
+  "invalidUser": {
+    "email": "wrong@wedding.test",
+    "password": "WrongPassword123!"
+  },
+  "testUsers": [
+    {
+      "email": "matthew@wedding.test",
+      "password": "MatthewTest123!"
+    },
+    {
+      "email": "partner@wedding.test",
+      "password": "PartnerTest123!"
+    }
+  ]
+}
