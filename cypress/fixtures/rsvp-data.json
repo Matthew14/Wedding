@@ -1,0 +1,37 @@
+{
+  "validCodes": {
+    "test01": "TEST01",
+    "test02": "TEST02"
+  },
+  "invalidCode": "INVALID99",
+  "rsvpSubmission": {
+    "accepted": true,
+    "staying_villa": true,
+    "dietary_restrictions": "Vegetarian, no nuts",
+    "song_request": "Don't Stop Believin' - Journey",
+    "travel_plans": "Arriving Friday evening, departing Sunday morning",
+    "message": "So excited to celebrate with you!"
+  },
+  "rsvpDecline": {
+    "accepted": false,
+    "staying_villa": false,
+    "dietary_restrictions": "",
+    "song_request": "",
+    "travel_plans": "",
+    "message": "Unfortunately we can't make it. Wishing you all the best!"
+  },
+  "inviteeSelections": {
+    "allComing": {
+      "33333333-3333-3333-3333-333333333333": true,
+      "44444444-4444-4444-4444-444444444444": true
+    },
+    "partialComing": {
+      "33333333-3333-3333-3333-333333333333": true,
+      "44444444-4444-4444-4444-444444444444": false
+    },
+    "noneComing": {
+      "33333333-3333-3333-3333-333333333333": false,
+      "44444444-4444-4444-4444-444444444444": false
+    }
+  }
+}
