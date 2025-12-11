@@ -39,7 +39,7 @@ const nextConfig = {
                     },
                     {
                         key: "Content-Security-Policy",
-                        value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://maps.googleapis.com; script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.openai.com https://va.vercel-scripts.com https://maps.googleapis.com; frame-src 'self' https://www.google.com https://maps.googleapis.com;",
+                        value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://maps.googleapis.com; script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://va.vercel-scripts.com https://maps.googleapis.com; frame-src 'self' https://www.google.com https://maps.googleapis.com;",
                     },
                 ],
             },

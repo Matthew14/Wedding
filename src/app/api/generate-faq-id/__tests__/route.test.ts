@@ -1,22 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { NextRequest } from "next/server";
 
-// Simple mock of OpenAI
-vi.mock("openai", () => ({
-    default: class MockOpenAI {
-        chat = {
-            completions: {
-                create: vi.fn(),
-            },
-        };
-    },
-}));
-
 describe("/api/generate-faq-id", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
     it("validates question input", async () => {
         const { POST } = await import("../route");
 
@@ -47,10 +32,10 @@ describe("/api/generate-faq-id", () => {
         expect(data.error).toBe("Question is required and must be a string");
     });
 
-    it("handles OpenAI API errors with fallback", async () => {
+    it("generates kebab-case ID from first 3 words", async () => {
         const { POST } = await import("../route");
 
-        const request = new NextRequest("http://localhost:3000/api/generate-faq-id?question=What%20time%20ceremony", {
+        const request = new NextRequest("http://localhost:3000/api/generate-faq-id", {
             method: "POST",
             body: JSON.stringify({ question: "What time is the ceremony?" }),
         });
@@ -59,7 +44,51 @@ describe("/api/generate-faq-id", () => {
         const data = await response.json();
 
         expect(response.status).toBe(200);
-        expect(data.questionId).toBeDefined();
-        // Should get fallback since OpenAI is mocked and will fail
+        expect(data.questionId).toBe("what-time-is");
+    });
+
+    it("handles questions with punctuation", async () => {
+        const { POST } = await import("../route");
+
+        const request = new NextRequest("http://localhost:3000/api/generate-faq-id", {
+            method: "POST",
+            body: JSON.stringify({ question: "What's the dress code?" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.questionId).toBe("whats-the-dress");
+    });
+
+    it("handles questions with less than 3 words", async () => {
+        const { POST } = await import("../route");
+
+        const request = new NextRequest("http://localhost:3000/api/generate-faq-id", {
+            method: "POST",
+            body: JSON.stringify({ question: "When?" }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.questionId).toBe("when");
+    });
+
+    it("handles questions with extra whitespace", async () => {
+        const { POST } = await import("../route");
+
+        const request = new NextRequest("http://localhost:3000/api/generate-faq-id", {
+            method: "POST",
+            body: JSON.stringify({ question: "  How   do   I   get   there?  " }),
+        });
+
+        const response = await POST(request);
+        const data = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(data.questionId).toBe("how-do-i");
     });
 });
