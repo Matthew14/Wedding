@@ -12,83 +12,94 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
  * Reset database to clean state and reseed with test data
  */
 export async function resetDatabase(): Promise<void> {
-  try {
-    // Delete data in reverse order of dependencies to avoid FK constraint violations
-    await supabase.from('invitees').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('RSVPs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('invitation').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('FAQs').delete().neq('id', '___never___');
+  // Delete data in reverse order of dependencies to avoid FK constraint violations
+  const { error: deleteInviteesError } = await supabase.from('invitees').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  if (deleteInviteesError) console.error('Error deleting invitees:', deleteInviteesError);
 
-    // Reseed database by executing inserts via Supabase client
-    // Insert test invitation
-    await supabase.from('invitation').insert({
-      id: '11111111-1111-1111-1111-111111111111',
-      isMatthewSide: true,
-    });
+  const { error: deleteRsvpsError } = await supabase.from('RSVPs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  if (deleteRsvpsError) console.error('Error deleting RSVPs:', deleteRsvpsError);
 
-    // Insert test RSVP with code TEST01
-    await supabase.from('RSVPs').insert({
-      id: '22222222-2222-2222-2222-222222222222',
+  const { error: deleteInvitationError } = await supabase.from('invitation').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  if (deleteInvitationError) console.error('Error deleting invitations:', deleteInvitationError);
+
+  const { error: deleteFaqsError } = await supabase.from('FAQs').delete().neq('id', '___never___');
+  if (deleteFaqsError) console.error('Error deleting FAQs:', deleteFaqsError);
+
+  // Reseed database by executing inserts via Supabase client
+  // Note: Column "isMatthewSide" is case-sensitive in PostgreSQL (quoted identifier)
+  
+  // Insert test invitation
+  const { error: inv1Error } = await supabase.from('invitation').insert({
+    id: '11111111-1111-1111-1111-111111111111',
+    "isMatthewSide": true,
+  });
+  if (inv1Error) console.error('Error inserting invitation 1:', inv1Error);
+
+  // Insert test RSVP with code TEST01
+  const { error: rsvp1Error } = await supabase.from('RSVPs').insert({
+    id: '22222222-2222-2222-2222-222222222222',
+    invitation_id: '11111111-1111-1111-1111-111111111111',
+    short_url: 'TEST01',
+    accepted: null,
+    staying_villa: null,
+    dietary_restrictions: null,
+    song_request: null,
+    travel_plans: null,
+    message: null,
+  });
+  if (rsvp1Error) console.error('Error inserting RSVP 1:', rsvp1Error);
+
+  // Insert test invitees
+  const { error: inviteesError } = await supabase.from('invitees').insert([
+    {
+      id: '33333333-3333-3333-3333-333333333333',
       invitation_id: '11111111-1111-1111-1111-111111111111',
-      short_url: 'TEST01',
-      accepted: null,
-      staying_villa: null,
-      dietary_restrictions: null,
-      song_request: null,
-      travel_plans: null,
-      message: null,
-    });
-
-    // Insert test invitees
-    await supabase.from('invitees').insert([
-      {
-        id: '33333333-3333-3333-3333-333333333333',
-        invitation_id: '11111111-1111-1111-1111-111111111111',
-        first_name: 'John',
-        last_name: 'Doe',
-        coming: null,
-      },
-      {
-        id: '44444444-4444-4444-4444-444444444444',
-        invitation_id: '11111111-1111-1111-1111-111111111111',
-        first_name: 'Jane',
-        last_name: 'Doe',
-        coming: null,
-      },
-    ]);
-
-    // Insert test FAQ
-    await supabase.from('FAQs').insert({
-      id: 'test-faq-1',
-      question: 'What time is the ceremony?',
-      answer: 'The ceremony starts at 4pm.',
-    });
-
-    // Insert second test invitation and RSVP
-    await supabase.from('invitation').insert({
-      id: '55555555-5555-5555-5555-555555555555',
-      isMatthewSide: false,
-    });
-
-    await supabase.from('RSVPs').insert({
-      id: '66666666-6666-6666-6666-666666666666',
-      invitation_id: '55555555-5555-5555-5555-555555555555',
-      short_url: 'TEST02',
-      accepted: null,
-      staying_villa: null,
-    });
-
-    await supabase.from('invitees').insert({
-      id: '77777777-7777-7777-7777-777777777777',
-      invitation_id: '55555555-5555-5555-5555-555555555555',
-      first_name: 'Alice',
-      last_name: 'Smith',
+      first_name: 'John',
+      last_name: 'Doe',
       coming: null,
-    });
-  } catch (error) {
-    console.error('Failed to reset database:', error);
-    throw error;
-  }
+    },
+    {
+      id: '44444444-4444-4444-4444-444444444444',
+      invitation_id: '11111111-1111-1111-1111-111111111111',
+      first_name: 'Jane',
+      last_name: 'Doe',
+      coming: null,
+    },
+  ]);
+  if (inviteesError) console.error('Error inserting invitees:', inviteesError);
+
+  // Insert test FAQ
+  const { error: faqError } = await supabase.from('FAQs').insert({
+    id: 'test-faq-1',
+    question: 'What time is the ceremony?',
+    answer: 'The ceremony starts at 4pm.',
+  });
+  if (faqError) console.error('Error inserting FAQ:', faqError);
+
+  // Insert second test invitation and RSVP
+  const { error: inv2Error } = await supabase.from('invitation').insert({
+    id: '55555555-5555-5555-5555-555555555555',
+    "isMatthewSide": false,
+  });
+  if (inv2Error) console.error('Error inserting invitation 2:', inv2Error);
+
+  const { error: rsvp2Error } = await supabase.from('RSVPs').insert({
+    id: '66666666-6666-6666-6666-666666666666',
+    invitation_id: '55555555-5555-5555-5555-555555555555',
+    short_url: 'TEST02',
+    accepted: null,
+    staying_villa: null,
+  });
+  if (rsvp2Error) console.error('Error inserting RSVP 2:', rsvp2Error);
+
+  const { error: invitee3Error } = await supabase.from('invitees').insert({
+    id: '77777777-7777-7777-7777-777777777777',
+    invitation_id: '55555555-5555-5555-5555-555555555555',
+    first_name: 'Alice',
+    last_name: 'Smith',
+    coming: null,
+  });
+  if (invitee3Error) console.error('Error inserting invitee 3:', invitee3Error);
 }
 
 interface DatabaseRecord {
