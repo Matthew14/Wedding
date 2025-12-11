@@ -1,5 +1,14 @@
 /// <reference types="cypress" />
 
+interface RsvpRecord {
+  accepted: boolean;
+  staying_villa: boolean;
+  dietary_restrictions: string;
+  song_request: string;
+  travel_plans: string;
+  message: string;
+}
+
 describe('RSVP Flow', () => {
   beforeEach(() => {
     // Reset database before each test for isolation
@@ -88,21 +97,29 @@ describe('RSVP Flow', () => {
     });
 
     it('should submit complete RSVP (accepting invitation)', () => {
-      // Accept invitation
-      cy.contains('Yes, we will be there').click();
+      // Accept invitation - find the "Are you joining us?" section and click Yes radio
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
 
       // Select invitees (both coming)
       cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
       cy.contains('Jane Doe').parent().find('input[type="checkbox"]').check();
 
-      // Staying at villa
-      cy.contains('Yes, we would like to stay at the villa').click();
+      // Staying at villa - find the villa section and click Yes radio
+      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
 
       // Fill optional fields
       cy.get('textarea[placeholder*="dietary"]').type('Vegetarian, no nuts');
       cy.get('input[placeholder*="song"]').type("Don't Stop Believin' - Journey");
       cy.get('textarea[placeholder*="travel"]').type('Arriving Friday evening, departing Sunday morning');
-      cy.get('textarea[placeholder*="message"]').type('So excited to celebrate with you!');
+      cy.get('textarea[placeholder*="Any other information"]').type('So excited to celebrate with you!');
 
       // Submit form
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -112,7 +129,8 @@ describe('RSVP Flow', () => {
       cy.contains('Thank you', { timeout: 5000 }).should('be.visible');
 
       // Verify data was saved to database
-      cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((rsvp) => {
+      cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((result) => {
+        const rsvp = result as RsvpRecord | null;
         if (!rsvp) {
           throw new Error('RSVP not found');
         }
@@ -142,11 +160,15 @@ describe('RSVP Flow', () => {
     });
 
     it('should submit RSVP declining invitation', () => {
-      // Decline invitation
-      cy.contains('Unfortunately, we cannot make it').click();
+      // Decline invitation - find the "Are you joining us?" section and click No radio
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="no"]')
+        .click({ force: true });
 
       // Fill message
-      cy.get('textarea[placeholder*="message"]').type("Unfortunately we can't make it. Wishing you all the best!");
+      cy.get('textarea[placeholder*="Any other information"]').type("Unfortunately we can't make it. Wishing you all the best!");
 
       // Submit form
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -155,7 +177,8 @@ describe('RSVP Flow', () => {
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Verify data was saved
-      cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((rsvp) => {
+      cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((result) => {
+        const rsvp = result as RsvpRecord | null;
         if (!rsvp) {
           throw new Error('RSVP not found');
         }
@@ -164,8 +187,12 @@ describe('RSVP Flow', () => {
     });
 
     it('should allow editing existing RSVP', () => {
-      // First submission
-      cy.contains('Yes, we will be there').click();
+      // First submission - accept invitation
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
       cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -177,15 +204,20 @@ describe('RSVP Flow', () => {
       // Should show info that we're amending
       cy.contains("You're amending your RSVP", { timeout: 5000 }).should('be.visible');
 
-      // Form should be pre-populated
-      cy.contains('Yes, we will be there').should('be.checked');
+      // Form should be pre-populated - Yes radio should be checked
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .should('be.checked');
 
       // Make changes
       cy.get('textarea[placeholder*="dietary"]').clear().type('Gluten-free');
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Verify updated data
-      cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((rsvp) => {
+      cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((result) => {
+        const rsvp = result as RsvpRecord | null;
         if (!rsvp) {
           throw new Error('RSVP not found');
         }
@@ -195,7 +227,11 @@ describe('RSVP Flow', () => {
 
     it('should handle partial invitee attendance', () => {
       // Accept invitation
-      cy.contains('Yes, we will be there').click();
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
 
       // Only John is coming
       cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
@@ -228,8 +264,12 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
-      // Quick submission
-      cy.contains('Yes, we will be there').click();
+      // Quick submission - accept invitation
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
       cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
