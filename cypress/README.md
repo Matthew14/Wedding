@@ -1,0 +1,214 @@
+# Cypress E2E Tests
+
+Comprehensive end-to-end tests for the Wedding RSVP application using Cypress with local Supabase.
+
+## Setup
+
+### Prerequisites
+
+1. **Supabase CLI** installed (`brew install supabase/tap/supabase`)
+2. **Docker** running (required for Supabase local dev)
+3. **Node.js** and **npm** installed
+
+### Initial Setup
+
+The Cypress tests are already configured. No additional setup needed beyond installing dependencies:
+
+```bash
+npm install
+```
+
+## Running Tests
+
+### Automated (Recommended)
+
+Run tests with automatic server startup and teardown:
+
+```bash
+npm run test:e2e
+```
+
+This command will:
+1. Start Next.js dev server with local Supabase credentials
+2. Wait for server to be ready
+3. Run all Cypress tests in headless mode
+4. Stop the dev server
+
+### Manual (Interactive)
+
+For development and debugging:
+
+1. Start Supabase:
+   ```bash
+   npm run supabase:start
+   ```
+
+2. Start dev server with test environment:
+   ```bash
+   npm run dev:test
+   ```
+
+3. Open Cypress in interactive mode:
+   ```bash
+   npm run cypress:open
+   ```
+
+4. Select a test file to run in the Cypress UI
+
+### Other Commands
+
+- **Headless mode**: `npm run cypress:run`
+- **Headed mode (see browser)**: `npm run cypress:headed`
+- **Supabase Studio**: Visit http://localhost:54323 (when Supabase is running)
+
+## Test Structure
+
+```
+cypress/
+├── e2e/
+│   ├── rsvp.cy.ts          # RSVP flow tests
+│   └── auth.cy.ts          # Authentication tests
+├── fixtures/
+│   ├── rsvp-data.json      # Test RSVP data
+│   └── auth-data.json      # Test user credentials
+├── support/
+│   ├── commands.ts         # Custom Cypress commands
+│   ├── database.ts         # Database utilities
+│   └── e2e.ts              # Support file (auto-loaded)
+└── tsconfig.json           # Cypress TypeScript config
+```
+
+## Test Coverage
+
+### RSVP Flow (`rsvp.cy.ts`)
+
+- ✅ Code entry and validation
+- ✅ Valid/invalid code handling
+- ✅ Complete form submission (accepting invitation)
+- ✅ Declining invitation
+- ✅ Invitee selection (all/partial/none)
+- ✅ Form validation
+- ✅ RSVP editing (resubmission)
+- ✅ Database verification
+- ✅ Success page display
+- ✅ Direct link navigation
+
+### Authentication Flow (`auth.cy.ts`)
+
+- ✅ Login page display
+- ✅ Form validation
+- ✅ Invalid credentials error
+- ⏭️ Valid login (requires test user setup)
+- ⏭️ Protected route access
+- ⏭️ Logout functionality
+- ⏭️ Session persistence
+- ⏭️ Navigation state
+
+**Note**: Auth tests are mostly skipped (`.skip()`) because they require test users to be created in Supabase Auth.
+
+## Database Management
+
+Tests automatically reset the database before each test using the `cy.resetDb()` custom command.
+
+### Manual Database Operations
+
+```bash
+# Reset database to initial state
+npm run supabase:reset
+
+# Check Supabase status
+npm run supabase:status
+
+# Stop Supabase
+npm run supabase:stop
+```
+
+## Creating Test Users (For Auth Tests)
+
+Auth tests require manual setup of test users in Supabase:
+
+1. Start Supabase: `npm run supabase:start`
+2. Open Supabase Studio: http://localhost:54323
+3. Navigate to **Authentication** > **Users**
+4. Click **Add User** and create:
+   - Email: `admin@wedding.test`
+   - Password: `TestPassword123!`
+5. Remove `.skip()` from auth tests in `cypress/e2e/auth.cy.ts`
+
+## Environment Configuration
+
+### Local Supabase Credentials
+
+The following environment variables are set automatically when running tests:
+
+- `NEXT_PUBLIC_SUPABASE_URL`: http://127.0.0.1:54321
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: (Standard local Supabase anon key)
+
+These are configured in:
+- `cypress.env.json` (for Cypress)
+- `package.json` scripts (for Next.js)
+
+### Test Data
+
+The database is seeded with:
+- **Invitation**: ID `11111111-1111-1111-1111-111111111111`
+- **RSVP Code**: `TEST01` (linked to above invitation)
+- **Invitees**: John Doe, Jane Doe
+- **Secondary RSVP**: Code `TEST02` for additional testing
+- **FAQ**: Test FAQ entry
+
+Seed data is defined in `supabase/seed.sql`.
+
+## Troubleshooting
+
+### Tests Failing
+
+1. **Server not ready**: Increase timeout in `start-server-and-test` config
+2. **Database errors**: Run `npm run supabase:reset` to reset database
+3. **Port conflicts**: Ensure ports 3000 (Next.js) and 54321 (Supabase) are available
+4. **Stale cache**: Clear Cypress cache with `npx cypress cache clear`
+
+### Supabase Issues
+
+1. **Docker not running**: Start Docker Desktop
+2. **Services not starting**: Run `supabase stop` then `supabase start`
+3. **Migration errors**: Check `supabase/migrations/` files for syntax errors
+
+### Environment Issues
+
+1. **Wrong Supabase instance**: Verify `npm run dev:test` is used, not `npm run dev`
+2. **Missing env vars**: Check `cypress.env.json` exists and has correct values
+
+## Debugging
+
+### Visual Debugging (Interactive Mode)
+
+Use `npm run cypress:open` to:
+- See tests run in real Chrome browser
+- Time-travel through test steps
+- Inspect DOM at each step
+- View network requests
+- See console logs
+
+### Screenshots
+
+Failed tests automatically capture screenshots in `cypress/screenshots/`
+
+### Logs
+
+- Cypress logs: Console output during test run
+- Database logs: Check Supabase logs via `supabase status`
+
+## CI/CD Integration
+
+For continuous integration:
+
+```bash
+# In CI pipeline
+npm install
+npm run supabase:start
+npm run test:e2e
+npm run supabase:stop
+```
+
+Ensure Docker is available in your CI environment.
