@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Local Supabase credentials (standard for all local Supabase instances)
-const SUPABASE_URL = 'http://127.0.0.1:54321';
+// Local Supabase TEST instance credentials (separate from dev instance)
+// Uses port 54421 instead of 54321 to run alongside dev
+const SUPABASE_URL = 'http://127.0.0.1:54421';
 const SUPABASE_SERVICE_ROLE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
@@ -9,21 +10,48 @@ const SUPABASE_SERVICE_ROLE_KEY =
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 /**
- * Reset database to clean state and reseed with test data
+ * Reset database to clean state and reseed with test data.
+ * Throws an error if any database operation fails to prevent tests from
+ * proceeding with corrupted or stale data.
  */
 export async function resetDatabase(): Promise<void> {
+  const errors: string[] = [];
+
   // Delete data in reverse order of dependencies to avoid FK constraint violations
   const { error: deleteInviteesError } = await supabase.from('invitees').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  if (deleteInviteesError) console.error('Error deleting invitees:', deleteInviteesError);
+  if (deleteInviteesError) {
+    errors.push(`Error deleting invitees: ${deleteInviteesError.message}`);
+  }
 
   const { error: deleteRsvpsError } = await supabase.from('RSVPs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  if (deleteRsvpsError) console.error('Error deleting RSVPs:', deleteRsvpsError);
+  if (deleteRsvpsError) {
+    errors.push(`Error deleting RSVPs: ${deleteRsvpsError.message}`);
+  }
 
   const { error: deleteInvitationError } = await supabase.from('invitation').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-  if (deleteInvitationError) console.error('Error deleting invitations:', deleteInvitationError);
+  if (deleteInvitationError) {
+    errors.push(`Error deleting invitations: ${deleteInvitationError.message}`);
+  }
 
   const { error: deleteFaqsError } = await supabase.from('FAQs').delete().neq('id', '___never___');
-  if (deleteFaqsError) console.error('Error deleting FAQs:', deleteFaqsError);
+  if (deleteFaqsError) {
+    errors.push(`Error deleting FAQs: ${deleteFaqsError.message}`);
+  }
+
+  // Delete test auth users
+  const { data: users, error: listUsersError } = await supabase.auth.admin.listUsers();
+  if (!listUsersError && users?.users) {
+    for (const user of users.users) {
+      if (user.email?.endsWith('@wedding.test')) {
+        await supabase.auth.admin.deleteUser(user.id);
+      }
+    }
+  }
+
+  // Fail fast if cleanup failed - don't attempt to seed with stale data
+  if (errors.length > 0) {
+    throw new Error(`Database reset failed during cleanup:\n${errors.join('\n')}`);
+  }
 
   // Reseed database by executing inserts via Supabase client
   // Note: Column "isMatthewSide" is case-sensitive in PostgreSQL (quoted identifier)
@@ -33,7 +61,9 @@ export async function resetDatabase(): Promise<void> {
     id: '11111111-1111-1111-1111-111111111111',
     "isMatthewSide": true,
   });
-  if (inv1Error) console.error('Error inserting invitation 1:', inv1Error);
+  if (inv1Error) {
+    errors.push(`Error inserting invitation 1: ${inv1Error.message}`);
+  }
 
   // Insert test RSVP with code TEST01
   const { error: rsvp1Error } = await supabase.from('RSVPs').insert({
@@ -47,7 +77,9 @@ export async function resetDatabase(): Promise<void> {
     travel_plans: null,
     message: null,
   });
-  if (rsvp1Error) console.error('Error inserting RSVP 1:', rsvp1Error);
+  if (rsvp1Error) {
+    errors.push(`Error inserting RSVP 1: ${rsvp1Error.message}`);
+  }
 
   // Insert test invitees
   const { error: inviteesError } = await supabase.from('invitees').insert([
@@ -66,7 +98,9 @@ export async function resetDatabase(): Promise<void> {
       coming: null,
     },
   ]);
-  if (inviteesError) console.error('Error inserting invitees:', inviteesError);
+  if (inviteesError) {
+    errors.push(`Error inserting invitees: ${inviteesError.message}`);
+  }
 
   // Insert test FAQ
   const { error: faqError } = await supabase.from('FAQs').insert({
@@ -74,14 +108,18 @@ export async function resetDatabase(): Promise<void> {
     question: 'What time is the ceremony?',
     answer: 'The ceremony starts at 4pm.',
   });
-  if (faqError) console.error('Error inserting FAQ:', faqError);
+  if (faqError) {
+    errors.push(`Error inserting FAQ: ${faqError.message}`);
+  }
 
   // Insert second test invitation and RSVP
   const { error: inv2Error } = await supabase.from('invitation').insert({
     id: '55555555-5555-5555-5555-555555555555',
     "isMatthewSide": false,
   });
-  if (inv2Error) console.error('Error inserting invitation 2:', inv2Error);
+  if (inv2Error) {
+    errors.push(`Error inserting invitation 2: ${inv2Error.message}`);
+  }
 
   const { error: rsvp2Error } = await supabase.from('RSVPs').insert({
     id: '66666666-6666-6666-6666-666666666666',
@@ -90,7 +128,9 @@ export async function resetDatabase(): Promise<void> {
     accepted: null,
     staying_villa: null,
   });
-  if (rsvp2Error) console.error('Error inserting RSVP 2:', rsvp2Error);
+  if (rsvp2Error) {
+    errors.push(`Error inserting RSVP 2: ${rsvp2Error.message}`);
+  }
 
   const { error: invitee3Error } = await supabase.from('invitees').insert({
     id: '77777777-7777-7777-7777-777777777777',
@@ -99,7 +139,24 @@ export async function resetDatabase(): Promise<void> {
     last_name: 'Smith',
     coming: null,
   });
-  if (invitee3Error) console.error('Error inserting invitee 3:', invitee3Error);
+  if (invitee3Error) {
+    errors.push(`Error inserting invitee 3: ${invitee3Error.message}`);
+  }
+
+  // Create test auth user
+  const { error: authUserError } = await supabase.auth.admin.createUser({
+    email: 'admin@wedding.test',
+    password: 'TestPassword123!',
+    email_confirm: true,
+  });
+  if (authUserError) {
+    errors.push(`Error creating auth user: ${authUserError.message}`);
+  }
+
+  // Throw if any seeding operations failed
+  if (errors.length > 0) {
+    throw new Error(`Database reset failed during seeding:\n${errors.join('\n')}`);
+  }
 }
 
 interface DatabaseRecord {

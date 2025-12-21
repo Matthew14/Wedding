@@ -18,6 +18,20 @@ The Cypress tests are already configured. No additional setup needed beyond inst
 npm install
 ```
 
+## Two Supabase Instances
+
+This project supports running **two separate Supabase instances**:
+
+| Instance | Purpose | API Port | Studio Port | Config Directory |
+|----------|---------|----------|-------------|------------------|
+| **Dev** | Manual development/testing | 54321 | 54323 | `supabase/` |
+| **Test** | E2E tests (isolated) | 54421 | 54423 | `supabase-test/supabase/` |
+
+This allows you to:
+- Run E2E tests without affecting your development data
+- Keep test data isolated and resettable
+- Work on the app while tests run in the background
+
 ## Running Tests
 
 ### Automated (Recommended)
@@ -25,11 +39,15 @@ npm install
 Run tests with automatic server startup and teardown:
 
 ```bash
+# First, start the test Supabase instance
+npm run supabase:test:start
+
+# Run E2E tests
 npm run test:e2e
 ```
 
 This command will:
-1. Start Next.js dev server with local Supabase credentials
+1. Start Next.js dev server pointing to the TEST Supabase instance (port 54421)
 2. Wait for server to be ready
 3. Run all Cypress tests in headless mode
 4. Stop the dev server
@@ -38,9 +56,9 @@ This command will:
 
 For development and debugging:
 
-1. Start Supabase:
+1. Start the TEST Supabase instance:
    ```bash
-   npm run supabase:start
+   npm run supabase:test:start
    ```
 
 2. Start dev server with test environment:
@@ -55,11 +73,27 @@ For development and debugging:
 
 4. Select a test file to run in the Cypress UI
 
+### Development Supabase (Separate)
+
+For regular development with persistent data:
+
+```bash
+# Start dev instance (uses port 54321)
+npm run supabase:start
+
+# Regular dev server (uses dev Supabase)
+npm run dev
+
+# View dev data in Studio
+open http://localhost:54323
+```
+
 ### Other Commands
 
 - **Headless mode**: `npm run cypress:run`
 - **Headed mode (see browser)**: `npm run cypress:headed`
-- **Supabase Studio**: Visit http://localhost:54323 (when Supabase is running)
+- **Test Supabase Studio**: Visit http://localhost:54423 (when test instance is running)
+- **Dev Supabase Studio**: Visit http://localhost:54323 (when dev instance is running)
 
 ## Test Structure
 
@@ -108,18 +142,23 @@ cypress/
 
 ## Database Management
 
-Tests automatically reset the database before each test using the `cy.resetDb()` custom command.
+Tests automatically reset the TEST database before each test using the `cy.resetDb()` custom command.
 
 ### Manual Database Operations
 
 ```bash
-# Reset database to initial state
+# Reset TEST database to initial state
+npm run supabase:test:reset
+
+# Check TEST Supabase status
+npm run supabase:test:status
+
+# Stop TEST Supabase
+npm run supabase:test:stop
+
+# For DEV instance, use the same commands without :test:
 npm run supabase:reset
-
-# Check Supabase status
 npm run supabase:status
-
-# Stop Supabase
 npm run supabase:stop
 ```
 
@@ -139,14 +178,16 @@ Auth tests require manual setup of test users in Supabase:
 
 ### Local Supabase Credentials
 
-The following environment variables are set automatically when running tests:
-
-- `NEXT_PUBLIC_SUPABASE_URL`: http://127.0.0.1:54321
+**E2E Tests use the TEST instance:**
+- `NEXT_PUBLIC_SUPABASE_URL`: http://127.0.0.1:54421
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: (Standard local Supabase anon key)
 
+**Regular development uses the DEV instance:**
+- `NEXT_PUBLIC_SUPABASE_URL`: http://127.0.0.1:54321
+
 These are configured in:
-- `cypress.env.json` (for Cypress)
-- `package.json` scripts (for Next.js)
+- `package.json` scripts (environment variables are set per script)
+- `cypress/support/database.ts` (Cypress database utilities)
 
 ### Test Data
 
@@ -206,9 +247,15 @@ For continuous integration:
 ```bash
 # In CI pipeline
 npm install
-npm run supabase:start
+npm run supabase:test:start
 npm run test:e2e
-npm run supabase:stop
+npm run supabase:test:stop
 ```
 
 Ensure Docker is available in your CI environment.
+
+The GitHub Actions workflow (`.github/workflows/ci.yml`) automatically:
+1. Starts the test Supabase instance
+2. Runs Next.js with test environment variables
+3. Executes Cypress tests
+4. Stops Supabase (even on failure)

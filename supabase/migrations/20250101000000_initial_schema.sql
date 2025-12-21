@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public."RSVPs" (
     travel_plans TEXT,
     message TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ
 );
 
 -- Invitees table
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.invitees (
     last_name VARCHAR(255) NOT NULL,
     coming BOOLEAN,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ
 );
 
 -- FAQs table

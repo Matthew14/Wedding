@@ -69,16 +69,32 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp');
 
       // Enter short code
-      cy.get('input[placeholder="ABC123"]').type('ABC');
+      cy.get('input[placeholder="ABC123"]').type('TES');
 
-      // Submit button should be disabled
+      // Submit button should be disabled (code too short)
       cy.get('button[type="submit"]').should('be.disabled');
 
-      // Complete the code
-      cy.get('input[placeholder="ABC123"]').type('123');
+      // Complete the code with valid TEST01
+      cy.get('input[placeholder="ABC123"]').type('T01');
 
-      // Button should be enabled (though code might be invalid)
+      // Wait for validation to complete
+      cy.contains('Code found!', { timeout: 2000 }).should('be.visible');
+
+      // Button should be enabled (valid code)
       cy.get('button[type="submit"]').should('not.be.disabled');
+    });
+
+    it('should keep button disabled for invalid 6-character code', () => {
+      cy.visit('/rsvp');
+
+      // Enter invalid 6-character code
+      cy.get('input[placeholder="ABC123"]').type('BADCODE'.slice(0, 6));
+
+      // Wait for validation
+      cy.contains('Code not found', { timeout: 2000 }).should('be.visible');
+
+      // Button should remain disabled for invalid code
+      cy.get('button[type="submit"]').should('be.disabled');
     });
   });
 
@@ -105,8 +121,8 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Select invitees (both coming)
-      cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
-      cy.contains('Jane Doe').parent().find('input[type="checkbox"]').check();
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').check();
 
       // Staying at villa - find the villa section and click Yes radio
       cy.contains('Will you be staying with us at Gran Villa Rosa?')
@@ -124,9 +140,12 @@ describe('RSVP Flow', () => {
       // Submit form
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
+      // Confirm in modal
+      cy.contains('Confirm & Submit').click();
+
       // Should redirect to success page
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
-      cy.contains('Thank you', { timeout: 5000 }).should('be.visible');
+      cy.contains('Thank You!', { timeout: 5000 }).should('be.visible');
 
       // Verify data was saved to database
       cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((result) => {
@@ -173,6 +192,9 @@ describe('RSVP Flow', () => {
       // Submit form
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
+      // Confirm in modal
+      cy.contains('Confirm & Submit').click();
+
       // Should redirect to success page
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
@@ -193,8 +215,12 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
+
+      // Confirm in modal
+      cy.contains('Confirm & Submit').click();
+
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Go back to form
@@ -215,6 +241,12 @@ describe('RSVP Flow', () => {
       cy.get('textarea[placeholder*="dietary"]').clear().type('Gluten-free');
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
+      // Confirm in modal
+      cy.contains('Confirm & Submit').click();
+
+      // Wait for redirect
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
       // Verify updated data
       cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((result) => {
         const rsvp = result as RsvpRecord | null;
@@ -234,11 +266,15 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Only John is coming
-      cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
-      cy.contains('Jane Doe').parent().find('input[type="checkbox"]').uncheck();
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').uncheck();
 
       // Submit
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
+
+      // Confirm in modal
+      cy.contains('Confirm & Submit').click();
+
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Verify invitees
@@ -270,12 +306,15 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').parent().find('input[type="checkbox"]').check();
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
+
+      // Confirm in modal
+      cy.contains('Confirm & Submit').click();
 
       // Check success page
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
-      cy.contains('Thank you', { timeout: 5000 }).should('be.visible');
+      cy.contains('Thank You!', { timeout: 5000 }).should('be.visible');
     });
   });
 
