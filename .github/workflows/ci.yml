@@ -90,7 +90,6 @@ jobs:
     - name: Run Cypress E2E tests
       uses: cypress-io/github-action@v6
       with:
-        build: npm run build
         start: npm run dev:test
         wait-on: 'http://localhost:3000'
         wait-on-timeout: 120
