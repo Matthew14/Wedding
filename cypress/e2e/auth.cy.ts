@@ -56,8 +56,8 @@ describe('Authentication Flow', () => {
     });
 
     // NOTE: This test requires a test user to exist in Supabase Auth
-    // Create via Supabase Studio before running this test
-    it.skip('should login with valid credentials and redirect to dashboard', () => {
+    // Test user is now created automatically during database reset
+    it('should login with valid credentials and redirect to dashboard', () => {
       cy.visit('/login');
 
       // Enter valid credentials (from fixtures)
@@ -72,7 +72,7 @@ describe('Authentication Flow', () => {
       });
     });
 
-    it.skip('should redirect to dashboard if already logged in', () => {
+    it('should redirect to dashboard if already logged in', () => {
       // Login first
       cy.fixture('auth-data').then((authData) => {
         cy.login(authData.validUser.email, authData.validUser.password);
@@ -87,7 +87,7 @@ describe('Authentication Flow', () => {
   });
 
   describe('Protected Routes', () => {
-    it.skip('should redirect to login when accessing dashboard without auth', () => {
+    it('should redirect to login when accessing dashboard without auth', () => {
       // Try to access dashboard without logging in
       cy.visit('/dashboard');
 
@@ -96,7 +96,7 @@ describe('Authentication Flow', () => {
       cy.url({ timeout: 5000 }).should('match', /login|unauthorized/i);
     });
 
-    it.skip('should allow access to dashboard when authenticated', () => {
+    it('should allow access to dashboard when authenticated', () => {
       cy.fixture('auth-data').then((authData) => {
         // Login
         cy.login(authData.validUser.email, authData.validUser.password);
@@ -112,7 +112,7 @@ describe('Authentication Flow', () => {
   });
 
   describe('Logout', () => {
-    it.skip('should logout and redirect to home', () => {
+    it('should logout and redirect to home', () => {
       cy.fixture('auth-data').then((authData) => {
         // Login first
         cy.login(authData.validUser.email, authData.validUser.password);
@@ -129,7 +129,7 @@ describe('Authentication Flow', () => {
   });
 
   describe('Session Persistence', () => {
-    it.skip('should maintain session after page refresh', () => {
+    it('should maintain session after page refresh', () => {
       cy.fixture('auth-data').then((authData) => {
         // Login
         cy.login(authData.validUser.email, authData.validUser.password);
@@ -154,7 +154,7 @@ describe('Authentication Flow', () => {
       cy.get('nav').should('not.contain', 'Dashboard');
     });
 
-    it.skip('should show dashboard link when authenticated', () => {
+    it('should show dashboard link when authenticated', () => {
       cy.fixture('auth-data').then((authData) => {
         // Login
         cy.login(authData.validUser.email, authData.validUser.password);

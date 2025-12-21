@@ -84,18 +84,28 @@ jobs:
       with:
         version: latest
 
-    - name: Start Supabase
-      run: supabase start
+    - name: Copy migrations to test instance
+      run: |
+        cp -r supabase/migrations supabase-test/supabase/
+        cp supabase/seed.sql supabase-test/supabase/
+
+    - name: Start Supabase (test instance)
+      run: npm run supabase:test:start
+
+    - name: Create test environment file
+      run: |
+        cat > .env.test << 'EOF'
+        PORT=3907
+        NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54421
+        NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+        EOF
 
     - name: Run Cypress E2E tests
       uses: cypress-io/github-action@v6
       with:
         start: npm run dev:test
-        wait-on: 'http://localhost:3000'
+        wait-on: 'http://localhost:3907'
         wait-on-timeout: 120
-      env:
-        NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
 
     - name: Upload Cypress screenshots
       uses: actions/upload-artifact@v4
@@ -113,6 +123,6 @@ jobs:
         path: cypress/videos
         retention-days: 7
 
-    - name: Stop Supabase
+    - name: Stop Supabase (test instance)
       if: always()
-      run: supabase stop
+      run: npm run supabase:test:stop

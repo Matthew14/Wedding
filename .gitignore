@@ -27,6 +27,7 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.test
 
 # vercel
 .vercel
@@ -35,9 +36,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Supabase
+# Supabase (dev instance)
 supabase/.branches
 supabase/.temp
+
+# Supabase (test instance)
+supabase-test/supabase/.branches
+supabase-test/supabase/.temp
+supabase-test/supabase/migrations
+supabase-test/supabase/seed.sql
 
 # Cypress
 cypress/screenshots
