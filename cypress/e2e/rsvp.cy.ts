@@ -32,8 +32,8 @@ describe('RSVP Flow', () => {
       // Enter valid code
       cy.get('input[placeholder="ABC123"]').type('TEST01');
 
-      // Wait for validation to complete
-      cy.contains('Code found!', { timeout: 2000 }).should('be.visible');
+      // Wait for validation to complete (500ms debounce + API call time)
+      cy.contains('Code found!', { timeout: 5000 }).should('be.visible');
 
       // Submit form
       cy.get('button[type="submit"]').click();
@@ -45,14 +45,11 @@ describe('RSVP Flow', () => {
     it('should show error for invalid RSVP code', () => {
       cy.visit('/rsvp');
 
-      // Enter invalid code
+      // Enter invalid code (gets truncated to 6 chars: INVALI)
       cy.get('input[placeholder="ABC123"]').type('INVALID99');
 
-      // Wait for validation
-      cy.wait(1000);
-
-      // Should show error message
-      cy.contains('Code not found', { timeout: 2000 }).should('be.visible');
+      // Should show error message (500ms debounce + API call time)
+      cy.contains("Double-check that you've entered all characters correctly", { timeout: 5000 }).should('be.visible');
     });
 
     it('should convert code to uppercase automatically', () => {
@@ -77,8 +74,8 @@ describe('RSVP Flow', () => {
       // Complete the code with valid TEST01
       cy.get('input[placeholder="ABC123"]').type('T01');
 
-      // Wait for validation to complete
-      cy.contains('Code found!', { timeout: 2000 }).should('be.visible');
+      // Wait for validation to complete (500ms debounce + API call time)
+      cy.contains('Code found!', { timeout: 5000 }).should('be.visible');
 
       // Button should be enabled (valid code)
       cy.get('button[type="submit"]').should('not.be.disabled');
@@ -87,11 +84,11 @@ describe('RSVP Flow', () => {
     it('should keep button disabled for invalid 6-character code', () => {
       cy.visit('/rsvp');
 
-      // Enter invalid 6-character code
+      // Enter invalid 6-character code (BADCOD)
       cy.get('input[placeholder="ABC123"]').type('BADCODE'.slice(0, 6));
 
-      // Wait for validation
-      cy.contains('Code not found', { timeout: 2000 }).should('be.visible');
+      // Wait for validation (500ms debounce + API call time)
+      cy.contains("Double-check that you've entered all characters correctly", { timeout: 5000 }).should('be.visible');
 
       // Button should remain disabled for invalid code
       cy.get('button[type="submit"]').should('be.disabled');
