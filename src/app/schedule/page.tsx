@@ -62,7 +62,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
                                             >
                                                 <IconClock size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -80,7 +80,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
                                             >
                                                 <IconPool size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -98,7 +98,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
                                             >
                                                 <IconToolsKitchen2 size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -116,7 +116,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
                                             >
                                                 <IconMusic size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -154,7 +154,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
                                             >
                                                 <IconChefHat size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -170,7 +170,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
                                             >
                                                 <IconGlass size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -188,7 +188,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
                                             >
                                                 <IconToolsKitchen2 size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -206,7 +206,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
                                             >
                                                 <IconMicrophone2 size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -224,7 +224,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
                                             >
                                                 <IconMusic size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -262,7 +262,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
                                             >
                                                 <IconChefHat size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -278,7 +278,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
                                             >
                                                 <IconGlass size={18} aria-hidden="true" />
                                             </ThemeIcon>
@@ -294,7 +294,7 @@ export default function SchedulePage() {
                                             <ThemeIcon
                                                 size={35}
                                                 radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold)" }}
+                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
                                             >
                                                 <IconPool size={18} aria-hidden="true" />
                                             </ThemeIcon>

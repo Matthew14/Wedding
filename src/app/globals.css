@@ -117,7 +117,7 @@ button:focus,
 
 /* Hyperlink Styles */
 a {
-    color: var(--gold);
+    color: var(--gold-dark);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -126,15 +126,15 @@ a {
 
 a:hover {
     color: var(--gold-dark);
-    border-bottom-color: var(--gold);
+    border-bottom-color: var(--gold-dark);
 }
 
 a:visited {
-    color: var(--gold);
+    color: var(--gold-dark);
 }
 
 a:focus {
-    outline: 2px solid var(--gold);
+    outline: 2px solid var(--gold-dark);
     outline-offset: 2px;
     border-radius: 2px;
 }
@@ -154,7 +154,7 @@ a:focus {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--gold);
+    color: var(--gold-dark);
     font-size: 8px;
 }
 

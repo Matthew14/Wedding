@@ -25,7 +25,7 @@ export default function NotFound() {
                 <Container size="sm" py="xl" style={{ paddingTop: 100 }}>
                     <Paper shadow="md" radius="lg" p="xl">
                         <Stack gap="xl" align="center">
-                            <IconError404 size={100} color="var(--gold)" stroke={1.5} />
+                            <IconError404 size={100} color="var(--gold-dark)" stroke={1.5} />
                             <Title
                                 order={1}
                                 style={{

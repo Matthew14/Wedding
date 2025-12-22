@@ -55,7 +55,7 @@ export function Navigation() {
                     size="lg"
                     fw={400}
                     style={{
-                        color: "var(--gold)",
+                        color: "var(--gold-dark)",
                         textDecoration: "none",
                         fontFamily: "var(--font-playfair), serif",
                         fontSize: "1.5rem",
