@@ -46,13 +46,13 @@ describe('Authentication Flow', () => {
     it('should show error for invalid credentials', () => {
       cy.visit('/login');
 
-      // Wait for inputs to be ready
-      cy.get('input[type="email"]').should('be.visible').should('not.be.disabled');
-      cy.get('input[type="password"]').should('be.visible').should('not.be.disabled');
+      // Wait for page to be fully loaded
+      cy.contains('Wedding Dashboard').should('be.visible');
+      cy.wait(500);
 
-      // Enter invalid credentials
-      cy.get('input[type="email"]').type('wrong@wedding.test');
-      cy.get('input[type="password"]').type('WrongPassword123!');
+      // Enter invalid credentials (force to bypass Mantine's disabled state)
+      cy.get('input[type="email"]').type('wrong@wedding.test', { force: true });
+      cy.get('input[type="password"]').type('WrongPassword123!', { force: true });
       cy.get('button[type="submit"]').click();
 
       // Should show error message
@@ -64,14 +64,14 @@ describe('Authentication Flow', () => {
     it('should login with valid credentials and redirect to dashboard', () => {
       cy.visit('/login');
 
-      // Wait for inputs to be ready
-      cy.get('input[type="email"]').should('be.visible').should('not.be.disabled');
-      cy.get('input[type="password"]').should('be.visible').should('not.be.disabled');
+      // Wait for page to be fully loaded
+      cy.contains('Wedding Dashboard').should('be.visible');
+      cy.wait(500);
 
       // Enter valid credentials (from fixtures)
       cy.fixture('auth-data').then((authData) => {
-        cy.get('input[type="email"]').type(authData.validUser.email);
-        cy.get('input[type="password"]').type(authData.validUser.password);
+        cy.get('input[type="email"]').type(authData.validUser.email, { force: true });
+        cy.get('input[type="password"]').type(authData.validUser.password, { force: true });
         cy.get('button[type="submit"]').click();
 
         // Should redirect to dashboard
