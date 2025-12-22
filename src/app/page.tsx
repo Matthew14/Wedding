@@ -107,14 +107,14 @@ export default function HomePage() {
                                         variant="filled"
                                         className="primary-cta-button"
                                         style={{
-                                            backgroundColor: "var(--gold)",
-                                            borderColor: "var(--gold)",
+                                            backgroundColor: "var(--gold-dark)",
+                                            borderColor: "var(--gold-dark)",
                                             color: "#ffffff",
                                             borderRadius: 30,
                                             padding: "12px 30px",
                                             fontSize: "18px",
                                             fontWeight: 600,
-                                            boxShadow: "0 4px 16px rgba(139, 115, 85, 0.3)",
+                                            boxShadow: "0 4px 16px rgba(109, 90, 68, 0.3)",
                                             transition: "all 0.2s ease",
                                         }}
                                     >
