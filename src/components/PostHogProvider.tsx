@@ -6,8 +6,17 @@ import { useEffect } from 'react';
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
+        // Debug logging
+        console.log('PostHog initialization check:', {
+            hasWindow: typeof window !== 'undefined',
+            hasKey: !!process.env.NEXT_PUBLIC_POSTHOG_KEY,
+            keyPrefix: process.env.NEXT_PUBLIC_POSTHOG_KEY?.substring(0, 7),
+            host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+        });
+
         // Only initialize in production or if explicitly enabled
         if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+            console.log('Initializing PostHog...');
             posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
                 api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
                 person_profiles: 'identified_only', // Don't create profiles for anonymous users
