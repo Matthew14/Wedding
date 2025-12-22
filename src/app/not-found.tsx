@@ -44,7 +44,24 @@ export default function NotFound() {
                                 The page might have been moved or doesn&apos;t exist. If you followed a link from
                                 your invitation, please check the URL and try again.
                             </Text>
-                            <Button component={Link} href="/" size="lg" color="#8b7355">
+                            <Button
+                                component={Link}
+                                href="/"
+                                size="lg"
+                                variant="filled"
+                                className="primary-cta-button"
+                                style={{
+                                    backgroundColor: "#8b7355",
+                                    borderColor: "#8b7355",
+                                    color: "#ffffff",
+                                    borderRadius: 30,
+                                    padding: "12px 30px",
+                                    fontSize: "18px",
+                                    fontWeight: 600,
+                                    boxShadow: "0 4px 16px rgba(139, 115, 85, 0.3)",
+                                    transition: "all 0.2s ease",
+                                }}
+                            >
                                 Go to Homepage
                             </Button>
                         </Stack>
