@@ -146,12 +146,11 @@ export default function RSVPFormPage() {
     };
 
     const handleInviteeChange = (inviteeId: number, coming: boolean) => {
-        const updatedInvitees = form.values.invitees.map(inv => 
+        const updatedInvitees = form.values.invitees.map(inv =>
             inv.id === inviteeId ? { ...inv, coming } : inv
         );
         form.setFieldValue("invitees", updatedInvitees);
         // Validate immediately to show error message when no invitees are selected
-        // This is needed because form.isValid() disables the button but doesn't populate form.errors
         form.validateField("invitees");
     };
 
@@ -417,7 +416,7 @@ export default function RSVPFormPage() {
                                         <Divider />
 
                                         {/* Submit Button */}
-                                        <Button type="submit" size="lg" loading={submitting} disabled={!form.isValid() || submitting} color="#8b7355" fullWidth>
+                                        <Button type="submit" size="lg" loading={submitting} disabled={submitting} color="#8b7355" fullWidth>
                                             Submit RSVP
                                         </Button>
                                     </Stack>

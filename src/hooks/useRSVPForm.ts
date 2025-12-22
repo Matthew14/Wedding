@@ -16,7 +16,7 @@ export const useRSVPForm = () => {
             accepted: (value) => (value === undefined ? "Please select whether you're coming" : null),
             invitees: (value, values) => {
                 // Only validate if they're accepting the invitation
-                if (values.accepted) {
+                if (values.accepted === true) {
                     const anyoneComing = value?.some(inv => inv.coming);
                     if (!anyoneComing) {
                         return "Please select at least one guest who will be attending";
