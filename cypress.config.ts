@@ -27,6 +27,17 @@ export default defineConfig({
         async queryDatabaseMultiple(params: { table: string; column?: string; value?: string }) {
           return await queryDatabaseMultiple(params);
         },
+
+        // Logging tasks for accessibility test results
+        log(message: string) {
+          console.log(message);
+          return null;
+        },
+
+        table(data: Array<Record<string, string | number>>) {
+          console.table(data);
+          return null;
+        },
       });
 
       return config;

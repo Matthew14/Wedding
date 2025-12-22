@@ -101,14 +101,15 @@ open http://localhost:54323
 cypress/
 ├── e2e/
 │   ├── rsvp.cy.ts          # RSVP flow tests
-│   └── auth.cy.ts          # Authentication tests
+│   ├── auth.cy.ts          # Authentication tests
+│   └── accessibility.cy.ts # Accessibility (a11y) tests
 ├── fixtures/
 │   ├── rsvp-data.json      # Test RSVP data
 │   └── auth-data.json      # Test user credentials
 ├── support/
 │   ├── commands.ts         # Custom Cypress commands
 │   ├── database.ts         # Database utilities
-│   └── e2e.ts              # Support file (auto-loaded)
+│   └── e2e.ts              # Support file (auto-loaded, includes cypress-axe)
 └── tsconfig.json           # Cypress TypeScript config
 ```
 
@@ -144,7 +145,33 @@ cypress/
 - ✅ Form disabling during submission
 - ✅ Password field masking
 
-**Note**: All 27 tests (11 auth + 16 RSVP) are now passing in both local and CI environments.
+### Accessibility Tests (`accessibility.cy.ts`)
+
+- ✅ Homepage accessibility (WCAG 2.1 Level AA)
+- ✅ Location page accessibility
+- ✅ Schedule page accessibility
+- ✅ FAQs page accessibility
+- ✅ 404 page accessibility
+- ✅ RSVP code entry page accessibility
+- ✅ RSVP form page accessibility
+- ✅ RSVP form with modal open accessibility
+- ✅ RSVP success page accessibility (accepted)
+- ✅ RSVP success page accessibility (declined)
+- ✅ Keyboard navigation through site
+- ✅ Skip to main content link
+- ✅ Form input labels and ARIA attributes
+- ✅ Radio button ARIA attributes
+- ✅ Checkbox ARIA attributes
+- ✅ Color contrast compliance
+
+**Run accessibility tests only:**
+```bash
+npm run test:a11y
+```
+
+See [docs/ACCESSIBILITY_TESTING.md](../docs/ACCESSIBILITY_TESTING.md) for detailed information.
+
+**Note**: All tests are passing in both local and CI environments.
 
 ## Database Management
 
