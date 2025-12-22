@@ -8,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PageViewTracker } from "@/components/PageViewTracker";
+import { Suspense } from "react";
 
 const geist = Geist({
     subsets: ["latin"],
@@ -57,7 +58,9 @@ export default function RootLayout({
             </head>
             <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
                 <PostHogProvider>
-                    <PageViewTracker />
+                    <Suspense fallback={null}>
+                        <PageViewTracker />
+                    </Suspense>
                     <MantineProvider>
                         <AuthProvider>{children}</AuthProvider>
                     </MantineProvider>
