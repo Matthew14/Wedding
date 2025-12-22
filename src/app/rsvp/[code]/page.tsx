@@ -335,7 +335,7 @@ export default function RSVPFormPage() {
                                     style={{
                                         fontSize: "clamp(2.5rem, 6vw, 3.5rem)",
                                         fontWeight: 400,
-                                        color: "var(--text-primary)",
+                                        color: "#2d2d2d",
                                         marginBottom: "0",
                                         fontFamily: "var(--font-cormorant), serif",
                                         letterSpacing: "0.02em",
@@ -345,11 +345,11 @@ export default function RSVPFormPage() {
                                 </Title>
                                 <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
                                 {infoText ? (
-                                    <Text size="lg" style={{ color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }} pb="md">
+                                    <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }} pb="md">
                                         {infoText}
                                     </Text>
                                 ) : (
-                                <Text size="lg" style={{ color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }}>
+                                <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }}>
                                     Let us know if you&apos;re coming to our wedding! Once you&apos;ve filled out this
                                     form, you will still be able to amend your details here up until the 1st of
                                     December. After that please get in touch if something changes.
@@ -374,8 +374,8 @@ export default function RSVPFormPage() {
                                         {/* Are you joining us? */}
                                         <Box mb="xl">
                                             <Group gap="sm" mb="md">
-                                                <IconBook size={20} color="var(--gold-dark)" />
-                                                <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
+                                                <IconBook size={20} color="#6d5a44" />
+                                                <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                                     Are you joining us?
                                                 </Text>
                                                 <Text span style={{ color: "#e53e3e" }}>
@@ -420,8 +420,8 @@ export default function RSVPFormPage() {
                                                 {form.values.invitees.length > 1 && (
                                                     <Box mb="xl">
                                                         <Group gap="sm" mb="md">
-                                                            <IconUsers size={20} color="var(--gold-dark)" />
-                                                            <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
+                                                            <IconUsers size={20} color="#6d5a44" />
+                                                            <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                                                 Is everyone coming?
                                                             </Text>
                                                             <Text span style={{ color: "#e53e3e" }}>
@@ -457,8 +457,8 @@ export default function RSVPFormPage() {
                                                 {/* Will you be staying with us at Gran Villa Rosa? */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconBed size={20} color="var(--gold-dark)" />
-                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
+                                                        <IconBed size={20} color="#6d5a44" />
+                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                                             Will you be staying with us at Gran Villa Rosa?
                                                         </Text>
                                                         <Text span style={{ color: "#e53e3e" }}>
@@ -467,7 +467,7 @@ export default function RSVPFormPage() {
                                                     </Group>
                                                     <Text
                                                         size="sm"
-                                                        style={{ color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: 1.6 }}
+                                                        style={{ color: "#5a5a5a", marginBottom: "1rem", lineHeight: 1.6 }}
                                                     >
                                                         We&apos;ve reserved a complimentary room in the venue for you
                                                         for both nights. If you&apos;d prefer to arrange your own
@@ -494,8 +494,8 @@ export default function RSVPFormPage() {
                                                 {/* Dietary restrictions */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconChefHat size={20} color="var(--gold-dark)" />
-                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
+                                                        <IconChefHat size={20} color="#6d5a44" />
+                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                                             Do you have any allergies or specific dietary requests?
                                                         </Text>
                                                     </Group>
@@ -518,8 +518,8 @@ export default function RSVPFormPage() {
                                                 {/* Song request */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconMusic size={20} color="var(--gold-dark)" />
-                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
+                                                        <IconMusic size={20} color="#6d5a44" />
+                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                                             Got a song request for the wedding playlist? Add it here!
                                                         </Text>
                                                     </Group>
@@ -541,8 +541,8 @@ export default function RSVPFormPage() {
                                                 {/* Travel plans */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconPlane size={20} color="var(--gold-dark)" />
-                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
+                                                        <IconPlane size={20} color="#6d5a44" />
+                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                                             Please add any travel plans so we can help with transfers
                                                         </Text>
                                                     </Group>
@@ -567,8 +567,8 @@ export default function RSVPFormPage() {
                                         {/* Additional message */}
                                         <Box mb="xl">
                                             <Group gap="sm" mb="md">
-                                                <IconMessage size={20} color="var(--gold-dark)" />
-                                                <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
+                                                <IconMessage size={20} color="#6d5a44" />
+                                                <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                                     Anything else you&apos;d like us to know?
                                                 </Text>
                                             </Group>
@@ -598,7 +598,7 @@ export default function RSVPFormPage() {
                                             disabled={submitting || !hasChanges}
                                             className="primary-cta-button"
                                             style={{
-                                                backgroundColor: "var(--gold)",
+                                                backgroundColor: "#6d5a44",
                                                 color: "#ffffff",
                                                 borderRadius: "8px",
                                                 fontWeight: 500,
@@ -639,7 +639,7 @@ export default function RSVPFormPage() {
                             fw={400}
                             size="xl"
                             style={{
-                                color: "var(--text-primary)",
+                                color: "#2d2d2d",
                                 fontFamily: "var(--font-playfair), serif",
                                 fontSize: "1.75rem",
                                 letterSpacing: "0.02em"
@@ -680,7 +680,7 @@ export default function RSVPFormPage() {
                     <Text
                         size="sm"
                         style={{
-                            color: "var(--text-secondary)",
+                            color: "#5a5a5a",
                             textAlign: "center",
                             lineHeight: 1.7
                         }}
@@ -736,7 +736,7 @@ export default function RSVPFormPage() {
                                     <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
                                         Accommodation
                                     </Text>
-                                    <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
+                                    <Text style={{ color: "#5a5a5a", fontSize: "0.95rem" }}>
                                         {form.values.staying_villa === "yes"
                                             ? "✓ Staying at Gran Villa Rosa"
                                             : "Arranging own accommodation"
@@ -749,7 +749,7 @@ export default function RSVPFormPage() {
                                         <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
                                             Dietary Requirements
                                         </Text>
-                                        <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                        <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
                                             {form.values.dietary_restrictions}
                                         </Text>
                                     </Box>
@@ -760,7 +760,7 @@ export default function RSVPFormPage() {
                                         <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
                                             Song Request
                                         </Text>
-                                        <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                        <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
                                             {form.values.song_request}
                                         </Text>
                                     </Box>
@@ -771,7 +771,7 @@ export default function RSVPFormPage() {
                                         <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
                                             Travel Plans
                                         </Text>
-                                        <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                        <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
                                             {form.values.travel_plans}
                                         </Text>
                                     </Box>
@@ -784,7 +784,7 @@ export default function RSVPFormPage() {
                                 <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
                                     Additional Message
                                 </Text>
-                                <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
                                     {form.values.message}
                                 </Text>
                             </Box>
@@ -804,7 +804,7 @@ export default function RSVPFormPage() {
                             className="secondary-cta-button"
                             size="md"
                             style={{
-                                borderColor: "var(--gold-dark)",
+                                borderColor: "#6d5a44",
                                 color: "var(--gold-dark)",
                                 fontWeight: 500,
                                 borderWidth: "2px",
@@ -822,7 +822,7 @@ export default function RSVPFormPage() {
                             className="primary-cta-button"
                             size="md"
                             style={{
-                                backgroundColor: "var(--gold)",
+                                backgroundColor: "#6d5a44",
                                 color: "#ffffff",
                                 fontWeight: 500,
                                 borderRadius: "8px",
