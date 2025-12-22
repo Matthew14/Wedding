@@ -14,6 +14,16 @@ export const useRSVPForm = () => {
         },
         validate: {
             accepted: (value) => (value === undefined ? "Please select whether you're coming" : null),
+            invitees: (value, values) => {
+                // Only validate if they're accepting the invitation
+                if (values.accepted) {
+                    const anyoneComing = value?.some(inv => inv.coming);
+                    if (!anyoneComing) {
+                        return "Please select at least one guest who will be attending";
+                    }
+                }
+                return null;
+            },
             staying_villa: (value) => (value === undefined ? "Please select accommodation preference" : null),
             dietary_restrictions: (value) => (value && value.length > 500 ? "Dietary restrictions must be less than 500 characters" : null),
             song_request: (value) => (value && value.length > 200 ? "Song request must be less than 200 characters" : null),
