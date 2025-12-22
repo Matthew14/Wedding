@@ -17,7 +17,7 @@
     "cypress:run": "dotenv -e .env.test -- cypress run",
     "cypress:headed": "dotenv -e .env.test -- cypress run --headed --browser chrome",
     "predev:test": "supabase status --workdir supabase-test >/dev/null 2>&1 || supabase start --workdir supabase-test",
-    "dev:test": "dotenv -e .env.test -- next dev",
+    "dev:test": "dotenv -e .env.test -- next dev -p 3907",
     "test:e2e": "npm run predev:test && dotenv -e .env.test -- start-server-and-test 'npm run dev:test' http://localhost:3907 cypress:run",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
