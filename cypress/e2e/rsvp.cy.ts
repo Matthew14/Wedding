@@ -624,6 +624,38 @@ describe('RSVP Flow', () => {
       cy.contains('No changes to submit').should('not.exist');
     });
 
+    it('should preserve invitee attendance states when amending (some not coming)', () => {
+      // First submission - Jane is NOT coming, but John is
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+
+      // Check John, but NOT Jane
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').should('not.be.checked');
+
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+      cy.contains('Confirm & Submit').click();
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
+      // Return to amend - invitee states should be preserved
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Jane should still be unchecked, John should still be checked
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').should('be.checked');
+      cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').should('not.be.checked');
+
+      // Button should be disabled (no changes made)
+      cy.get('button[type="submit"]').should('be.disabled');
+      cy.contains('No changes to submit').should('be.visible');
+    });
+
     it('should allow new RSVP submission without amendment detection', () => {
       // First time visitor (no existing RSVP)
       cy.visit('/rsvp/TEST01');

@@ -225,22 +225,44 @@ export default function RSVPFormPage() {
         });
     };
 
-    // Effect to automatically check/uncheck all invitees based on coming status
+    // Effect to automatically check/uncheck all invitees based on acceptance status
+    // This should only run when the user actively changes the acceptance radio button,
+    // not when we're loading initial/amendment data
     useEffect(() => {
-        // Only run this effect after initial load is complete to avoid overriding pre-populated data
-        if (!isInitialLoad && form.values.invitees.length > 0) {
+        // Skip if still loading initial data
+        if (isInitialLoad || form.values.invitees.length === 0) {
+            return;
+        }
+
+        // Only run if we have original values (meaning this is an active session, not initial load)
+        // If no original values, this is a new RSVP and we should apply the default behavior
+        if (originalValues) {
+            // For amendments: only auto-select/deselect if acceptance status actually changed
+            // This prevents overwriting correctly loaded invitee states
+            if (form.values.accepted !== originalValues.accepted) {
+                if (!form.values.accepted) {
+                    // User changed to declining - uncheck all invitees
+                    form.setFieldValue("invitees",
+                        form.values.invitees.map(inv => ({ ...inv, coming: false }))
+                    );
+                } else {
+                    // User changed to accepting - check all invitees
+                    form.setFieldValue("invitees",
+                        form.values.invitees.map(inv => ({ ...inv, coming: true }))
+                    );
+                    form.clearFieldError("invitees");
+                }
+            }
+        } else {
+            // For new RSVPs: apply default behavior
             if (!form.values.accepted) {
-                // Uncheck all invitees when not coming
                 form.setFieldValue("invitees",
                     form.values.invitees.map(inv => ({ ...inv, coming: false }))
                 );
             } else {
-                // Check all invitees when coming (as a default)
                 form.setFieldValue("invitees",
                     form.values.invitees.map(inv => ({ ...inv, coming: true }))
                 );
-                // Clear any stale validation error after auto-selecting all invitees
-                // This handles the race condition where onChange validates before useEffect runs
                 form.clearFieldError("invitees");
             }
         }
