@@ -251,6 +251,11 @@ export default function RSVPFormPage() {
     const hasChanges = useMemo(() => {
         if (!originalValues) return true; // If no original values, allow submission (new RSVP)
 
+        // Helper to normalize empty values (null, undefined, and "" are all treated as empty)
+        const normalizeEmpty = (value: string | null | undefined): string => {
+            return value || "";
+        };
+
         // Compare invitees arrays for deep equality
         const inviteesAreEqual = (a: typeof form.values.invitees, b: typeof form.values.invitees) => {
             if (a.length !== b.length) return false;
@@ -264,10 +269,10 @@ export default function RSVPFormPage() {
             form.values.accepted !== originalValues.accepted ||
             !inviteesAreEqual(form.values.invitees, originalValues.invitees) ||
             form.values.staying_villa !== originalValues.staying_villa ||
-            form.values.dietary_restrictions !== originalValues.dietary_restrictions ||
-            form.values.song_request !== originalValues.song_request ||
-            form.values.travel_plans !== originalValues.travel_plans ||
-            form.values.message !== originalValues.message
+            normalizeEmpty(form.values.dietary_restrictions) !== normalizeEmpty(originalValues.dietary_restrictions) ||
+            normalizeEmpty(form.values.song_request) !== normalizeEmpty(originalValues.song_request) ||
+            normalizeEmpty(form.values.travel_plans) !== normalizeEmpty(originalValues.travel_plans) ||
+            normalizeEmpty(form.values.message) !== normalizeEmpty(originalValues.message)
         );
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [form.values, originalValues]);
