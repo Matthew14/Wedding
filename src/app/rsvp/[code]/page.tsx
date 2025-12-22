@@ -32,7 +32,7 @@ import {
 } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
 import { RSVPFormData, Invitee, DatabaseRSVPResponse } from "@/types";
-import { useRSVPForm } from "@/hooks";
+import { useRSVPForm, useTracking, RSVPEvents } from "@/hooks";
 
 export default function RSVPFormPage() {
     const params = useParams();
@@ -46,6 +46,7 @@ export default function RSVPFormPage() {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const form = useRSVPForm();
+    const { trackEvent, trackPageView } = useTracking();
 
     useEffect(() => {
         const fetchRSVPData = async () => {
@@ -57,8 +58,19 @@ export default function RSVPFormPage() {
 
                 if (response.ok) {
                     const data: DatabaseRSVPResponse = await response.json();
+                    const isReturningUser = !!(data && data.updatedAt);
+                    const inviteeCount = data.invitees?.length || 0;
+
+                    // Track form view
+                    trackPageView('RSVP Form');
+                    trackEvent(RSVPEvents.FORM_VIEWED, {
+                        code,
+                        invitee_count: inviteeCount,
+                        is_amendment: isReturningUser,
+                    });
+
                     // If there's existing RSVP data and it was updated, pre-populate the form
-                    if (data && data.updatedAt) {
+                    if (isReturningUser) {
                         console.log('data', data);
                         const formattedDate = new Date(data.updatedAt).toLocaleDateString('en-GB', {
                             weekday: 'long',
@@ -69,7 +81,7 @@ export default function RSVPFormPage() {
                             minute: '2-digit'
                         });
                         setInfoText("You're amending your RSVP, last updated on " + formattedDate);
-                        
+
                         // Map invitees with their existing responses
                         const inviteesWithResponses = data.invitees?.map((inv: Invitee) => ({
                             id: inv.id,
@@ -86,9 +98,19 @@ export default function RSVPFormPage() {
                             travel_plans: data.travelPlans,
                             message: data.message,
                         });
+
+                        // Track amendment details
+                        trackEvent(RSVPEvents.FORM_AMENDMENT, {
+                            code,
+                            previous_acceptance: data.accepted,
+                            has_dietary: !!data.dietaryRestrictions,
+                            has_song: !!data.songRequest,
+                            has_travel: !!data.travelPlans,
+                            has_message: !!data.message,
+                        });
                     } else {
                         // Set default invitees only if no existing data
-                        form.setFieldValue("invitees", 
+                        form.setFieldValue("invitees",
                             data.invitees?.map((inv: Invitee) => ({
                                 id: inv.id,
                                 name: `${inv.first_name} ${inv.last_name}`,
@@ -96,14 +118,22 @@ export default function RSVPFormPage() {
                             })) || []
                         );
                     }
-                    
+
                     // Mark initial load as complete
                     setIsInitialLoad(false);
                 } else {
                     setError("Failed to load RSVP data");
+                    trackEvent(RSVPEvents.FORM_LOAD_ERROR, {
+                        code: params.code as string,
+                        error: 'Failed to load',
+                    });
                 }
-            } catch {
+            } catch (err) {
                 setError("Something went wrong while loading the form");
+                trackEvent(RSVPEvents.FORM_LOAD_ERROR, {
+                    code: params.code as string,
+                    error: String(err),
+                });
             } finally {
                 setLoading(false);
             }
@@ -119,6 +149,21 @@ export default function RSVPFormPage() {
         setSubmitting(true);
         setError("");
         console.log(values);
+
+        // Track submission attempt
+        const attendingCount = values.invitees.filter(inv => inv.coming).length;
+        trackEvent(RSVPEvents.SUBMIT_ATTEMPT, {
+            code: params.code as string,
+            accepted: values.accepted,
+            attending_count: attendingCount,
+            total_invitees: values.invitees.length,
+            staying_villa: values.staying_villa === "yes",
+            has_dietary: !!values.dietary_restrictions,
+            has_song: !!values.song_request,
+            has_travel: !!values.travel_plans,
+            has_message: !!values.message,
+        });
+
         try {
             const code = params.code as string;
             const response = await fetch(`/api/rsvp/${code}`, {
@@ -131,18 +176,32 @@ export default function RSVPFormPage() {
 
             if (response.ok) {
                 setSuccess(true);
+                trackEvent(RSVPEvents.SUBMIT_SUCCESS, {
+                    code,
+                    accepted: values.accepted,
+                    attending_count: attendingCount,
+                });
                 setTimeout(() => {
                     router.push(`/rsvp/success?accepted=${values.accepted ? 'yes' : 'no'}&code=${params.code}`);
                 }, 500);
             } else {
                 const errorData = await response.json();
-                setError(errorData.error || "Failed to submit RSVP");
+                const errorMessage = errorData.error || "Failed to submit RSVP";
+                setError(errorMessage);
                 setSubmitting(false);
+                trackEvent(RSVPEvents.SUBMIT_ERROR, {
+                    code,
+                    error: errorMessage,
+                });
             }
-        } catch {
+        } catch (err) {
             setError("Something went wrong. Please try again.");
             setSubmitting(false);
-        } 
+            trackEvent(RSVPEvents.SUBMIT_ERROR, {
+                code: params.code as string,
+                error: String(err),
+            });
+        }
     };
 
     const handleInviteeChange = (inviteeId: number, coming: boolean) => {
@@ -152,6 +211,15 @@ export default function RSVPFormPage() {
         form.setFieldValue("invitees", updatedInvitees);
         // Validate immediately to show error message when no invitees are selected
         form.validateField("invitees");
+
+        // Track invitee toggle
+        const attendingCount = updatedInvitees.filter(inv => inv.coming).length;
+        trackEvent(RSVPEvents.INVITEE_TOGGLED, {
+            code: params.code as string,
+            invitee_id: inviteeId,
+            coming,
+            total_attending: attendingCount,
+        });
     };
 
     // Effect to automatically check/uncheck all invitees based on coming status
@@ -238,7 +306,13 @@ export default function RSVPFormPage() {
 
                             {/* RSVP Form */}
                             <Paper shadow="md" radius="lg" p="xl">
-                                <form onSubmit={form.onSubmit(() => setShowConfirmation(true))} onKeyDown={(e) => {
+                                <form onSubmit={form.onSubmit(() => {
+                                    setShowConfirmation(true);
+                                    trackEvent(RSVPEvents.CONFIRMATION_OPENED, {
+                                        code: params.code as string,
+                                        accepted: form.values.accepted,
+                                    });
+                                })} onKeyDown={(e) => {
                                     if (e.key === 'Enter' && e.target !== e.currentTarget) {
                                         e.preventDefault();
                                     }
@@ -268,6 +342,12 @@ export default function RSVPFormPage() {
                                                         // Clear invitees error when declining
                                                         form.clearFieldError("invitees");
                                                     }
+
+                                                    // Track acceptance change
+                                                    trackEvent(RSVPEvents.ACCEPTANCE_CHANGED, {
+                                                        code: params.code as string,
+                                                        accepted: isAccepted,
+                                                    });
                                                 }}
                                                 required
                                             >
@@ -342,6 +422,13 @@ export default function RSVPFormPage() {
                                                     </Text>
                                                     <Radio.Group
                                                         {...form.getInputProps("staying_villa")}
+                                                        onChange={(value) => {
+                                                            form.setFieldValue("staying_villa", value);
+                                                            trackEvent(RSVPEvents.VILLA_CHANGED, {
+                                                                code: params.code as string,
+                                                                staying: value === "yes",
+                                                            });
+                                                        }}
                                                         required
                                                     >
                                                         <Group gap="lg">
@@ -362,6 +449,14 @@ export default function RSVPFormPage() {
                                                     <Textarea
                                                         placeholder="Please let us know about any dietary requirements..."
                                                         {...form.getInputProps("dietary_restrictions")}
+                                                        onBlur={(e) => {
+                                                            if (e.target.value.trim()) {
+                                                                trackEvent(RSVPEvents.DIETARY_FILLED, {
+                                                                    code: params.code as string,
+                                                                    length: e.target.value.length,
+                                                                });
+                                                            }
+                                                        }}
                                                         minRows={3}
                                                         size="md"
                                                     />
@@ -378,6 +473,14 @@ export default function RSVPFormPage() {
                                                     <TextInput
                                                         placeholder="What song would you like to hear at our wedding?"
                                                         {...form.getInputProps("song_request")}
+                                                        onBlur={(e) => {
+                                                            if (e.target.value.trim()) {
+                                                                trackEvent(RSVPEvents.SONG_FILLED, {
+                                                                    code: params.code as string,
+                                                                    length: e.target.value.length,
+                                                                });
+                                                            }
+                                                        }}
                                                         size="md"
                                                     />
                                                 </Box>
@@ -393,6 +496,14 @@ export default function RSVPFormPage() {
                                                     <Textarea
                                                         placeholder="Flight number, day of travel etc."
                                                         {...form.getInputProps("travel_plans")}
+                                                        onBlur={(e) => {
+                                                            if (e.target.value.trim()) {
+                                                                trackEvent(RSVPEvents.TRAVEL_FILLED, {
+                                                                    code: params.code as string,
+                                                                    length: e.target.value.length,
+                                                                });
+                                                            }
+                                                        }}
                                                         minRows={3}
                                                         size="md"
                                                     />
@@ -411,6 +522,14 @@ export default function RSVPFormPage() {
                                             <Textarea
                                                 placeholder="Any other information you'd like to share..."
                                                 {...form.getInputProps("message")}
+                                                onBlur={(e) => {
+                                                    if (e.target.value.trim()) {
+                                                        trackEvent(RSVPEvents.MESSAGE_FILLED, {
+                                                            code: params.code as string,
+                                                            length: e.target.value.length,
+                                                        });
+                                                    }
+                                                }}
                                                 minRows={4}
                                                 size="md"
                                             />
@@ -506,9 +625,14 @@ export default function RSVPFormPage() {
                     </List>
 
                     <Group justify="space-between" mt="md">
-                        <Button 
-                            variant="outline" 
-                            onClick={() => setShowConfirmation(false)}
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowConfirmation(false);
+                                trackEvent(RSVPEvents.CONFIRMATION_EDITED, {
+                                    code: params.code as string,
+                                });
+                            }}
                             color="gray"
                         >
                             Go Back & Edit
