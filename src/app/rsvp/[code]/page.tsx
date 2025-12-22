@@ -17,7 +17,7 @@ import {
     Modal,
     TextInput,
 } from "@mantine/core";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     IconX,
@@ -44,6 +44,7 @@ export default function RSVPFormPage() {
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [originalValues, setOriginalValues] = useState<RSVPFormData | null>(null);
+    const previousAcceptedRef = useRef<boolean | null>(null);
 
     const form = useRSVPForm();
     const { trackEvent } = useTracking();
@@ -227,45 +228,40 @@ export default function RSVPFormPage() {
 
     // Effect to automatically check/uncheck all invitees based on acceptance status
     // This should only run when the user actively changes the acceptance radio button,
-    // not when we're loading initial/amendment data
+    // not when we're loading initial/amendment data or when invitees are manually toggled
     useEffect(() => {
-        // Skip if still loading initial data
+        // Skip if still loading initial data or no invitees
         if (isInitialLoad || form.values.invitees.length === 0) {
             return;
         }
 
-        // Only run if we have original values (meaning this is an active session, not initial load)
-        // If no original values, this is a new RSVP and we should apply the default behavior
-        if (originalValues) {
-            // For amendments: only auto-select/deselect if acceptance status actually changed
-            // This prevents overwriting correctly loaded invitee states
-            if (form.values.accepted !== originalValues.accepted) {
-                if (!form.values.accepted) {
-                    // User changed to declining - uncheck all invitees
-                    form.setFieldValue("invitees",
-                        form.values.invitees.map(inv => ({ ...inv, coming: false }))
-                    );
-                } else {
-                    // User changed to accepting - check all invitees
-                    form.setFieldValue("invitees",
-                        form.values.invitees.map(inv => ({ ...inv, coming: true }))
-                    );
-                    form.clearFieldError("invitees");
-                }
-            }
-        } else {
-            // For new RSVPs: apply default behavior
-            if (!form.values.accepted) {
-                form.setFieldValue("invitees",
-                    form.values.invitees.map(inv => ({ ...inv, coming: false }))
-                );
-            } else {
-                form.setFieldValue("invitees",
-                    form.values.invitees.map(inv => ({ ...inv, coming: true }))
-                );
-                form.clearFieldError("invitees");
-            }
+        // Check if acceptance value actually changed from previous value
+        const currentAccepted = form.values.accepted;
+        const previousAccepted = previousAcceptedRef.current;
+
+        // If this is the first time setting the value after load, just store it without acting
+        if (previousAccepted === null) {
+            previousAcceptedRef.current = currentAccepted;
+            return;
         }
+
+        // Only proceed if acceptance value actually changed
+        if (currentAccepted === previousAccepted) {
+            return;
+        }
+
+        // Update the ref for next comparison
+        previousAcceptedRef.current = currentAccepted;
+
+        // User actively toggled the acceptance radio button
+        if (!currentAccepted) {
+            // Changed to declining - uncheck all invitees
+            form.setFieldValue("invitees",
+                form.values.invitees.map(inv => ({ ...inv, coming: false }))
+            );
+        }
+        // Note: When changing from "No" to "Yes", we DON'T auto-check invitees
+        // Let the user manually select who's coming
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [form.values.accepted, isInitialLoad]);
 
