@@ -6,24 +6,17 @@ export const useTracking = () => {
 
     const trackEvent = useCallback((eventName: string, properties?: Record<string, unknown>) => {
         if (posthog) {
-            console.log('📊 Tracking event:', eventName, properties);
             posthog.capture(eventName, properties);
-        } else {
-            console.warn('⚠️ PostHog not initialized, event not tracked:', eventName);
         }
     }, [posthog]);
 
     const trackPageView = useCallback((pageName: string, properties?: Record<string, unknown>) => {
         if (posthog) {
-            const pageViewData = {
+            posthog.capture('$pageview', {
                 $current_url: window.location.href,
                 page_name: pageName,
                 ...properties,
-            };
-            console.log('📄 Tracking page view:', pageName, pageViewData);
-            posthog.capture('$pageview', pageViewData);
-        } else {
-            console.warn('⚠️ PostHog not initialized, page view not tracked:', pageName);
+            });
         }
     }, [posthog]);
 
