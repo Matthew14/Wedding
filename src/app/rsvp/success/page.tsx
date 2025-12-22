@@ -5,12 +5,24 @@ import { IconCheck, IconHeart, IconHeartBroken } from "@tabler/icons-react";
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
+import { useTracking, RSVPEvents } from "@/hooks";
 
 function RSVPSuccessContent() {
     const searchParams = useSearchParams();
     const isComing = searchParams.get("accepted") === "yes";
     const rsvpCode = searchParams.get("code");
+    const { trackEvent, trackPageView } = useTracking();
+
+    useEffect(() => {
+        // This confirms the complete RSVP journey
+        trackPageView('RSVP Success');
+        trackEvent(RSVPEvents.SUCCESS_PAGE_VIEWED, {
+            code: rsvpCode,
+            accepted: isComing,
+        });
+    }, [trackEvent, trackPageView, rsvpCode, isComing]);
+
     return (
         <>
             <Navigation />
@@ -73,7 +85,20 @@ function RSVPSuccessContent() {
                                         If you need to make any changes to your RSVP, 
                                         you can go back and amend it, or just contact us.
                                     </Text>
-                                    <Button component={Link} href={rsvpCode ? `/rsvp/${rsvpCode}` : "/rsvp"} variant="outline" color="#8b7355" size="lg" fullWidth>
+                                    <Button
+                                        component={Link}
+                                        href={rsvpCode ? `/rsvp/${rsvpCode}` : "/rsvp"}
+                                        variant="outline"
+                                        color="#8b7355"
+                                        size="lg"
+                                        fullWidth
+                                        onClick={() => {
+                                            trackEvent(RSVPEvents.AMENDMENT_CLICKED, {
+                                                code: rsvpCode,
+                                                accepted: isComing,
+                                            });
+                                        }}
+                                    >
                                         Amend RSVP
                                     </Button>
                                 </Stack>
