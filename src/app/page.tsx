@@ -2,7 +2,6 @@ import { Container, Title, Text, Button, Group, Stack, Box } from "@mantine/core
 import { Navigation } from "@/components/Navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { PRIMARY, PRIMARY_DARK, TEXT_PRIMARY, BACKGROUND_WHITE } from "@/constants/colours";
 
 export default function HomePage() {
     return (
@@ -15,7 +14,7 @@ export default function HomePage() {
                         className="fade-in"
                         style={{
                             minHeight: "100vh",
-                            backgroundColor: BACKGROUND_WHITE,
+                            backgroundColor: "#ffffff",
                             display: "flex",
                             alignItems: "center",
                             position: "relative",
@@ -57,7 +56,7 @@ export default function HomePage() {
                                     style={{
                                         fontSize: "clamp(2.5rem, 8vw, 4rem)",
                                         fontWeight: 400,
-                                        color: TEXT_PRIMARY,
+                                        color: "var(--text-primary)",
                                         marginBottom: "0",
                                         fontFamily: "var(--font-playfair), serif",
                                         lineHeight: 1.2,
@@ -74,7 +73,7 @@ export default function HomePage() {
                                     style={{
                                         fontSize: "clamp(1.3rem, 4vw, 1.75rem)",
                                         fontWeight: 300,
-                                        color: PRIMARY_DARK,
+                                        color: "var(--gold-dark)",
                                         marginBottom: "0.5rem",
                                         fontFamily: "var(--font-cormorant), serif",
                                         letterSpacing: "0.15em",
@@ -88,7 +87,7 @@ export default function HomePage() {
                                 <Text
                                     size="xl"
                                     style={{
-                                        color: TEXT_PRIMARY,
+                                        color: "var(--text-primary)",
                                         maxWidth: 600,
                                         lineHeight: 1.8,
                                         marginTop: "1rem",
@@ -108,9 +107,9 @@ export default function HomePage() {
                                         variant="filled"
                                         className="primary-cta-button"
                                         style={{
-                                            backgroundColor: PRIMARY,
-                                            borderColor: PRIMARY,
-                                            color: BACKGROUND_WHITE,
+                                            backgroundColor: "var(--gold)",
+                                            borderColor: "var(--gold)",
+                                            color: "#ffffff",
                                             borderRadius: 30,
                                             padding: "12px 30px",
                                             fontSize: "18px",
@@ -128,9 +127,9 @@ export default function HomePage() {
                                         variant="outline"
                                         className="secondary-cta-button"
                                         style={{
-                                            borderColor: PRIMARY,
-                                            backgroundColor: BACKGROUND_WHITE,
-                                            color: PRIMARY,
+                                            borderColor: "var(--gold)",
+                                            backgroundColor: "#ffffff",
+                                            color: "var(--gold)",
                                             borderRadius: 30,
                                             padding: "12px 30px",
                                             fontSize: "18px",

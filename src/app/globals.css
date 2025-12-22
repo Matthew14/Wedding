@@ -13,8 +13,8 @@
     --gold: #8b7355;
     --gold-light: #a08872;
     --gold-dark: #6d5a44;
-    --text-primary: #2d2d2d;
-    --text-secondary: #5a5a5a;
+    --text-primary: #495057;
+    --text-secondary: #495057;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -94,11 +94,6 @@ html {
 ::-moz-selection {
     background-color: #8b7355;
     color: #ffffff;
-}
-
-/* Improved color contrast for better accessibility */
-.text-secondary {
-    color: #495057 !important; /* Darker than the original #6c757d for better contrast */
 }
 
 /* Focus indicators for all interactive elements */
