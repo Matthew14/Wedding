@@ -18,13 +18,13 @@ export default function RSVPPage() {
     const inputRef = useRef<HTMLInputElement>(null);
     const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const router = useRouter();
-    const { trackEvent, trackPageView } = useTracking();
+    const { trackEvent } = useTracking();
 
     // Track page view on mount
     useEffect(() => {
-        trackPageView('RSVP Code Entry');
+        // Page view is tracked by PageViewTracker component
         trackEvent(RSVPEvents.CODE_ENTRY_VIEWED);
-    }, [trackPageView, trackEvent]);
+    }, [trackEvent]);
 
     // Auto-focus input on mount
     useEffect(() => {
@@ -67,8 +67,10 @@ export default function RSVPPage() {
         setValidationMessage("Checking code...");
 
         validationTimeoutRef.current = setTimeout(async () => {
+            const validationStartTime = performance.now();
             try {
                 const response = await fetch(`/api/rsvp/validate/${cleaned}`);
+                const validationDuration = Math.round(performance.now() - validationStartTime);
 
                 if (response.ok) {
                     setValidationState("valid");
@@ -76,7 +78,7 @@ export default function RSVPPage() {
                     // Track successful validation
                     trackEvent(RSVPEvents.CODE_VALIDATED, {
                         code: cleaned,
-                        validation_time_ms: 500,
+                        validation_time_ms: validationDuration,
                     });
                 } else {
                     const errorData = await response.json().catch(() => ({}));
@@ -88,14 +90,17 @@ export default function RSVPPage() {
                     trackEvent(RSVPEvents.CODE_INVALID, {
                         code_length: cleaned.length,
                         error_message: errorData.suggestion,
+                        validation_time_ms: validationDuration,
                     });
                 }
             } catch {
+                const validationDuration = Math.round(performance.now() - validationStartTime);
                 setValidationState("invalid");
                 setValidationMessage("Unable to verify code. Please try again.");
                 trackEvent(RSVPEvents.CODE_INVALID, {
                     code_length: cleaned.length,
                     error_type: 'network_error',
+                    validation_time_ms: validationDuration,
                 });
             }
         }, 500); // 500ms debounce

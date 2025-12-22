@@ -12,16 +12,16 @@ function RSVPSuccessContent() {
     const searchParams = useSearchParams();
     const isComing = searchParams.get("accepted") === "yes";
     const rsvpCode = searchParams.get("code");
-    const { trackEvent, trackPageView } = useTracking();
+    const { trackEvent } = useTracking();
 
     useEffect(() => {
-        // This confirms the complete RSVP journey
-        trackPageView('RSVP Success');
+        // Page view tracked by PageViewTracker component
+        // This event confirms the complete RSVP journey
         trackEvent(RSVPEvents.SUCCESS_PAGE_VIEWED, {
             code: rsvpCode,
             accepted: isComing,
         });
-    }, [trackEvent, trackPageView, rsvpCode, isComing]);
+    }, [trackEvent, rsvpCode, isComing]);
 
     return (
         <>
