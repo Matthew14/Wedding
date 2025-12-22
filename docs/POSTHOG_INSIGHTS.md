@@ -198,9 +198,9 @@ Selected "No"            → 30 users  (30% decline rate)
 
 ## Privacy Considerations
 
-- **No personal data tracked**: We don't track names, emails, or RSVP codes in analytics
-- **Input masking enabled**: Form inputs are masked in session recordings
-- **GDPR compliant**: PostHog is GDPR compliant
+- **Password masking only**: Only password inputs are masked in session recordings
+- **Form data visible**: Dietary restrictions, song requests, travel plans, and messages are visible in session recordings to help understand user behavior
+- **GDPR compliant**: PostHog is GDPR compliant, hosted in EU
 - **Can be disabled**: Set `NEXT_PUBLIC_POSTHOG_KEY` to empty string to disable
 
 ## Free Tier Limits
@@ -223,7 +223,7 @@ For a wedding with ~100-200 guests:
 3. **Add to `.env.local`**:
    ```
    NEXT_PUBLIC_POSTHOG_KEY=phc_your_key_here
-   NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+   NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
    ```
 4. **Deploy to production**
 5. **Create your first funnel** (see "How to View This Data" above)

@@ -15,8 +15,8 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
                 capture_pageleave: true, // Track when users leave
                 autocapture: false, // Disable auto-capture, we'll track explicitly
                 session_recording: {
-                    maskAllInputs: true, // Mask sensitive form inputs
-                    maskTextSelector: '[data-private]', // Custom masking
+                    maskAllInputs: false, // Allow recording of form inputs
+                    maskInputSelector: 'input[type="password"]', // Only mask password fields
                 },
                 loaded: (posthog) => {
                     if (process.env.NODE_ENV === 'development') {
