@@ -52,4 +52,22 @@ export const RSVPEvents = {
     SUBMIT_ATTEMPT: 'rsvp_submit_attempt',
     SUBMIT_SUCCESS: 'rsvp_submit_success',
     SUBMIT_ERROR: 'rsvp_submit_error',
+
+    // Success page
+    SUCCESS_PAGE_VIEWED: 'rsvp_success_page_viewed',
+    AMENDMENT_CLICKED: 'rsvp_amendment_clicked',
+} as const;
+
+// Site-wide tracking events
+export const SiteEvents = {
+    // Navigation
+    NAV_CLICK: 'nav_click',
+    EXTERNAL_LINK_CLICK: 'external_link_click',
+
+    // Pages
+    PAGE_404: 'page_404',
+
+    // Errors
+    API_ERROR: 'api_error',
+    JS_ERROR: 'js_error',
 } as const;

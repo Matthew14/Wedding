@@ -1,5 +1,8 @@
+'use client';
+
 import { Container, Title, Text, Stack, Box, Card, Group } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
+import { ExternalLink } from "@/components/ExternalLink";
 import { IconMapPin, IconPlane, IconCar } from "@tabler/icons-react";
 import { travelCopy } from "./strings";
 
@@ -64,13 +67,9 @@ export default function LocationPage() {
                                         </Title>
                                         <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>
                                             We&apos;ll be celebrating at{" "}
-                                            <a
-                                                href="https://www.granvillarosa.com/"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
+                                            <ExternalLink href="https://www.granvillarosa.com/" label="Gran Villa Rosa Website">
                                                 Gran Villa Rosa
-                                            </a>{" "}
+                                            </ExternalLink>{" "}
                                             in Vilanova i la Geltrú. See the map above for the exact location and use
                                             the interactive features for directions.
                                         </Text>

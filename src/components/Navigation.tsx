@@ -5,6 +5,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTracking, SiteEvents } from "@/hooks";
 import classes from "./Navigation.module.css";
 
 const links = [
@@ -18,6 +19,16 @@ export function Navigation() {
     const [opened, { toggle, close }] = useDisclosure(false);
     const pathname = usePathname();
     const { user } = useAuth();
+    const { trackEvent } = useTracking();
+
+    const handleNavClick = (label: string, link: string) => {
+        trackEvent(SiteEvents.NAV_CLICK, {
+            label,
+            link,
+            from_page: pathname,
+        });
+        close();
+    };
 
     const items = links.map(link => (
         <Anchor
@@ -26,9 +37,7 @@ export function Navigation() {
             href={link.link}
             className={classes.link}
             data-active={pathname === link.link || undefined}
-            onClick={() => {
-                close();
-            }}
+            onClick={() => handleNavClick(link.label, link.link)}
         >
             {link.label}
         </Anchor>
@@ -51,7 +60,7 @@ export function Navigation() {
                         fontFamily: "cursive",
                         fontStyle: "italic",
                     }}
-                    onClick={() => {}}
+                    onClick={() => handleNavClick('Home', '/')}
                 >
                     Rebecca & Matthew
                 </Anchor>
@@ -70,7 +79,7 @@ export function Navigation() {
                                     color: "#ffffff",
                                     textDecoration: "none",
                                 }}
-                                onClick={() => close()}
+                                onClick={() => handleNavClick('Dashboard', '/dashboard')}
                             >
                                 Dashboard
                             </Button>
@@ -113,7 +122,7 @@ export function Navigation() {
                                         textDecoration: "none",
                                         marginTop: "0.5rem",
                                     }}
-                                    onClick={() => close()}
+                                    onClick={() => handleNavClick('Dashboard', '/dashboard')}
                                 >
                                     Dashboard
                                 </Button>
