@@ -35,11 +35,14 @@ describe('RSVP Flow', () => {
       // Wait for validation to complete (500ms debounce + API call time)
       cy.contains('Code found!', { timeout: 5000 }).should('be.visible');
 
+      // Wait for the button to be ready (not loading, not disabled)
+      cy.get('button[type="submit"]').should('not.be.disabled').should('not.have.attr', 'data-loading');
+
       // Submit form
       cy.get('button[type="submit"]').click();
 
-      // Should redirect to RSVP form page
-      cy.url().should('include', '/rsvp/TEST01');
+      // Should redirect to RSVP form page with longer timeout for CI
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/TEST01');
     });
 
     it('should show error for invalid RSVP code', () => {
