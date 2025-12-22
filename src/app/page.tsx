@@ -127,9 +127,9 @@ export default function HomePage() {
                                         variant="outline"
                                         className="secondary-cta-button"
                                         style={{
-                                            borderColor: "var(--gold)",
+                                            borderColor: "var(--gold-dark)",
                                             backgroundColor: "#ffffff",
-                                            color: "var(--gold)",
+                                            color: "var(--gold-dark)",
                                             borderRadius: 30,
                                             padding: "12px 30px",
                                             fontSize: "18px",

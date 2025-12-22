@@ -58,7 +58,7 @@ function RSVPSuccessContent() {
                                 <Text size="lg" style={{ color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: 1.8 }}>
                                     Your RSVP has been submitted successfully.
                                 </Text>
-                                <Text size="sm" style={{ color: "var(--gold)" }}>
+                                <Text size="sm" style={{ color: "var(--gold-dark)" }}>
                                     {isComing
                                         ? "We're looking forward to celebrating with you!"
                                         : "We're sorry you can't make it, but we appreciate you letting us know."
@@ -93,8 +93,8 @@ function RSVPSuccessContent() {
                                         variant="outline"
                                         className="secondary-cta-button"
                                         style={{
-                                            borderColor: "var(--gold)",
-                                            color: "var(--gold)",
+                                            borderColor: "var(--gold-dark)",
+                                            color: "var(--gold-dark)",
                                             fontWeight: 500,
                                             borderWidth: "2px",
                                         }}

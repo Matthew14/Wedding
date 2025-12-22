@@ -44,7 +44,7 @@ export default function FAQsPage() {
                     <Box style={{ paddingTop: 56 }}>
                         <Container size="lg" py="xl">
                             <Stack gap="xl" align="center" style={{ paddingTop: "2rem" }}>
-                                <Loader size="lg" style={{ color: "var(--gold)" }} />
+                                <Loader size="lg" style={{ color: "var(--gold-dark)" }} />
                                 <Text size="lg" style={{ color: "var(--text-secondary)" }}>
                                     Loading FAQs...
                                 </Text>

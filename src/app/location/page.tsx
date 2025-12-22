@@ -64,7 +64,7 @@ export default function LocationPage() {
                             {/* Venue Information */}
                             <Card className="elegant-card" radius="md" p="xl" style={{ marginBottom: "2rem" }}>
                                 <Group align="flex-start" gap="lg">
-                                    <IconMapPin size={32} color="var(--gold)" aria-hidden="true" />
+                                    <IconMapPin size={32} color="var(--gold-dark)" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
                                         <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Venue Details
@@ -84,7 +84,7 @@ export default function LocationPage() {
                             {/* Travel Information */}
                             <Card className="elegant-card" radius="md" p="xl" style={{ marginBottom: "2rem" }}>
                                 <Group align="flex-start" gap="lg">
-                                    <IconPlane size={32} color="var(--gold)" aria-hidden="true" />
+                                    <IconPlane size={32} color="var(--gold-dark)" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
                                         <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Getting There
@@ -102,7 +102,7 @@ export default function LocationPage() {
                             {/* Parking Information */}
                             <Card className="elegant-card" radius="md" p="xl">
                                 <Group align="flex-start" gap="lg">
-                                    <IconCar size={32} color="var(--gold)" aria-hidden="true" />
+                                    <IconCar size={32} color="var(--gold-dark)" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
                                         <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Parking & Accessibility
