@@ -27,12 +27,12 @@ describe('Accessibility Tests', () => {
       `${violations.length} accessibility violation${violations.length === 1 ? '' : 's'} detected`
     );
 
-    const violationData = violations.map(({ id, impact, description, nodes }) => ({
+    const violationData = violations.map(({ id, impact, description, nodes, helpUrl }) => ({
       id,
       impact: impact || 'unknown',
       description,
       nodes: nodes.length,
-      helpUrl: `https://dequeuniversity.com/rules/axe/4.8/${id}`,
+      helpUrl,
     }));
 
     cy.task('table', violationData);
