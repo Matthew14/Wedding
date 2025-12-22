@@ -296,6 +296,11 @@ export default function RSVPFormPage() {
                                                                 />
                                                             ))}
                                                         </Stack>
+                                                        {form.errors.invitees && (
+                                                            <Text size="sm" style={{ color: "#e53e3e", marginTop: "0.5rem" }}>
+                                                                {form.errors.invitees}
+                                                            </Text>
+                                                        )}
                                                     </Box>
                                                 )}
 
