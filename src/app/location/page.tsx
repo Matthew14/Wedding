@@ -12,17 +12,19 @@ export default function LocationPage() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
-                    <Container size="lg" py="xl">
+                    <Container size="lg" py="xl" className="fade-in">
                         <Stack gap="xl">
-                            <Box style={{ textAlign: "center", marginBottom: "2rem" }}>
+                            <Box style={{ textAlign: "center", marginBottom: "3rem" }}>
                                 <Title
                                     order={1}
                                     style={{
-                                        color: "#495057",
-                                        marginBottom: "1rem",
-                                        fontFamily: "serif",
-                                        fontSize: "clamp(2rem, 8vw, 3rem)",
+                                        color: "var(--text-primary)",
+                                        marginBottom: "0",
+                                        fontFamily: "var(--font-playfair), serif",
+                                        fontSize: "clamp(2.5rem, 8vw, 3.5rem)",
+                                        fontWeight: 400,
                                         lineHeight: 1.2,
+                                        letterSpacing: "0.02em",
                                         hyphens: "none",
                                         wordBreak: "keep-all",
                                         whiteSpace: "pre-line",
@@ -30,18 +32,20 @@ export default function LocationPage() {
                                 >
                                     Location
                                 </Title>
-                                <Text size="lg" style={{ color: "#6c757d", maxWidth: 600, margin: "0 auto" }}>
+                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
+                                <Text size="xl" style={{ color: "var(--text-secondary)", maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontSize: "1.125rem" }}>
                                     Join us in Vilanova i la Geltrú, Spain for our special celebration
                                 </Text>
                             </Box>
 
                             {/* Google Maps Embed */}
                             <Box
+                                className="elegant-card"
                                 style={{
-                                    borderRadius: 8,
+                                    borderRadius: 12,
                                     overflow: "hidden",
-                                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
                                     marginBottom: "2rem",
+                                    border: "none",
                                 }}
                             >
                                 <iframe
@@ -58,14 +62,14 @@ export default function LocationPage() {
                             </Box>
 
                             {/* Venue Information */}
-                            <Card withBorder radius="md" p="xl" style={{ marginBottom: "2rem" }}>
+                            <Card className="elegant-card" radius="md" p="xl" style={{ marginBottom: "2rem" }}>
                                 <Group align="flex-start" gap="lg">
-                                    <IconMapPin size={32} color="#8b7355" aria-hidden="true" />
+                                    <IconMapPin size={32} color="var(--gold)" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "#495057" }}>
+                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Venue Details
                                         </Title>
-                                        <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             We&apos;ll be celebrating at{" "}
                                             <ExternalLink href="https://www.granvillarosa.com/" label="Gran Villa Rosa Website">
                                                 Gran Villa Rosa
@@ -78,17 +82,17 @@ export default function LocationPage() {
                             </Card>
 
                             {/* Travel Information */}
-                            <Card withBorder radius="md" p="xl" style={{ marginBottom: "2rem" }}>
+                            <Card className="elegant-card" radius="md" p="xl" style={{ marginBottom: "2rem" }}>
                                 <Group align="flex-start" gap="lg">
-                                    <IconPlane size={32} color="#8b7355" aria-hidden="true" />
+                                    <IconPlane size={32} color="var(--gold)" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "#495057" }}>
+                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Getting There
                                         </Title>
-                                        <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             <strong>Nearest Airport:</strong> Barcelona-El Prat Airport (BCN)
                                         </Text>
-                                        <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             {travelCopy}
                                         </Text>
                                     </Stack>
@@ -96,24 +100,24 @@ export default function LocationPage() {
                             </Card>
 
                             {/* Parking Information */}
-                            <Card withBorder radius="md" p="xl">
+                            <Card className="elegant-card" radius="md" p="xl">
                                 <Group align="flex-start" gap="lg">
-                                    <IconCar size={32} color="#8b7355" aria-hidden="true" />
+                                    <IconCar size={32} color="var(--gold)" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "#495057" }}>
+                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Parking & Accessibility
                                         </Title>
-                                        <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             <strong>Ample parking is available on-site</strong> at Gran Villa Rosa,
                                             making driving a convenient option for guests.
                                         </Text>
-                                        <Text style={{ color: "#6c757d", lineHeight: 1.6, marginTop: "0.5rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
                                             <strong>For international guests:</strong> Consider renting a car for
                                             flexibility in exploring the beautiful Catalonian coast. The venue is easily
                                             accessible by car, and having your own transport allows you to enjoy nearby
                                             Sitges and other coastal towns at your own pace.
                                         </Text>
-                                        <Text style={{ color: "#6c757d", lineHeight: 1.6, marginTop: "0.5rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
                                             <strong>Alternative options:</strong> Taxis and ride-sharing services are
                                             also available for those who prefer not to drive. We&apos;re committed to
                                             ensuring all our guests can comfortably attend our celebration.

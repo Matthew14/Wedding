@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Cormorant } from "next/font/google";
 import "./globals.css";
 import { MantineProvider, ColorSchemeScript } from "@mantine/core";
 import "@mantine/core/styles.css";
@@ -18,6 +18,19 @@ const geist = Geist({
 const geistMono = Geist_Mono({
     subsets: ["latin"],
     variable: "--font-geist-mono",
+});
+
+const playfair = Playfair_Display({
+    subsets: ["latin"],
+    variable: "--font-playfair",
+    display: "swap",
+});
+
+const cormorant = Cormorant({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600"],
+    variable: "--font-cormorant",
+    display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -56,7 +69,7 @@ export default function RootLayout({
             <head>
                 <ColorSchemeScript />
             </head>
-            <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
+            <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} antialiased`}>
                 <PostHogProvider>
                     <Suspense fallback={null}>
                         <PageViewTracker />

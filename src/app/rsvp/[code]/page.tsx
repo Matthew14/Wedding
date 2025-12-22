@@ -15,7 +15,6 @@ import {
     Radio,
     Group,
     Modal,
-    List,
     TextInput,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
@@ -273,29 +272,30 @@ export default function RSVPFormPage() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
-                    <Container size="md" py="xl">
+                    <Container size="md" py="xl" className="fade-in">
                         <Stack gap="xl">
                             {/* Header */}
-                            <Box style={{ textAlign: "center" }}>
+                            <Box style={{ textAlign: "center", marginBottom: "1rem" }}>
                                 <Title
                                     order={1}
                                     style={{
-                                        fontSize: "clamp(2rem, 6vw, 3rem)",
-                                        fontWeight: 300,
-                                        color: "#8b7355",
-                                        marginBottom: "1rem",
-                                        fontFamily: "cursive",
-                                        fontStyle: "italic",
+                                        fontSize: "clamp(2.5rem, 6vw, 3.5rem)",
+                                        fontWeight: 400,
+                                        color: "var(--text-primary)",
+                                        marginBottom: "0",
+                                        fontFamily: "var(--font-cormorant), serif",
+                                        letterSpacing: "0.02em",
                                     }}
                                 >
                                     Répondez s&apos;il vous plaît
                                 </Title>
+                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
                                 {infoText ? (
-                                    <Text size="lg" style={{ color: "#6c757d" }} pb="md">
+                                    <Text size="lg" style={{ color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }} pb="md">
                                         {infoText}
                                     </Text>
                                 ) : (
-                                <Text size="lg" style={{ color: "#6c757d" }}>
+                                <Text size="lg" style={{ color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }}>
                                     Let us know if you&apos;re coming to our wedding! Once you&apos;ve filled out this
                                     form, you will still be able to amend your details here up until the 1st of
                                     December. After that please get in touch if something changes.
@@ -304,7 +304,7 @@ export default function RSVPFormPage() {
                             </Box>
 
                             {/* RSVP Form */}
-                            <Paper shadow="md" radius="lg" p="xl">
+                            <Paper className="elegant-card" radius="lg" p="xl">
                                 <form onSubmit={form.onSubmit(() => {
                                     setShowConfirmation(true);
                                     trackEvent(RSVPEvents.CONFIRMATION_OPENED, {
@@ -320,8 +320,8 @@ export default function RSVPFormPage() {
                                         {/* Are you joining us? */}
                                         <Box mb="xl">
                                             <Group gap="sm" mb="md">
-                                                <IconBook size={20} color="#8b7355" />
-                                                <Text size="lg" fw={500}>
+                                                <IconBook size={20} color="var(--gold)" />
+                                                <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                                     Are you joining us?
                                                 </Text>
                                                 <Text span style={{ color: "#e53e3e" }}>
@@ -366,8 +366,8 @@ export default function RSVPFormPage() {
                                                 {form.values.invitees.length > 1 && (
                                                     <Box mb="xl">
                                                         <Group gap="sm" mb="md">
-                                                            <IconUsers size={20} color="#8b7355" />
-                                                            <Text size="lg" fw={500}>
+                                                            <IconUsers size={20} color="var(--gold)" />
+                                                            <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                                                 Is everyone coming?
                                                             </Text>
                                                             <Text span style={{ color: "#e53e3e" }}>
@@ -403,8 +403,8 @@ export default function RSVPFormPage() {
                                                 {/* Will you be staying with us at Gran Villa Rosa? */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconBed size={20} color="#8b7355" />
-                                                        <Text size="lg" fw={500}>
+                                                        <IconBed size={20} color="var(--gold)" />
+                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                                             Will you be staying with us at Gran Villa Rosa?
                                                         </Text>
                                                         <Text span style={{ color: "#e53e3e" }}>
@@ -413,7 +413,7 @@ export default function RSVPFormPage() {
                                                     </Group>
                                                     <Text
                                                         size="sm"
-                                                        style={{ color: "#6c757d", marginBottom: "1rem" }}
+                                                        style={{ color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: 1.6 }}
                                                     >
                                                         We&apos;ve reserved a complimentary room in the venue for you
                                                         for both nights. If you&apos;d prefer to arrange your own
@@ -440,8 +440,8 @@ export default function RSVPFormPage() {
                                                 {/* Dietary restrictions */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconChefHat size={20} color="#8b7355" />
-                                                        <Text size="lg" fw={500}>
+                                                        <IconChefHat size={20} color="var(--gold)" />
+                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                                             Do you have any allergies or specific dietary requests?
                                                         </Text>
                                                     </Group>
@@ -464,8 +464,8 @@ export default function RSVPFormPage() {
                                                 {/* Song request */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconMusic size={20} color="#8b7355" />
-                                                        <Text size="lg" fw={500}>
+                                                        <IconMusic size={20} color="var(--gold)" />
+                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                                             Got a song request for the wedding playlist? Add it here!
                                                         </Text>
                                                     </Group>
@@ -487,8 +487,8 @@ export default function RSVPFormPage() {
                                                 {/* Travel plans */}
                                                 <Box mb="xl">
                                                     <Group gap="sm" mb="md">
-                                                        <IconPlane size={20} color="#8b7355" />
-                                                        <Text size="lg" fw={500}>
+                                                        <IconPlane size={20} color="var(--gold)" />
+                                                        <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                                             Please add any travel plans so we can help with transfers
                                                         </Text>
                                                     </Group>
@@ -513,8 +513,8 @@ export default function RSVPFormPage() {
                                         {/* Additional message */}
                                         <Box mb="xl">
                                             <Group gap="sm" mb="md">
-                                                <IconMessage size={20} color="#8b7355" />
-                                                <Text size="lg" fw={500}>
+                                                <IconMessage size={20} color="var(--gold)" />
+                                                <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                                     Anything else you&apos;d like us to know?
                                                 </Text>
                                             </Group>
@@ -534,10 +534,24 @@ export default function RSVPFormPage() {
                                             />
                                         </Box>
 
-                                        <Divider />
+                                        <Divider style={{ borderColor: "rgba(139, 115, 85, 0.2)" }} />
 
                                         {/* Submit Button */}
-                                        <Button type="submit" size="lg" loading={submitting} disabled={submitting} color="#8b7355" fullWidth>
+                                        <Button
+                                            type="submit"
+                                            size="lg"
+                                            loading={submitting}
+                                            disabled={submitting}
+                                            className="primary-cta-button"
+                                            style={{
+                                                backgroundColor: "var(--gold)",
+                                                color: "#ffffff",
+                                                borderRadius: "8px",
+                                                fontWeight: 500,
+                                                letterSpacing: "0.02em",
+                                            }}
+                                            fullWidth
+                                        >
                                             Submit RSVP
                                         </Button>
                                     </Stack>
@@ -552,78 +566,166 @@ export default function RSVPFormPage() {
             <Modal
                 opened={showConfirmation}
                 onClose={() => setShowConfirmation(false)}
-                title="Confirm Your RSVP"
+                title={
+                    <Box style={{ textAlign: "center", width: "100%" }}>
+                        <Text
+                            fw={400}
+                            size="xl"
+                            style={{
+                                color: "var(--text-primary)",
+                                fontFamily: "var(--font-playfair), serif",
+                                fontSize: "1.75rem",
+                                letterSpacing: "0.02em"
+                            }}
+                        >
+                            Confirm Your RSVP
+                        </Text>
+                    </Box>
+                }
                 size="lg"
                 centered
+                radius="lg"
+                padding="xl"
+                styles={{
+                    content: {
+                        backgroundColor: "rgba(255, 255, 255, 0.98)",
+                        border: "1px solid rgba(139, 115, 85, 0.15)",
+                        boxShadow: "0 20px 60px rgba(139, 115, 85, 0.2)",
+                    },
+                    header: {
+                        backgroundColor: "transparent",
+                        borderBottom: "none",
+                        paddingBottom: 0,
+                        textAlign: "center",
+                    },
+                    title: {
+                        width: "100%",
+                        textAlign: "center",
+                    },
+                    body: {
+                        paddingTop: "1rem",
+                    },
+                }}
             >
-                <Stack gap="md">
-                    <Text size="sm" c="dimmed">
+                <Stack gap="lg">
+                    <div className="decorative-divider" style={{ margin: "0 auto 1rem" }}></div>
+
+                    <Text
+                        size="sm"
+                        style={{
+                            color: "var(--text-secondary)",
+                            textAlign: "center",
+                            lineHeight: 1.7
+                        }}
+                    >
                         Please review your RSVP details before submitting:
                     </Text>
 
-                    <List size="sm" spacing="xs">
-                        <List.Item>
-                            <Text fw={500}>Attendance:</Text>
-                            <Text c={form.values.accepted ? "green" : "red"}>
-                                {form.values.accepted ? "Yes, I'm coming!" : "No, I can't make it"}
-                            </Text>
-                        </List.Item>
+                    <Paper
+                        p="lg"
+                        radius="md"
+                        style={{
+                            backgroundColor: "rgba(250, 248, 245, 0.5)",
+                            border: "1px solid rgba(139, 115, 85, 0.1)"
+                        }}
+                    >
+                        <Stack gap="md">
+                            <Box>
+                                <Text fw={600} size="sm" style={{ color: "var(--gold)", marginBottom: "0.25rem" }}>
+                                    Attendance
+                                </Text>
+                                <Text
+                                    fw={500}
+                                    c={form.values.accepted ? "green" : "red"}
+                                    style={{ fontSize: "0.95rem" }}
+                                >
+                                    {form.values.accepted ? "✓ Yes, I'm coming!" : "✗ No, I can't make it"}
+                                </Text>
+                            </Box>
 
                         {form.values.accepted && (
                             <>
                                 {form.values.invitees.length > 1 && (
-                                    <List.Item>
-                                        <Text fw={500}>Invitee Attendance:</Text>
-                                        {form.values.invitees.map((invitee) => (
-                                            <Text key={invitee.id} c={invitee.coming ? "green" : "red"}>
-                                                • {invitee.name}: {invitee.coming ? "Coming" : "Not coming"}
-                                            </Text>
-                                        ))}
-                                    </List.Item>
+                                    <Box>
+                                        <Text fw={600} size="sm" style={{ color: "var(--gold)", marginBottom: "0.5rem" }}>
+                                            Guest Attendance
+                                        </Text>
+                                        <Stack gap="xs">
+                                            {form.values.invitees.map((invitee) => (
+                                                <Text
+                                                    key={invitee.id}
+                                                    c={invitee.coming ? "green" : "red"}
+                                                    fw={500}
+                                                    style={{ fontSize: "0.9rem", paddingLeft: "0.5rem" }}
+                                                >
+                                                    {invitee.coming ? "✓" : "✗"} {invitee.name}
+                                                </Text>
+                                            ))}
+                                        </Stack>
+                                    </Box>
                                 )}
 
-                                <List.Item>
-                                    <Text fw={500}>Accommodation:</Text>
-                                    <Text>
-                                        {form.values.staying_villa === "yes" 
-                                            ? "Yes, staying at Gran Villa Rosa" 
-                                            : "No, arranging own accommodation"
+                                <Box>
+                                    <Text fw={600} size="sm" style={{ color: "var(--gold)", marginBottom: "0.25rem" }}>
+                                        Accommodation
+                                    </Text>
+                                    <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
+                                        {form.values.staying_villa === "yes"
+                                            ? "✓ Staying at Gran Villa Rosa"
+                                            : "Arranging own accommodation"
                                         }
                                     </Text>
-                                </List.Item>
+                                </Box>
 
                                 {form.values.dietary_restrictions && (
-                                    <List.Item>
-                                        <Text fw={500}>Dietary Restrictions:</Text>
-                                        <Text>{form.values.dietary_restrictions}</Text>
-                                    </List.Item>
+                                    <Box>
+                                        <Text fw={600} size="sm" style={{ color: "var(--gold)", marginBottom: "0.25rem" }}>
+                                            Dietary Requirements
+                                        </Text>
+                                        <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                            {form.values.dietary_restrictions}
+                                        </Text>
+                                    </Box>
                                 )}
 
                                 {form.values.song_request && (
-                                    <List.Item>
-                                        <Text fw={500}>Song Request:</Text>
-                                        <Text>{form.values.song_request}</Text>
-                                    </List.Item>
+                                    <Box>
+                                        <Text fw={600} size="sm" style={{ color: "var(--gold)", marginBottom: "0.25rem" }}>
+                                            Song Request
+                                        </Text>
+                                        <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                            {form.values.song_request}
+                                        </Text>
+                                    </Box>
                                 )}
 
                                 {form.values.travel_plans && (
-                                    <List.Item>
-                                        <Text fw={500}>Travel Plans:</Text>
-                                        <Text>{form.values.travel_plans}</Text>
-                                    </List.Item>
+                                    <Box>
+                                        <Text fw={600} size="sm" style={{ color: "var(--gold)", marginBottom: "0.25rem" }}>
+                                            Travel Plans
+                                        </Text>
+                                        <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                            {form.values.travel_plans}
+                                        </Text>
+                                    </Box>
                                 )}
                             </>
                         )}
 
                         {form.values.message && (
-                            <List.Item>
-                                <Text fw={500}>Additional Message:</Text>
-                                <Text>{form.values.message}</Text>
-                            </List.Item>
+                            <Box>
+                                <Text fw={600} size="sm" style={{ color: "var(--gold)", marginBottom: "0.25rem" }}>
+                                    Additional Message
+                                </Text>
+                                <Text style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                    {form.values.message}
+                                </Text>
+                            </Box>
                         )}
-                    </List>
+                        </Stack>
+                    </Paper>
 
-                    <Group justify="space-between" mt="md">
+                    <Group justify="space-between" mt="lg" gap="md">
                         <Button
                             variant="outline"
                             onClick={() => {
@@ -632,16 +734,33 @@ export default function RSVPFormPage() {
                                     code: params.code as string,
                                 });
                             }}
-                            color="gray"
+                            className="secondary-cta-button"
+                            size="md"
+                            style={{
+                                borderColor: "var(--gold)",
+                                color: "var(--gold)",
+                                fontWeight: 500,
+                                borderWidth: "2px",
+                                borderRadius: "8px",
+                                flex: 1,
+                            }}
                         >
                             Go Back & Edit
                         </Button>
-                        <Button 
+                        <Button
                             onClick={() => {
                                 setShowConfirmation(false);
                                 handleSubmit(form.values);
                             }}
-                            color="#8b7355"
+                            className="primary-cta-button"
+                            size="md"
+                            style={{
+                                backgroundColor: "var(--gold)",
+                                color: "#ffffff",
+                                fontWeight: 500,
+                                borderRadius: "8px",
+                                flex: 1,
+                            }}
                             loading={submitting}
                         >
                             Confirm & Submit

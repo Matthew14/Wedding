@@ -53,12 +53,14 @@ export function Navigation() {
                     component={Link}
                     href="/"
                     size="lg"
-                    fw={600}
+                    fw={400}
                     style={{
-                        color: "#8b7355",
+                        color: "var(--gold)",
                         textDecoration: "none",
-                        fontFamily: "cursive",
-                        fontStyle: "italic",
+                        fontFamily: "var(--font-playfair), serif",
+                        fontSize: "1.5rem",
+                        letterSpacing: "0.02em",
+                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                     onClick={() => handleNavClick('Home', '/')}
                 >
@@ -75,9 +77,13 @@ export function Navigation() {
                                 color="#8b7355"
                                 size="sm"
                                 style={{
-                                    backgroundColor: "#8b7355",
+                                    backgroundColor: "var(--gold)",
                                     color: "#ffffff",
                                     textDecoration: "none",
+                                    borderRadius: "6px",
+                                    fontWeight: 500,
+                                    letterSpacing: "0.02em",
+                                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                                 }}
                                 onClick={() => handleNavClick('Dashboard', '/dashboard')}
                             >
@@ -117,10 +123,13 @@ export function Navigation() {
                                     size="sm"
                                     fullWidth
                                     style={{
-                                        backgroundColor: "#8b7355",
+                                        backgroundColor: "var(--gold)",
                                         color: "#ffffff",
                                         textDecoration: "none",
                                         marginTop: "0.5rem",
+                                        borderRadius: "6px",
+                                        fontWeight: 500,
+                                        letterSpacing: "0.02em",
                                     }}
                                     onClick={() => handleNavClick('Dashboard', '/dashboard')}
                                 >
