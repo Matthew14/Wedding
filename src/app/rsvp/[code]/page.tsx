@@ -83,10 +83,10 @@ export default function RSVPFormPage() {
                         setInfoText("You're amending your RSVP, last updated on " + formattedDate);
 
                         // Map invitees with their existing responses
-                        const inviteesWithResponses = data.invitees?.map((inv: Invitee) => ({
+                        const inviteesWithResponses = data.invitees?.map((inv: Invitee & { coming?: boolean }) => ({
                             id: inv.id,
                             name: `${inv.first_name} ${inv.last_name}`,
-                            coming: data?.inviteeResponses?.[inv.id] ?? true,
+                            coming: inv.coming ?? false,
                         })) || [];
 
                         const loadedValues = {

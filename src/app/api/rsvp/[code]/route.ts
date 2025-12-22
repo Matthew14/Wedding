@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Get invitees for this invitation
         const { data: invitees, error: inviteesError } = await supabase
             .from("invitees")
-            .select("id, first_name, last_name")
+            .select("id, first_name, last_name, coming")
             .eq("invitation_id", rsvpData.invitation_id);
 
         if (inviteesError) {
