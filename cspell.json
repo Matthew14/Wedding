@@ -3,8 +3,6 @@
   "language": "en-GB",
   "dictionaries": ["en-GB"],
   "flagWords": [
-    "color",
-    "colors",
     "favorite",
     "favorites",
     "honor",
@@ -59,8 +57,15 @@
   "overrides": [
     {
       "filename": "**/*.{ts,tsx,js,jsx,css,scss}",
-      "words": ["color", "backgroundColor", "borderColor"],
-      "description": "Allow American spelling in code for CSS properties"
+      "words": [
+        "color",
+        "backgroundColor",
+        "borderColor",
+        "textColor",
+        "outlineColor",
+        "boxShadow"
+      ],
+      "description": "Allow American spelling in code for CSS properties and JavaScript APIs"
     }
   ]
 }
