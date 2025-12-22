@@ -2,6 +2,7 @@ import { Container, Title, Text, Button, Group, Stack, Box } from "@mantine/core
 import { Navigation } from "@/components/Navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { PRIMARY, PRIMARY_DARK, TEXT_PRIMARY, BACKGROUND_WHITE } from "@/constants/colours";
 
 export default function HomePage() {
     return (
@@ -14,6 +15,7 @@ export default function HomePage() {
                         className="fade-in"
                         style={{
                             minHeight: "100vh",
+                            backgroundColor: BACKGROUND_WHITE,
                             display: "flex",
                             alignItems: "center",
                             position: "relative",
@@ -55,7 +57,7 @@ export default function HomePage() {
                                     style={{
                                         fontSize: "clamp(2.5rem, 8vw, 4rem)",
                                         fontWeight: 400,
-                                        color: "#2d2d2d",
+                                        color: TEXT_PRIMARY,
                                         marginBottom: "0",
                                         fontFamily: "var(--font-playfair), serif",
                                         lineHeight: 1.2,
@@ -72,7 +74,7 @@ export default function HomePage() {
                                     style={{
                                         fontSize: "clamp(1.3rem, 4vw, 1.75rem)",
                                         fontWeight: 300,
-                                        color: "#8b7355",
+                                        color: PRIMARY_DARK,
                                         marginBottom: "0.5rem",
                                         fontFamily: "var(--font-cormorant), serif",
                                         letterSpacing: "0.15em",
@@ -86,7 +88,7 @@ export default function HomePage() {
                                 <Text
                                     size="xl"
                                     style={{
-                                        color: "#5a5a5a",
+                                        color: TEXT_PRIMARY,
                                         maxWidth: 600,
                                         lineHeight: 1.8,
                                         marginTop: "1rem",
@@ -106,9 +108,9 @@ export default function HomePage() {
                                         variant="filled"
                                         className="primary-cta-button"
                                         style={{
-                                            backgroundColor: "#8b7355",
-                                            borderColor: "#8b7355",
-                                            color: "#ffffff",
+                                            backgroundColor: PRIMARY,
+                                            borderColor: PRIMARY,
+                                            color: BACKGROUND_WHITE,
                                             borderRadius: 30,
                                             padding: "12px 30px",
                                             fontSize: "18px",
@@ -126,9 +128,9 @@ export default function HomePage() {
                                         variant="outline"
                                         className="secondary-cta-button"
                                         style={{
-                                            borderColor: "#8b7355",
-                                            backgroundColor: "#ffffff",
-                                            color: "#8b7355",
+                                            borderColor: PRIMARY,
+                                            backgroundColor: BACKGROUND_WHITE,
+                                            color: PRIMARY,
                                             borderRadius: 30,
                                             padding: "12px 30px",
                                             fontSize: "18px",

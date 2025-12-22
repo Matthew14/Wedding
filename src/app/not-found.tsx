@@ -25,22 +25,22 @@ export default function NotFound() {
                 <Container size="sm" py="xl" style={{ paddingTop: 100 }}>
                     <Paper shadow="md" radius="lg" p="xl">
                         <Stack gap="xl" align="center">
-                            <IconError404 size={100} color="#8b7355" stroke={1.5} />
+                            <IconError404 size={100} color="var(--gold)" stroke={1.5} />
                             <Title
                                 order={1}
                                 style={{
                                     fontSize: 'clamp(2rem, 6vw, 3rem)',
                                     fontWeight: 300,
-                                    color: '#8b7355',
+                                    color: "var(--text-primary)",
                                     textAlign: 'center',
                                 }}
                             >
                                 Page Not Found
                             </Title>
-                            <Text size="lg" style={{ textAlign: 'center', color: '#6c757d' }}>
+                            <Text size="lg" style={{ textAlign: 'center', color: "var(--text-secondary)" }}>
                                 Sorry, we couldn&apos;t find the page you&apos;re looking for.
                             </Text>
-                            <Text size="md" style={{ textAlign: 'center', color: '#6c757d' }}>
+                            <Text size="md" style={{ textAlign: 'center', color: "var(--text-secondary)" }}>
                                 The page might have been moved or doesn&apos;t exist. If you followed a link from
                                 your invitation, please check the URL and try again.
                             </Text>
