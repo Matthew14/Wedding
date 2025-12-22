@@ -220,7 +220,7 @@ export default function DashboardPage() {
                 }}
             >
                 <Text size="lg" style={{ color: "#6c757d", fontStyle: "italic" }}>
-                    &quot;Every love story is beautiful, but ours is my favorite.&quot;
+                    &quot;Every love story is beautiful, but ours is my favourite.&quot;
                 </Text>
             </Paper>
         </Stack>

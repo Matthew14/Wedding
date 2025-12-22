@@ -1,0 +1,66 @@
+{
+  "version": "0.2",
+  "language": "en-GB",
+  "dictionaries": ["en-GB"],
+  "flagWords": [
+    "color",
+    "colors",
+    "favorite",
+    "favorites",
+    "honor",
+    "honors",
+    "organize",
+    "organized",
+    "organizing",
+    "realize",
+    "realized",
+    "realizing",
+    "analyze",
+    "analyzed",
+    "analyzing",
+    "apologize",
+    "apologized",
+    "apologizing",
+    "centralize",
+    "centralized",
+    "centralizing"
+  ],
+  "words": [
+    "colour",
+    "colours",
+    "favourite",
+    "favourites",
+    "honour",
+    "honours",
+    "organise",
+    "organised",
+    "organising",
+    "realise",
+    "realised",
+    "realising",
+    "analyse",
+    "analysed",
+    "analysing",
+    "apologise",
+    "apologised",
+    "apologising",
+    "centralise",
+    "centralised",
+    "centralising"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "build/**",
+    "dist/**",
+    ".next/**",
+    "package-lock.json",
+    "yarn.lock"
+  ],
+  "overrides": [
+    {
+      "filename": "**/*.{ts,tsx,js,jsx,css,scss}",
+      "words": ["color", "backgroundColor", "borderColor"],
+      "description": "Allow American spelling in code for CSS properties"
+    }
+  ]
+}
