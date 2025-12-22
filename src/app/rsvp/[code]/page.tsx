@@ -114,11 +114,12 @@ export default function RSVPFormPage() {
                         });
                     } else {
                         // Set default invitees only if no existing data
+                        // Initialize as unchecked - users must manually select who's coming
                         form.setFieldValue("invitees",
                             data.invitees?.map((inv: Invitee) => ({
                                 id: inv.id,
                                 name: `${inv.first_name} ${inv.last_name}`,
-                                coming: true,
+                                coming: false,
                             })) || []
                         );
                     }
