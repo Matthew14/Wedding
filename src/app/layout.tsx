@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Cormorant } from "next/font/google";
 import "./globals.css";
-import { MantineProvider, ColorSchemeScript } from "@mantine/core";
+import { MantineProvider, ColorSchemeScript, createTheme } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -57,6 +57,27 @@ export const viewport = {
     initialScale: 1,
 };
 
+const theme = createTheme({
+    colors: {
+        gold: ['#faf8f5', '#e8e0d5', '#d4c8b5', '#c0af95', '#8b7355', '#6d5a44', '#5a4936', '#473828', '#34271a', '#21160d'],
+        dark: ['#f8f9fa', '#e9ecef', '#dee2e6', '#ced4da', '#adb5bd', '#868e96', '#5a5a5a', '#2d2d2d', '#212529', '#16191d'],
+    },
+    primaryColor: 'gold',
+    defaultRadius: 'md',
+    fontFamily: 'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    headings: {
+        fontFamily: 'var(--font-playfair), serif',
+        fontWeight: '400',
+    },
+    black: '#2d2d2d',
+    white: '#ffffff',
+    other: {
+        textPrimary: '#2d2d2d',
+        textSecondary: '#5a5a5a',
+        goldDark: '#6d5a44',
+    },
+});
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -72,7 +93,7 @@ export default function RootLayout({
                     <Suspense fallback={null}>
                         <PageViewTracker />
                     </Suspense>
-                    <MantineProvider>
+                    <MantineProvider theme={theme} forceColorScheme="light">
                         <AuthProvider>{children}</AuthProvider>
                     </MantineProvider>
                 </PostHogProvider>

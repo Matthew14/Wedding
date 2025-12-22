@@ -27,7 +27,7 @@ export function ExternalLink({ href, children, label, style, className }: Extern
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleClick}
-            style={style}
+            style={{ color: "#6d5a44", ...style }}
             className={className}
         >
             {children}
