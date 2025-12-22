@@ -7,7 +7,7 @@ const localSupabaseUrls = isProduction
     : " http://127.0.0.1:54321 http://127.0.0.1:54421";
 
 // Only include PostHog in production
-const posthogUrls = isProduction ? " https://eu.i.posthog.com" : "";
+const posthogUrls = isProduction ? " https://eu.i.posthog.com https://eu-assets.i.posthog.com" : "";
 
 const nextConfig = {
     images: {
