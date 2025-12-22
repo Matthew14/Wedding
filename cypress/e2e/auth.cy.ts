@@ -99,9 +99,8 @@ describe('Authentication Flow', () => {
       // Try to access dashboard without logging in
       cy.visit('/dashboard');
 
-      // Should redirect to login (implementation dependent)
-      // Adjust this assertion based on actual redirect behavior
-      cy.url({ timeout: 5000 }).should('match', /login|unauthorized/i);
+      // Should redirect to login
+      cy.url({ timeout: 5000 }).should('include', '/login');
     });
 
     it('should allow access to dashboard when authenticated', () => {
