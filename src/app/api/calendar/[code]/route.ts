@@ -9,9 +9,9 @@ const WEDDING_EVENT = {
         "Wedding celebration at Gran Villa Rosa, Vilanova i la Geltrú, Spain.",
     location: "Gran Villa Rosa, Vilanova i la Geltrú, Spain",
     url: "https://maps.google.com/?q=Gran+Villa+Rosa,+Vilanova+i+la+Geltrú,+Spain",
-    // Friday May 22 to Saturday May 23, 2026 - all-day event
+    // Friday May 22 to Sunday May 24, 2026 - all-day event
     start: [2026, 5, 22] as [number, number, number],
-    end: [2026, 5, 23] as [number, number, number],
+    end: [2026, 5, 24] as [number, number, number],
     status: "CONFIRMED" as const,
     busyStatus: "BUSY" as const,
 };
