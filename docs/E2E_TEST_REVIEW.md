@@ -1,6 +1,6 @@
 # E2E Test Logic Review
 
-> **Note**: This document represents a comprehensive review of the E2E test suite conducted in December 2024. Many of the issues identified below have since been addressed and fixed. See the "Fixed Issues" section at the bottom for current status.
+> **Note**: This document represents a comprehensive review of the E2E test suite conducted in December 2025. Many of the issues identified below have since been addressed and fixed. See the "Fixed Issues" section at the bottom for current status.
 
 ## Overview
 This document reviews the logic of all e2e tests in `cypress/e2e/auth.cy.ts` and `cypress/e2e/rsvp.cy.ts`.
@@ -362,7 +362,7 @@ The e2e test suite is **well-structured and covers the critical user flows**. Th
 
 ---
 
-## ✅ Fixed Issues (December 2024)
+## ✅ Fixed Issues (December 2025)
 
 The following issues from this review have been addressed:
 

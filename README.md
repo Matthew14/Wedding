@@ -178,6 +178,7 @@ npm run cypress:run
 - **[cypress/README.md](cypress/README.md)**: E2E testing setup, configuration, and test coverage
 - **[docs/E2E_TEST_REVIEW.md](docs/E2E_TEST_REVIEW.md)**: Detailed review of E2E test logic and quality
 - **[docs/SECURITY.md](docs/SECURITY.md)**: Security implementation and best practices
+- **[AGENTS.md](AGENTS.md)**: Information about automated PR review bots and agents
 
 ## Deployment
 
