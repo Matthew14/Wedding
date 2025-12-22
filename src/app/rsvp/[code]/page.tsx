@@ -160,14 +160,17 @@ export default function RSVPFormPage() {
         if (!isInitialLoad && form.values.invitees.length > 0) {
             if (!form.values.accepted) {
                 // Uncheck all invitees when not coming
-                form.setFieldValue("invitees", 
+                form.setFieldValue("invitees",
                     form.values.invitees.map(inv => ({ ...inv, coming: false }))
                 );
             } else {
                 // Check all invitees when coming (as a default)
-                form.setFieldValue("invitees", 
+                form.setFieldValue("invitees",
                     form.values.invitees.map(inv => ({ ...inv, coming: true }))
                 );
+                // Clear any stale validation error after auto-selecting all invitees
+                // This handles the race condition where onChange validates before useEffect runs
+                form.clearFieldError("invitees");
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
