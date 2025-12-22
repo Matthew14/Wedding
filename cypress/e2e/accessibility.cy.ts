@@ -36,6 +36,19 @@ describe('Accessibility Tests', () => {
     }));
 
     cy.task('table', violationData);
+
+    // Log detailed information about each failing node
+    violations.forEach((violation) => {
+      cy.task('log', `\nViolation: ${violation.id}`);
+      violation.nodes.forEach((node, index) => {
+        cy.task('log', `  Node ${index + 1}:`);
+        cy.task('log', `    HTML: ${node.html}`);
+        cy.task('log', `    Target: ${node.target.join(' > ')}`);
+        if (node.failureSummary) {
+          cy.task('log', `    Failure: ${node.failureSummary}`);
+        }
+      });
+    });
   };
 
   beforeEach(() => {
