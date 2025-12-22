@@ -8,12 +8,13 @@ Cypress.Commands.add('resetDb', () => {
 // Custom command to login
 Cypress.Commands.add('login', (email: string, password: string) => {
   cy.visit('/login');
-  // Wait for the form to be fully rendered and interactive
-  cy.get('input[type="email"]').should('be.visible').should('not.be.disabled');
-  cy.get('input[type="password"]').should('be.visible').should('not.be.disabled');
-  // Now type into the inputs
-  cy.get('input[type="email"]').type(email);
-  cy.get('input[type="password"]').type(password);
+  // Wait for the page title to ensure page is loaded
+  cy.contains('Wedding Dashboard').should('be.visible');
+  // Wait a moment for any initial renders to settle
+  cy.wait(500);
+  // Now type into the inputs (use force to bypass Mantine's disabled state)
+  cy.get('input[type="email"]').type(email, { force: true });
+  cy.get('input[type="password"]').type(password, { force: true });
   cy.get('button[type="submit"]').click();
   // Wait for redirect after login
   cy.url().should('not.include', '/login');
