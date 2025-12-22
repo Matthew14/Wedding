@@ -8,12 +8,12 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
 - **Location**: Complete venue details for Gran Villa Rosa with integrated Google Maps, travel information, and parking details
 - **Schedule**: Comprehensive 3-day wedding timeline with detailed activities for each day
 - **FAQs**: Frequently asked questions with expandable accordion interface and admin editor
-- **RSVP System**: Complete RSVP form system with unique invitation codes, guest management, and response tracking
+- **RSVP System**: Complete RSVP form system with unique invitation codes, guest management, form validation, and response tracking
 - **Admin Dashboard**: Secure dashboard for managing FAQs, invitations, and RSVP responses
 - **Responsive Design**: Mobile-first approach with custom styling and smooth animations
 - **SEO Optimized**: Proper meta tags, Open Graph data, and social sharing
 - **Custom Styling**: Beautiful brown/gold color scheme with hover effects and smooth transitions
-- **Testing**: Comprehensive unit testing with Vitest and React Testing Library
+- **Testing**: Comprehensive unit testing with Vitest and React Testing Library, E2E testing with Cypress
 
 ## Tech Stack
 
@@ -24,7 +24,7 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
 - **Styling**: Tailwind CSS + Custom CSS with Mantine integration
 - **Icons**: Tabler Icons
 - **Fonts**: Geist Sans & Geist Mono
-- **Testing**: Vitest with React Testing Library
+- **Testing**: Vitest with React Testing Library (unit tests), Cypress (E2E tests)
 
 ## Getting Started
 
@@ -34,7 +34,14 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
     npm install
     ```
 
-2. **Set up environment variables**:
+2. **Set up Supabase**:
+   Start the local Supabase instance (requires Docker):
+
+    ```bash
+    npm run supabase:start
+    ```
+
+3. **Set up environment variables**:
    Copy `.env.local` and add your Supabase credentials:
 
     ```bash
@@ -42,13 +49,13 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
     ```
 
-3. **Run development server**:
+4. **Run development server**:
 
     ```bash
     npm run dev
     ```
 
-4. **Open [http://localhost:3000](http://localhost:3000)** in your browser
+5. **Open [http://localhost:3000](http://localhost:3000)** in your browser
 
 ## Project Structure
 
@@ -133,9 +140,9 @@ The site uses Supabase as the database backend. You'll need to create the necess
 
 ## Testing
 
-This project includes comprehensive unit testing. See [TESTING.md](TESTING.md) for detailed information.
+This project includes comprehensive testing at multiple levels. See [TESTING.md](TESTING.md) for detailed unit testing information and [cypress/README.md](cypress/README.md) for E2E testing documentation.
 
-### Running Tests
+### Running Unit Tests
 
 ```bash
 # Run tests in watch mode
@@ -151,10 +158,26 @@ npm run test:coverage
 npm run test:ui
 ```
 
+### Running E2E Tests
+
+```bash
+# Run E2E tests (automated)
+npm run test:e2e
+
+# Open Cypress in interactive mode
+npm run cypress:open
+
+# Run Cypress tests in headless mode
+npm run cypress:run
+```
+
 ## Additional Documentation
 
-- **[RSVP_SYSTEM_README.md](RSVP_SYSTEM_README.md)**: Detailed documentation for the RSVP system
-- **[TESTING.md](TESTING.md)**: Comprehensive testing guide and best practices
+- **[docs/RSVP_SYSTEM_README.md](docs/RSVP_SYSTEM_README.md)**: Detailed documentation for the RSVP system
+- **[docs/TESTING.md](docs/TESTING.md)**: Comprehensive unit testing guide and best practices
+- **[cypress/README.md](cypress/README.md)**: E2E testing setup, configuration, and test coverage
+- **[docs/E2E_TEST_REVIEW.md](docs/E2E_TEST_REVIEW.md)**: Detailed review of E2E test logic and quality
+- **[docs/SECURITY.md](docs/SECURITY.md)**: Security implementation and best practices
 
 ## Deployment
 

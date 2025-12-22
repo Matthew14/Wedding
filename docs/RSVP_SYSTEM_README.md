@@ -83,25 +83,38 @@ Sees success page
 
 ### **Required Fields**
 
-- Coming/not coming
-- Villa accommodation preference
+- Coming/not coming (yes/no radio selection)
+- Villa accommodation preference (only required when accepting)
+- At least one guest selected (when accepting invitation)
 
 ### **Optional Fields**
 
-- Dietary restrictions
-- Song requests
-- Travel plans
-- Additional messages
+- Dietary restrictions (multiline text, max 500 characters)
+- Song requests (text, max 200 characters)
+- Travel plans (multiline text, max 500 characters)
+- Additional messages (multiline text, max 1000 characters)
 
 ### **Dynamic Fields**
 
 - Individual invitee attendance (only shown when "coming" is checked)
+- Villa accommodation (hidden when declining invitation)
+
+### **Validation Rules**
+
+- When accepting invitation: At least one guest must be selected
+- When declining invitation: Guest selection and villa fields are hidden
+- All text fields have maximum length constraints
+- RSVP codes must be exactly 6 alphanumeric characters
+- Codes are automatically converted to uppercase
 
 ## Security Features
 
-- Input sanitization
-- Code format validation
+- Input sanitization for all user inputs
+- Code format validation (6-character alphanumeric)
+- Client-side form validation with error messages
+- Cross-field validation (e.g., guest selection when accepting)
 - Database constraint enforcement
+- Maximum length constraints on text fields
 - Error handling without information leakage
 
 ## Styling
@@ -141,6 +154,34 @@ The RSVP system uses the existing wedding theme:
 ### **Debug Mode**
 
 Enable console logging for detailed error information during development.
+
+## Testing
+
+The RSVP system has comprehensive test coverage:
+
+### **E2E Tests** (`cypress/e2e/rsvp.cy.ts`)
+
+- Code entry and validation (valid/invalid codes)
+- Code formatting (uppercase conversion, length requirements)
+- Complete RSVP submission (accepting and declining)
+- Guest selection validation
+- Villa question conditional display
+- Form field validation
+- RSVP editing functionality
+- Database verification
+- Success page with query parameters
+- Direct link navigation
+- Error handling
+
+See [cypress/README.md](cypress/README.md) for detailed test documentation.
+
+### **Unit Tests**
+
+- Custom hooks (`useRSVPForm`)
+- Form validation logic
+- API route handlers
+
+See [TESTING.md](TESTING.md) for unit testing documentation.
 
 ## Support
 

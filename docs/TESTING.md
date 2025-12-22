@@ -1,8 +1,8 @@
 # Testing Guide
 
-This project uses comprehensive unit testing with industry best practices.
+This project uses comprehensive testing at multiple levels: unit tests and end-to-end tests.
 
-## Testing Stack
+## Unit Testing Stack
 
 - **Test Runner**: [Vitest](https://vitest.dev/) - Fast, modern test runner
 - **Component Testing**: [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
@@ -10,9 +10,21 @@ This project uses comprehensive unit testing with industry best practices.
 - **Mocking**: Vitest's built-in mocking capabilities
 - **Coverage**: v8 coverage provider
 
+## E2E Testing Stack
+
+- **Test Framework**: [Cypress](https://www.cypress.io/) - Modern E2E testing framework
+- **Test Database**: Local Supabase instance (isolated from development data)
+- **Test Server**: Next.js dev server on port 3907
+- **Custom Commands**: Database utilities and authentication helpers
+- **CI/CD**: Automated testing in GitHub Actions
+
+For detailed E2E testing documentation, see [cypress/README.md](cypress/README.md).
+
 ## Test Organization
 
-Tests are organized using the `__tests__` folder pattern near the System Under Test (SUT):
+### Unit Tests
+
+Unit tests are organized using the `__tests__` folder pattern near the System Under Test (SUT):
 
 ```
 src/
@@ -36,7 +48,25 @@ src/
 │           └── page.test.tsx
 ```
 
+### E2E Tests
+
+E2E tests are organized in the `cypress/` directory:
+
+```
+cypress/
+├── e2e/
+│   ├── auth.cy.ts          # Authentication flow tests
+│   └── rsvp.cy.ts          # RSVP system tests
+├── fixtures/               # Test data
+├── support/
+│   ├── commands.ts         # Custom Cypress commands
+│   └── database.ts         # Database utilities
+└── tsconfig.json
+```
+
 ## Running Tests
+
+### Unit Tests
 
 ```bash
 # Run tests in watch mode
@@ -51,6 +81,24 @@ npm run test:coverage
 # Run tests with UI
 npm run test:ui
 ```
+
+### E2E Tests
+
+```bash
+# Run E2E tests (automated - starts server, runs tests, stops server)
+npm run test:e2e
+
+# Open Cypress in interactive mode
+npm run cypress:open
+
+# Run Cypress tests in headless mode
+npm run cypress:run
+
+# Run Cypress tests with browser visible
+npm run cypress:headed
+```
+
+For detailed E2E testing instructions, including Supabase setup and troubleshooting, see [cypress/README.md](cypress/README.md).
 
 ## Test Configuration
 

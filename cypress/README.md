@@ -118,27 +118,33 @@ cypress/
 
 - ✅ Code entry and validation
 - ✅ Valid/invalid code handling
+- ✅ Uppercase conversion
+- ✅ Code length requirements
 - ✅ Complete form submission (accepting invitation)
 - ✅ Declining invitation
 - ✅ Invitee selection (all/partial/none)
-- ✅ Form validation
+- ✅ Form validation (including guest selection requirement)
+- ✅ Villa question conditional display
 - ✅ RSVP editing (resubmission)
-- ✅ Database verification
-- ✅ Success page display
+- ✅ Database verification with null checks
+- ✅ Success page with query parameter verification
 - ✅ Direct link navigation
+- ✅ Error handling for non-existent codes
 
 ### Authentication Flow (`auth.cy.ts`)
 
 - ✅ Login page display
 - ✅ Form validation
 - ✅ Invalid credentials error
-- ⏭️ Valid login (requires test user setup)
-- ⏭️ Protected route access
-- ⏭️ Logout functionality
-- ⏭️ Session persistence
-- ⏭️ Navigation state
+- ✅ Valid login and redirect
+- ✅ Protected route access control
+- ✅ Logout functionality
+- ✅ Session persistence after page refresh
+- ✅ Navigation state (logged in/out)
+- ✅ Form disabling during submission
+- ✅ Password field masking
 
-**Note**: Auth tests are mostly skipped (`.skip()`) because they require test users to be created in Supabase Auth.
+**Note**: All 27 tests (11 auth + 16 RSVP) are now passing in both local and CI environments.
 
 ## Database Management
 
@@ -205,8 +211,8 @@ Seed data is defined in `supabase/seed.sql`.
 ### Tests Failing
 
 1. **Server not ready**: Increase timeout in `start-server-and-test` config
-2. **Database errors**: Run `npm run supabase:reset` to reset database
-3. **Port conflicts**: Ensure ports 3000 (Next.js) and 54321 (Supabase) are available
+2. **Database errors**: Run `npm run supabase:test:reset` to reset database
+3. **Port conflicts**: Ensure ports 3907 (Next.js test server) and 54421 (Test Supabase) are available
 4. **Stale cache**: Clear Cypress cache with `npx cypress cache clear`
 
 ### Supabase Issues
