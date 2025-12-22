@@ -146,11 +146,13 @@ export default function RSVPFormPage() {
     };
 
     const handleInviteeChange = (inviteeId: number, coming: boolean) => {
-        form.setFieldValue("invitees", 
-            form.values.invitees.map(inv => 
-                inv.id === inviteeId ? { ...inv, coming } : inv
-            )
+        const updatedInvitees = form.values.invitees.map(inv => 
+            inv.id === inviteeId ? { ...inv, coming } : inv
         );
+        form.setFieldValue("invitees", updatedInvitees);
+        // Validate immediately to show error message when no invitees are selected
+        // This is needed because form.isValid() disables the button but doesn't populate form.errors
+        form.validateField("invitees");
     };
 
     // Effect to automatically check/uncheck all invitees based on coming status
@@ -253,7 +255,18 @@ export default function RSVPFormPage() {
                                             </Group>
                                             <Radio.Group
                                                 value={form.values.accepted ? "yes" : "no"}
-                                                onChange={(value) => form.setFieldValue("accepted", value === "yes")}
+                                                onChange={(value) => {
+                                                    const isAccepted = value === "yes";
+                                                    form.setFieldValue("accepted", isAccepted);
+                                                    // Validate invitees when accepting to show error
+                                                    // if no guests are selected
+                                                    if (isAccepted) {
+                                                        form.validateField("invitees");
+                                                    } else {
+                                                        // Clear invitees error when declining
+                                                        form.clearFieldError("invitees");
+                                                    }
+                                                }}
                                                 required
                                             >
                                                 <Group gap="lg">
