@@ -96,6 +96,12 @@ describe('RSVP Flow', () => {
       // Button should remain disabled for invalid code
       cy.get('button[type="submit"]').should('be.disabled');
     });
+
+    // NOTE: Paste event testing is difficult to simulate reliably in Cypress
+    // The paste handler (src/app/rsvp/page.tsx:78-82) should be manually tested:
+    // - Paste valid code (e.g., "test01") -> converts to "TEST01" and validates
+    // - Paste code with special chars (e.g., "TEST-01!") -> strips to "TEST01"
+    // - Paste too-long code (e.g., "TEST0123") -> truncates to "TEST01"
   });
 
   describe('RSVP Form Submission', () => {
@@ -143,8 +149,11 @@ describe('RSVP Flow', () => {
       // Confirm in modal
       cy.contains('Confirm & Submit').click();
 
-      // Should redirect to success page
-      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+      // Should redirect to success page with correct query parameters
+      cy.url({ timeout: 10000 })
+        .should('include', '/rsvp/success')
+        .and('include', 'accepted=yes')
+        .and('include', 'code=TEST01');
       cy.contains('Thank You!', { timeout: 5000 }).should('be.visible');
 
       // Verify data was saved to database
@@ -195,8 +204,11 @@ describe('RSVP Flow', () => {
       // Confirm in modal
       cy.contains('Confirm & Submit').click();
 
-      // Should redirect to success page
-      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+      // Should redirect to success page with correct query parameters
+      cy.url({ timeout: 10000 })
+        .should('include', '/rsvp/success')
+        .and('include', 'accepted=no')
+        .and('include', 'code=TEST01');
 
       // Verify data was saved
       cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((result) => {
@@ -206,6 +218,53 @@ describe('RSVP Flow', () => {
         }
         expect(rsvp.accepted).to.equal(false);
       });
+    });
+
+    it('should hide villa question when declining invitation', () => {
+      // Wait for form to be fully loaded and verify default state (accepting)
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Wait for "Yes" radio to be selected by default (accepted=true)
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .should('be.checked');
+
+      // Villa question should be visible when accepting (wait for render)
+      cy.wait(1000); // Give conditional render time to complete
+      cy.get('body').should('contain', 'Will you be staying with us at Gran Villa Rosa?');
+
+      // Switch to declining
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="no"]')
+        .click({ force: true });
+
+      // Villa question should now be hidden (removed from DOM)
+      cy.wait(500); // Wait for conditional render
+      cy.get('body').should('not.contain', 'Will you be staying with us at Gran Villa Rosa?');
+
+      // Invitee selection section should also be hidden (removed from DOM)
+      // Note: Individual invitee names might still appear elsewhere (like in confirmation modal text)
+      // so we check that the checkbox inputs are gone
+      cy.get('input[type="checkbox"]').should('not.exist');
+
+      // Switch back to accepting
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+
+      // Villa question should be visible again
+      cy.wait(500); // Wait for conditional render
+      cy.get('body').should('contain', 'Will you be staying with us at Gran Villa Rosa?');
+
+      // Invitee checkboxes should be visible again
+      cy.get('input[type="checkbox"]').should('exist');
+      cy.get('input[type="checkbox"]').should('have.length', 2); // John and Jane
     });
 
     it('should allow editing existing RSVP', () => {
@@ -221,7 +280,10 @@ describe('RSVP Flow', () => {
       // Confirm in modal
       cy.contains('Confirm & Submit').click();
 
-      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+      cy.url({ timeout: 10000 })
+        .should('include', '/rsvp/success')
+        .and('include', 'accepted=yes')
+        .and('include', 'code=TEST01');
 
       // Go back to form
       cy.visit('/rsvp/TEST01');
@@ -244,8 +306,11 @@ describe('RSVP Flow', () => {
       // Confirm in modal
       cy.contains('Confirm & Submit').click();
 
-      // Wait for redirect
-      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+      // Wait for redirect with correct query parameters
+      cy.url({ timeout: 10000 })
+        .should('include', '/rsvp/success')
+        .and('include', 'accepted=yes')
+        .and('include', 'code=TEST01');
 
       // Verify updated data
       cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST01' }).then((result) => {
@@ -275,7 +340,10 @@ describe('RSVP Flow', () => {
       // Confirm in modal
       cy.contains('Confirm & Submit').click();
 
-      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+      cy.url({ timeout: 10000 })
+        .should('include', '/rsvp/success')
+        .and('include', 'accepted=yes')
+        .and('include', 'code=TEST01');
 
       // Verify invitees
       cy.task('queryDatabaseMultiple', {
@@ -335,7 +403,10 @@ describe('RSVP Flow', () => {
           cy.contains('Confirm & Submit').click();
 
           // Currently allows submission (this is a bug)
-          cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+          cy.url({ timeout: 10000 })
+            .should('include', '/rsvp/success')
+            .and('include', 'accepted=yes')
+            .and('include', 'code=TEST01');
 
           // Verify all invitees marked as not coming
           cy.task('queryDatabaseMultiple', {
@@ -373,8 +444,11 @@ describe('RSVP Flow', () => {
       // Confirm in modal
       cy.contains('Confirm & Submit').click();
 
-      // Check success page
-      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+      // Check success page with correct query parameters
+      cy.url({ timeout: 10000 })
+        .should('include', '/rsvp/success')
+        .and('include', 'accepted=yes')
+        .and('include', 'code=TEST01');
       cy.contains('Thank You!', { timeout: 5000 }).should('be.visible');
     });
   });
