@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import type * as axe from 'axe-core';
+
 describe('Accessibility Tests', () => {
   /**
    * Configuration for axe-core accessibility testing
@@ -20,8 +22,7 @@ describe('Accessibility Tests', () => {
    * Custom callback to log accessibility violations in a readable format
    * This helps developers quickly identify and fix issues
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const logViolations = (violations: any[]) => {
+  const logViolations = (violations: axe.Result[]) => {
     cy.task(
       'log',
       `${violations.length} accessibility violation${violations.length === 1 ? '' : 's'} detected`
@@ -40,7 +41,7 @@ describe('Accessibility Tests', () => {
     // Log detailed information about each failing node
     violations.forEach((violation) => {
       cy.task('log', `\nViolation: ${violation.id}`);
-      violation.nodes.forEach((node, index) => {
+      violation.nodes.forEach((node: axe.NodeResult, index: number) => {
         cy.task('log', `  Node ${index + 1}:`);
         cy.task('log', `    HTML: ${node.html}`);
         cy.task('log', `    Target: ${node.target.join(' > ')}`);
