@@ -13,8 +13,8 @@
     --gold: #8b7355;
     --gold-light: #a08872;
     --gold-dark: #6d5a44;
-    --text-primary: #495057;
-    --text-secondary: #495057;
+    --text-primary: #2d2d2d;
+    --text-secondary: #5a5a5a;
 }
 
 @media (prefers-color-scheme: dark) {
