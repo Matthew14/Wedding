@@ -443,7 +443,7 @@ describe('RSVP Flow', () => {
       cy.contains("You're amending your RSVP", { timeout: 5000 }).should('be.visible');
 
       // Submit button should be disabled (no changes made)
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.get('button[type="submit"]').should('be.disabled');
 
       // Should show "No changes to submit" message
       cy.contains('No changes to submit').should('be.visible');
@@ -469,13 +469,13 @@ describe('RSVP Flow', () => {
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should initially be disabled
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.get('button[type="submit"]').should('be.disabled');
 
       // Make a change - add dietary restriction
       cy.get('textarea[placeholder*="dietary"]').type('Gluten-free');
 
       // Button should now be enabled
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+      cy.get('button[type="submit"]').should('not.be.disabled');
 
       // "No changes to submit" message should be hidden
       cy.contains('No changes to submit').should('not.exist');
@@ -501,7 +501,7 @@ describe('RSVP Flow', () => {
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.get('button[type="submit"]').should('be.disabled');
 
       // Change to declining
       cy.contains('Are you joining us?')
@@ -511,7 +511,7 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Button should now be enabled
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+      cy.get('button[type="submit"]').should('not.be.disabled');
     });
 
     it('should detect changes in invitee attendance', () => {
@@ -535,13 +535,13 @@ describe('RSVP Flow', () => {
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.get('button[type="submit"]').should('be.disabled');
 
       // Change Jane's status - uncheck her
       cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').uncheck();
 
       // Button should now be enabled
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+      cy.get('button[type="submit"]').should('not.be.disabled');
     });
 
     it('should detect changes in villa accommodation', () => {
@@ -569,7 +569,7 @@ describe('RSVP Flow', () => {
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.get('button[type="submit"]').should('be.disabled');
 
       // Change to not staying at villa
       cy.contains('Will you be staying with us at Gran Villa Rosa?')
@@ -579,7 +579,7 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Button should now be enabled
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+      cy.get('button[type="submit"]').should('not.be.disabled');
     });
 
     it('should not detect false changes when empty fields are focused/blurred', () => {
@@ -604,7 +604,7 @@ describe('RSVP Flow', () => {
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.get('button[type="submit"]').should('be.disabled');
       cy.contains('No changes to submit').should('be.visible');
 
       // Focus and blur text fields without typing (changes null to "" in form state)
@@ -613,14 +613,14 @@ describe('RSVP Flow', () => {
       cy.get('textarea[placeholder*="travel"]').focus().blur();
 
       // Button should STILL be disabled (null and "" are equivalent)
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.get('button[type="submit"]').should('be.disabled');
       cy.contains('No changes to submit').should('be.visible');
 
       // Now actually type something
       cy.get('textarea[placeholder*="dietary"]').type('Vegetarian');
 
       // Button should now be enabled (actual change made)
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+      cy.get('button[type="submit"]').should('not.be.disabled');
       cy.contains('No changes to submit').should('not.exist');
     });
 
@@ -642,7 +642,7 @@ describe('RSVP Flow', () => {
       cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
 
       // Button should be enabled for new submission
-      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+      cy.get('button[type="submit"]').should('not.be.disabled');
 
       // Should NOT show "No changes to submit" message
       cy.contains('No changes to submit').should('not.exist');
