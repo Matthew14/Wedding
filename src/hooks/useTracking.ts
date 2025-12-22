@@ -56,6 +56,11 @@ export const RSVPEvents = {
     // Success page
     SUCCESS_PAGE_VIEWED: 'rsvp_success_page_viewed',
     AMENDMENT_CLICKED: 'rsvp_amendment_clicked',
+
+    // Calendar events
+    CALENDAR_CLICKED: 'rsvp_calendar_clicked',
+    CALENDAR_DOWNLOADED: 'rsvp_calendar_downloaded',
+    CALENDAR_DOWNLOAD_ERROR: 'rsvp_calendar_download_error',
 } as const;
 
 // Site-wide tracking events

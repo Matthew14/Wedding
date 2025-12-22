@@ -1,12 +1,65 @@
 "use client";
 
-import { Container, Title, Text, Paper, Button, Stack, Box, Alert } from "@mantine/core";
-import { IconCheck, IconHeart, IconHeartBroken } from "@tabler/icons-react";
+import { Container, Title, Text, Paper, Button, Stack, Box, Alert, Menu } from "@mantine/core";
+import { IconCheck, IconHeart, IconHeartBroken, IconCalendar, IconChevronDown } from "@tabler/icons-react";
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useTracking, RSVPEvents } from "@/hooks";
+
+// Helper function to generate Google Calendar URL
+const generateGoogleCalendarUrl = () => {
+    const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: "Rebecca & Matthew's Wedding",
+        dates: "20260523/20260524", // All-day event format
+        details:
+            "Join us for our wedding celebration at Gran Villa Rosa in Vilanova i la Geltrú, Spain. Three unforgettable days of celebration!",
+        location: "Gran Villa Rosa, Vilanova i la Geltrú, Spain",
+        ctz: "Europe/Madrid",
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
+
+// Helper function to handle .ics download
+const handleIcsDownload = async (
+    rsvpCode: string,
+    calendarType: string,
+    trackEvent: (eventName: string, properties?: Record<string, unknown>) => void
+) => {
+    try {
+        const response = await fetch(`/api/calendar/${rsvpCode}`);
+
+        if (!response.ok) {
+            throw new Error("Failed to download calendar file");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "rebecca-matthew-wedding.ics";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        // Track successful download
+        trackEvent(RSVPEvents.CALENDAR_DOWNLOADED, {
+            code: rsvpCode,
+            calendar_type: calendarType,
+        });
+    } catch (error) {
+        console.error("Error downloading calendar:", error);
+        // Track error
+        trackEvent(RSVPEvents.CALENDAR_DOWNLOAD_ERROR, {
+            code: rsvpCode,
+            calendar_type: calendarType,
+            error: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+};
 
 function RSVPSuccessContent() {
     const searchParams = useSearchParams();
@@ -109,6 +162,74 @@ function RSVPSuccessContent() {
                                     >
                                         Amend RSVP
                                     </Button>
+
+                                    {/* Calendar Dropdown - Only show for accepted RSVPs */}
+                                    {isComing && (
+                                        <Menu shadow="md" width={250} position="bottom" withinPortal>
+                                            <Menu.Target>
+                                                <Button
+                                                    variant="light"
+                                                    leftSection={<IconCalendar size={18} />}
+                                                    rightSection={<IconChevronDown size={18} />}
+                                                    style={{
+                                                        backgroundColor: "rgba(139, 115, 85, 0.1)",
+                                                        color: "var(--gold-dark)",
+                                                        fontWeight: 500,
+                                                    }}
+                                                    size="lg"
+                                                    fullWidth
+                                                >
+                                                    Add to Calendar
+                                                </Button>
+                                            </Menu.Target>
+
+                                            <Menu.Dropdown>
+                                                <Menu.Label>Select Calendar</Menu.Label>
+
+                                                <Menu.Item
+                                                    leftSection={<IconCalendar size={16} />}
+                                                    onClick={() => {
+                                                        window.open(generateGoogleCalendarUrl(), "_blank");
+                                                        trackEvent(RSVPEvents.CALENDAR_CLICKED, {
+                                                            code: rsvpCode,
+                                                            calendar_type: "google",
+                                                        });
+                                                    }}
+                                                >
+                                                    Google Calendar
+                                                </Menu.Item>
+
+                                                <Menu.Item
+                                                    leftSection={<IconCalendar size={16} />}
+                                                    onClick={() =>
+                                                        handleIcsDownload(rsvpCode || "", "apple", trackEvent)
+                                                    }
+                                                >
+                                                    Apple Calendar
+                                                </Menu.Item>
+
+                                                <Menu.Item
+                                                    leftSection={<IconCalendar size={16} />}
+                                                    onClick={() =>
+                                                        handleIcsDownload(rsvpCode || "", "outlook", trackEvent)
+                                                    }
+                                                >
+                                                    Outlook
+                                                </Menu.Item>
+
+                                                <Menu.Divider />
+
+                                                <Menu.Item
+                                                    leftSection={<IconCalendar size={16} />}
+                                                    onClick={() =>
+                                                        handleIcsDownload(rsvpCode || "", "other", trackEvent)
+                                                    }
+                                                >
+                                                    Download .ics File
+                                                </Menu.Item>
+                                            </Menu.Dropdown>
+                                        </Menu>
+                                    )}
                                 </Stack>
                             </Paper>
                         </Stack>
