@@ -296,12 +296,14 @@ export default function RSVPFormPage() {
                                                                 />
                                                             ))}
                                                         </Stack>
-                                                        {form.errors.invitees && (
-                                                            <Text size="sm" style={{ color: "#e53e3e", marginTop: "0.5rem" }}>
-                                                                {form.errors.invitees}
-                                                            </Text>
-                                                        )}
                                                     </Box>
+                                                )}
+
+                                                {/* Invitees validation error - shown regardless of invitee count */}
+                                                {form.errors.invitees && (
+                                                    <Text size="sm" style={{ color: "#e53e3e", marginBottom: "1rem" }}>
+                                                        {form.errors.invitees}
+                                                    </Text>
                                                 )}
 
                                                 {/* Will you be staying with us at Gran Villa Rosa? */}
