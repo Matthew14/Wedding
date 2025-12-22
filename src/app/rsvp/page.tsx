@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { IconMail, IconCheck, IconX, IconAlertCircle } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
+import { useTracking, RSVPEvents } from "@/hooks";
 
 type ValidationState = "idle" | "validating" | "valid" | "invalid";
 
@@ -17,6 +18,13 @@ export default function RSVPPage() {
     const inputRef = useRef<HTMLInputElement>(null);
     const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const router = useRouter();
+    const { trackEvent, trackPageView } = useTracking();
+
+    // Track page view on mount
+    useEffect(() => {
+        trackPageView('RSVP Code Entry');
+        trackEvent(RSVPEvents.CODE_ENTRY_VIEWED);
+    }, [trackPageView, trackEvent]);
 
     // Auto-focus input on mount
     useEffect(() => {
@@ -49,6 +57,11 @@ export default function RSVPPage() {
             return;
         }
 
+        // Track code entry when 6 characters are entered
+        trackEvent(RSVPEvents.CODE_ENTERED, {
+            code_length: cleaned.length,
+        });
+
         // Validate when 6 characters are entered (debounced)
         setValidationState("validating");
         setValidationMessage("Checking code...");
@@ -56,20 +69,34 @@ export default function RSVPPage() {
         validationTimeoutRef.current = setTimeout(async () => {
             try {
                 const response = await fetch(`/api/rsvp/validate/${cleaned}`);
-                
+
                 if (response.ok) {
                     setValidationState("valid");
                     setValidationMessage("Code found! Click continue to proceed.");
+                    // Track successful validation
+                    trackEvent(RSVPEvents.CODE_VALIDATED, {
+                        code: cleaned,
+                        validation_time_ms: 500,
+                    });
                 } else {
                     const errorData = await response.json().catch(() => ({}));
                     setValidationState("invalid");
                     setValidationMessage(
                         errorData.suggestion || "Code not found. Please check your invitation and try again."
                     );
+                    // Track invalid code
+                    trackEvent(RSVPEvents.CODE_INVALID, {
+                        code_length: cleaned.length,
+                        error_message: errorData.suggestion,
+                    });
                 }
             } catch {
                 setValidationState("invalid");
                 setValidationMessage("Unable to verify code. Please try again.");
+                trackEvent(RSVPEvents.CODE_INVALID, {
+                    code_length: cleaned.length,
+                    error_type: 'network_error',
+                });
             }
         }, 500); // 500ms debounce
     };
