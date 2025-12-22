@@ -8,6 +8,10 @@ Cypress.Commands.add('resetDb', () => {
 // Custom command to login
 Cypress.Commands.add('login', (email: string, password: string) => {
   cy.visit('/login');
+  // Wait for the form to be fully rendered and interactive
+  cy.get('input[type="email"]').should('be.visible').should('not.be.disabled');
+  cy.get('input[type="password"]').should('be.visible').should('not.be.disabled');
+  // Now type into the inputs
   cy.get('input[type="email"]').type(email);
   cy.get('input[type="password"]').type(password);
   cy.get('button[type="submit"]').click();

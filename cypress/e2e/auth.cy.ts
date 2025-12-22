@@ -46,6 +46,10 @@ describe('Authentication Flow', () => {
     it('should show error for invalid credentials', () => {
       cy.visit('/login');
 
+      // Wait for inputs to be ready
+      cy.get('input[type="email"]').should('be.visible').should('not.be.disabled');
+      cy.get('input[type="password"]').should('be.visible').should('not.be.disabled');
+
       // Enter invalid credentials
       cy.get('input[type="email"]').type('wrong@wedding.test');
       cy.get('input[type="password"]').type('WrongPassword123!');
@@ -59,6 +63,10 @@ describe('Authentication Flow', () => {
     // Test user is now created automatically during database reset
     it('should login with valid credentials and redirect to dashboard', () => {
       cy.visit('/login');
+
+      // Wait for inputs to be ready
+      cy.get('input[type="email"]').should('be.visible').should('not.be.disabled');
+      cy.get('input[type="password"]').should('be.visible').should('not.be.disabled');
 
       // Enter valid credentials (from fixtures)
       cy.fixture('auth-data').then((authData) => {
