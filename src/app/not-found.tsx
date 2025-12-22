@@ -8,15 +8,15 @@ import { Navigation } from '@/components/Navigation';
 import { useTracking, SiteEvents } from '@/hooks';
 
 export default function NotFound() {
-    const { trackEvent, trackPageView } = useTracking();
+    const { trackEvent } = useTracking();
 
     useEffect(() => {
-        trackPageView('404 Not Found');
+        // Page view tracked by PageViewTracker component
         trackEvent(SiteEvents.PAGE_404, {
             url: window.location.href,
             referrer: document.referrer,
         });
-    }, [trackEvent, trackPageView]);
+    }, [trackEvent]);
 
     return (
         <>

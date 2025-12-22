@@ -46,7 +46,7 @@ export default function RSVPFormPage() {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const form = useRSVPForm();
-    const { trackEvent, trackPageView } = useTracking();
+    const { trackEvent } = useTracking();
 
     useEffect(() => {
         const fetchRSVPData = async () => {
@@ -61,8 +61,7 @@ export default function RSVPFormPage() {
                     const isReturningUser = !!(data && data.updatedAt);
                     const inviteeCount = data.invitees?.length || 0;
 
-                    // Track form view
-                    trackPageView('RSVP Form');
+                    // Track form view (page view tracked by PageViewTracker component)
                     trackEvent(RSVPEvents.FORM_VIEWED, {
                         code,
                         invitee_count: inviteeCount,
