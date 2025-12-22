@@ -17,7 +17,7 @@ import {
     Modal,
     TextInput,
 } from "@mantine/core";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
     IconX,
@@ -43,6 +43,7 @@ export default function RSVPFormPage() {
     const [infoText, setInfoText] = useState("");
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [originalValues, setOriginalValues] = useState<RSVPFormData | null>(null);
 
     const form = useRSVPForm();
     const { trackEvent } = useTracking();
@@ -87,7 +88,7 @@ export default function RSVPFormPage() {
                             coming: data?.inviteeResponses?.[inv.id] ?? true,
                         })) || [];
 
-                        form.setValues({
+                        const loadedValues = {
                             accepted: data.accepted,
                             invitees: inviteesWithResponses,
                             staying_villa: data.stayingVilla ? "yes" : "no",
@@ -95,7 +96,11 @@ export default function RSVPFormPage() {
                             song_request: data.songRequest,
                             travel_plans: data.travelPlans,
                             message: data.message,
-                        });
+                        };
+
+                        form.setValues(loadedValues);
+                        // Store original values for comparison
+                        setOriginalValues(loadedValues);
 
                         // Track amendment details
                         trackEvent(RSVPEvents.FORM_AMENDMENT, {
@@ -241,6 +246,31 @@ export default function RSVPFormPage() {
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [form.values.accepted, isInitialLoad]);
+
+    // Check if form has changes from original values
+    const hasChanges = useMemo(() => {
+        if (!originalValues) return true; // If no original values, allow submission (new RSVP)
+
+        // Compare invitees arrays for deep equality
+        const inviteesAreEqual = (a: typeof form.values.invitees, b: typeof form.values.invitees) => {
+            if (a.length !== b.length) return false;
+            return a.every((invitee) => {
+                const otherInvitee = b.find(inv => inv.id === invitee.id);
+                return otherInvitee && invitee.coming === otherInvitee.coming;
+            });
+        };
+
+        return (
+            form.values.accepted !== originalValues.accepted ||
+            !inviteesAreEqual(form.values.invitees, originalValues.invitees) ||
+            form.values.staying_villa !== originalValues.staying_villa ||
+            form.values.dietary_restrictions !== originalValues.dietary_restrictions ||
+            form.values.song_request !== originalValues.song_request ||
+            form.values.travel_plans !== originalValues.travel_plans ||
+            form.values.message !== originalValues.message
+        );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [form.values, originalValues]);
 
     if (loading) {
         return (
@@ -541,7 +571,7 @@ export default function RSVPFormPage() {
                                             type="submit"
                                             size="lg"
                                             loading={submitting}
-                                            disabled={submitting}
+                                            disabled={submitting || !hasChanges}
                                             className="primary-cta-button"
                                             style={{
                                                 backgroundColor: "var(--gold)",
@@ -554,6 +584,19 @@ export default function RSVPFormPage() {
                                         >
                                             Submit RSVP
                                         </Button>
+                                        {!hasChanges && originalValues && (
+                                            <Text
+                                                size="sm"
+                                                style={{
+                                                    color: "var(--text-secondary)",
+                                                    textAlign: "center",
+                                                    fontStyle: "italic",
+                                                    marginTop: "-0.5rem"
+                                                }}
+                                            >
+                                                No changes to submit
+                                            </Text>
+                                        )}
                                     </Stack>
                                 </form>
                             </Paper>

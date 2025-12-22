@@ -401,6 +401,212 @@ describe('RSVP Flow', () => {
     });
   });
 
+  describe('RSVP Amendment - Change Detection', () => {
+    it('should disable submit button when amending RSVP with no changes', () => {
+      // First submission - create initial RSVP
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Accept invitation
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+
+      // Select invitees
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').check();
+
+      // Staying at villa
+      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+
+      // Fill dietary restrictions
+      cy.get('textarea[placeholder*="dietary"]').type('Vegetarian');
+
+      // Submit form
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+      cy.contains('Confirm & Submit').click();
+
+      // Wait for redirect to success page
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
+      // Return to form to amend
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Should show amending message
+      cy.contains("You're amending your RSVP", { timeout: 5000 }).should('be.visible');
+
+      // Submit button should be disabled (no changes made)
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+
+      // Should show "No changes to submit" message
+      cy.contains('No changes to submit').should('be.visible');
+    });
+
+    it('should enable submit button when changes are made during amendment', () => {
+      // First submission - create initial RSVP
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+      cy.contains('Confirm & Submit').click();
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
+      // Return to form to amend
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Button should initially be disabled
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+
+      // Make a change - add dietary restriction
+      cy.get('textarea[placeholder*="dietary"]').type('Gluten-free');
+
+      // Button should now be enabled
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+
+      // "No changes to submit" message should be hidden
+      cy.contains('No changes to submit').should('not.exist');
+    });
+
+    it('should detect changes in acceptance status', () => {
+      // First submission - accept
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+      cy.contains('Confirm & Submit').click();
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
+      // Return to form
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Button should be disabled initially
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+
+      // Change to declining
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="no"]')
+        .click({ force: true });
+
+      // Button should now be enabled
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+    });
+
+    it('should detect changes in invitee attendance', () => {
+      // First submission - both invitees coming
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+      cy.contains('Confirm & Submit').click();
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
+      // Return to form
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Button should be disabled initially
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+
+      // Change Jane's status - uncheck her
+      cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').uncheck();
+
+      // Button should now be enabled
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+    });
+
+    it('should detect changes in villa accommodation', () => {
+      // First submission - staying at villa
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+      cy.contains('Confirm & Submit').click();
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
+      // Return to form
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Button should be disabled initially
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+
+      // Change to not staying at villa
+      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="no"]')
+        .click({ force: true });
+
+      // Button should now be enabled
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+    });
+
+    it('should allow new RSVP submission without amendment detection', () => {
+      // First time visitor (no existing RSVP)
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Should NOT show amending message
+      cy.contains("You're amending your RSVP").should('not.exist');
+
+      // Submit button should be enabled (new RSVP, not amendment)
+      // Note: It might be disabled due to validation, but not due to "no changes"
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+
+      // Button should be enabled for new submission
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+
+      // Should NOT show "No changes to submit" message
+      cy.contains('No changes to submit').should('not.exist');
+    });
+  });
+
   describe('RSVP Success Page', () => {
     it('should display success message after submission', () => {
       cy.visit('/rsvp/TEST01');
