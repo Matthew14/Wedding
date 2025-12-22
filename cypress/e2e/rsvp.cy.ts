@@ -582,6 +582,48 @@ describe('RSVP Flow', () => {
       cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
     });
 
+    it('should not detect false changes when empty fields are focused/blurred', () => {
+      // First submission - accept with no optional fields (stored as null in DB)
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
+
+      // Don't fill optional fields - they'll be stored as null
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+      cy.contains('Confirm & Submit').click();
+      cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
+
+      // Return to form
+      cy.visit('/rsvp/TEST01');
+      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+
+      // Button should be disabled initially
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.contains('No changes to submit').should('be.visible');
+
+      // Focus and blur text fields without typing (changes null to "" in form state)
+      cy.get('textarea[placeholder*="dietary"]').focus().blur();
+      cy.get('input[placeholder*="song"]').focus().blur();
+      cy.get('textarea[placeholder*="travel"]').focus().blur();
+
+      // Button should STILL be disabled (null and "" are equivalent)
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('be.disabled');
+      cy.contains('No changes to submit').should('be.visible');
+
+      // Now actually type something
+      cy.get('textarea[placeholder*="dietary"]').type('Vegetarian');
+
+      // Button should now be enabled (actual change made)
+      cy.get('button[type="submit"]').contains('Submit RSVP').should('not.be.disabled');
+      cy.contains('No changes to submit').should('not.exist');
+    });
+
     it('should allow new RSVP submission without amendment detection', () => {
       // First time visitor (no existing RSVP)
       cy.visit('/rsvp/TEST01');
