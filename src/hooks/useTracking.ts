@@ -36,23 +36,20 @@ export const RSVPEvents = {
 
     // Form flow
     FORM_VIEWED: 'rsvp_form_viewed',
-    FORM_STARTED: 'rsvp_form_started',
+    FORM_AMENDMENT: 'rsvp_form_amendment',
+    FORM_LOAD_ERROR: 'rsvp_form_load_error',
     ACCEPTANCE_CHANGED: 'rsvp_acceptance_changed',
-    INVITEE_SELECTED: 'rsvp_invitee_selected',
-    INVITEE_DESELECTED: 'rsvp_invitee_deselected',
-    VILLA_SELECTED: 'rsvp_villa_selected',
+    INVITEE_TOGGLED: 'rsvp_invitee_toggled',
+    VILLA_CHANGED: 'rsvp_villa_changed',
     DIETARY_FILLED: 'rsvp_dietary_filled',
-    SONG_REQUESTED: 'rsvp_song_requested',
-    TRAVEL_PLANS_FILLED: 'rsvp_travel_plans_filled',
+    SONG_FILLED: 'rsvp_song_filled',
+    TRAVEL_FILLED: 'rsvp_travel_filled',
     MESSAGE_FILLED: 'rsvp_message_filled',
 
     // Submission flow
-    SUBMIT_ATTEMPTED: 'rsvp_submit_attempted',
-    SUBMIT_CONFIRMED: 'rsvp_submit_confirmed',
+    CONFIRMATION_OPENED: 'rsvp_confirmation_opened',
+    CONFIRMATION_EDITED: 'rsvp_confirmation_edited',
+    SUBMIT_ATTEMPT: 'rsvp_submit_attempt',
     SUBMIT_SUCCESS: 'rsvp_submit_success',
-    SUBMIT_FAILED: 'rsvp_submit_failed',
-
-    // Edit flow
-    EDIT_VIEWED: 'rsvp_edit_viewed',
-    EDIT_SUBMITTED: 'rsvp_edit_submitted',
+    SUBMIT_ERROR: 'rsvp_submit_error',
 } as const;
