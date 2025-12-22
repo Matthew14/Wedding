@@ -28,7 +28,7 @@ function RSVPSuccessContent() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
-                    <Container size="sm" py="xl">
+                    <Container size="sm" py="xl" className="fade-in">
                         <Stack gap="xl" align="center">
                             {/* Success Icon */}
                             <Box style={{ textAlign: "center" }}>
@@ -44,28 +44,30 @@ function RSVPSuccessContent() {
                                 <Title
                                     order={1}
                                     style={{
-                                        fontSize: "clamp(2rem, 6vw, 3rem)",
-                                        fontWeight: 300,
-                                        color: "#495057",
-                                        marginBottom: "1rem",
-                                        fontFamily: "serif",
+                                        fontSize: "clamp(2.5rem, 6vw, 3.5rem)",
+                                        fontWeight: 400,
+                                        color: "var(--text-primary)",
+                                        marginBottom: "0",
+                                        fontFamily: "var(--font-playfair), serif",
+                                        letterSpacing: "0.02em",
                                     }}
                                 >
                                     {isComing ? "Thank You!" : "Response Received"}
                                 </Title>
-                                <Text size="lg" style={{ color: "#6c757d", marginBottom: "1rem" }}>
+                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
+                                <Text size="lg" style={{ color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: 1.8 }}>
                                     Your RSVP has been submitted successfully.
                                 </Text>
-                                <Text size="sm" style={{ color: "#8b7355" }}>
-                                    {isComing 
-                                        ? "We're looking forward to celebrating with you!" 
+                                <Text size="sm" style={{ color: "var(--gold)" }}>
+                                    {isComing
+                                        ? "We're looking forward to celebrating with you!"
                                         : "We're sorry you can't make it, but we appreciate you letting us know."
                                     }
                                 </Text>
                             </Box>
 
                             {/* Success Details */}
-                            <Paper shadow="md" radius="lg" p="xl" style={{ width: "100%", maxWidth: "500px" }}>
+                            <Paper className="elegant-card" radius="lg" p="xl" style={{ width: "100%", maxWidth: "500px" }}>
                                 <Stack gap="md">
                                     <Alert
                                         icon={isComing ? <IconHeart size={16} /> : <IconHeartBroken size={16} />}
@@ -74,22 +76,28 @@ function RSVPSuccessContent() {
                                         variant="light"
                                     >
                                         <Text size="sm">
-                                            {isComing 
+                                            {isComing
                                                 ? "We've received your RSVP and will be in touch with any additional details as the wedding approaches."
                                                 : "We've received your response and will update our guest list accordingly. We'll miss you on our special day!"
                                             }
                                         </Text>
                                     </Alert>
 
-                                    <Text size="sm" style={{ color: "#6c757d", textAlign: "center" }}>
-                                        If you need to make any changes to your RSVP, 
+                                    <Text size="sm" style={{ color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.7 }}>
+                                        If you need to make any changes to your RSVP,
                                         you can go back and amend it, or just contact us.
                                     </Text>
                                     <Button
                                         component={Link}
                                         href={rsvpCode ? `/rsvp/${rsvpCode}` : "/rsvp"}
                                         variant="outline"
-                                        color="#8b7355"
+                                        className="secondary-cta-button"
+                                        style={{
+                                            borderColor: "var(--gold)",
+                                            color: "var(--gold)",
+                                            fontWeight: 500,
+                                            borderWidth: "2px",
+                                        }}
                                         size="lg"
                                         fullWidth
                                         onClick={() => {

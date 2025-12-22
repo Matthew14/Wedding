@@ -44,8 +44,8 @@ export default function FAQsPage() {
                     <Box style={{ paddingTop: 56 }}>
                         <Container size="lg" py="xl">
                             <Stack gap="xl" align="center" style={{ paddingTop: "2rem" }}>
-                                <Loader size="lg" color="#8b7355" />
-                                <Text size="lg" color="#6c757d">
+                                <Loader size="lg" style={{ color: "var(--gold)" }} />
+                                <Text size="lg" style={{ color: "var(--text-secondary)" }}>
                                     Loading FAQs...
                                 </Text>
                             </Stack>
@@ -61,21 +61,24 @@ export default function FAQsPage() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
-                    <Container size="lg" py="xl">
+                    <Container size="lg" py="xl" className="fade-in">
                         <Stack gap="xl">
-                            <Box style={{ textAlign: "center", marginBottom: "2rem" }}>
+                            <Box style={{ textAlign: "center", marginBottom: "3rem" }}>
                                 <Title
                                     order={1}
-                                    size="3rem"
                                     style={{
-                                        color: "#495057",
-                                        marginBottom: "1rem",
-                                        fontFamily: "serif",
+                                        color: "var(--text-primary)",
+                                        marginBottom: "0",
+                                        fontFamily: "var(--font-playfair), serif",
+                                        fontSize: "clamp(2rem, 8vw, 3rem)",
+                                        fontWeight: 400,
+                                        letterSpacing: "0.02em",
                                     }}
                                 >
                                     Frequently Asked Questions
                                 </Title>
-                                <Text size="lg" style={{ color: "#6c757d", maxWidth: 600, margin: "0 auto" }}>
+                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
+                                <Text size="xl" style={{ color: "var(--text-secondary)", maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontSize: "1.125rem" }}>
                                     Find answers to common questions about our wedding day
                                 </Text>
                             </Box>
@@ -92,8 +95,8 @@ export default function FAQsPage() {
                             )}
 
                             {faqs.length === 0 && !loading && !error ? (
-                                <Box style={{ textAlign: "center", padding: "3rem" }}>
-                                    <Text size="lg" color="#6c757d">
+                                <Box className="elegant-card" style={{ textAlign: "center", padding: "3rem", borderRadius: 12 }}>
+                                    <Text size="lg" style={{ color: "var(--text-secondary)" }}>
                                         No FAQs available at the moment. Please check back later.
                                     </Text>
                                 </Box>
@@ -104,19 +107,27 @@ export default function FAQsPage() {
                                     defaultValue={faqs.length > 0 ? faqs[0].id : undefined}
                                     styles={{
                                         item: {
-                                            border: "1px solid #e9ecef",
+                                            backgroundColor: "rgba(255, 255, 255, 0.95)",
+                                            border: "1px solid rgba(139, 115, 85, 0.1)",
                                             marginBottom: "1rem",
+                                            boxShadow: "0 4px 16px rgba(139, 115, 85, 0.08)",
+                                            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                            "&:hover": {
+                                                boxShadow: "0 8px 24px rgba(139, 115, 85, 0.12)",
+                                                transform: "translateY(-2px)",
+                                            },
                                         },
                                         control: {
                                             padding: "1.5rem",
                                             "&:hover": {
-                                                backgroundColor: "#f8f9fa",
+                                                backgroundColor: "rgba(139, 115, 85, 0.05)",
                                             },
                                         },
                                         label: {
-                                            fontSize: "1.1rem",
+                                            fontSize: "1.15rem",
                                             fontWeight: 500,
-                                            color: "#495057",
+                                            color: "var(--text-primary)",
+                                            fontFamily: "var(--font-geist-sans), sans-serif",
                                         },
                                         content: {
                                             padding: "1.5rem",
@@ -128,7 +139,7 @@ export default function FAQsPage() {
                                         <Accordion.Item key={faq.id} value={faq.id}>
                                             <Accordion.Control>{faq.question}</Accordion.Control>
                                             <Accordion.Panel>
-                                                <Text style={{ color: "#6c757d", lineHeight: 1.6 }}>{faq.answer}</Text>
+                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>{faq.answer}</Text>
                                             </Accordion.Panel>
                                         </Accordion.Item>
                                     ))}
@@ -136,18 +147,18 @@ export default function FAQsPage() {
                             )}
 
                             <Box
+                                className="elegant-card"
                                 style={{
                                     textAlign: "center",
                                     marginTop: "3rem",
-                                    padding: "2rem",
-                                    backgroundColor: "#ffffff",
-                                    borderRadius: 8,
+                                    padding: "2.5rem",
+                                    borderRadius: 12,
                                 }}
                             >
-                                <Title order={3} style={{ color: "#495057", marginBottom: "1rem" }}>
+                                <Title order={3} style={{ color: "var(--text-primary)", marginBottom: "1rem", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                     Still have questions?
                                 </Title>
-                                <Text style={{ color: "#6c757d" }}>
+                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                     Don&apos;t hesitate to reach out to us directly. We&apos;re here to help make sure
                                     you have everything you need for our special day!
                                 </Text>

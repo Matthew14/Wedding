@@ -11,9 +11,9 @@ export default function HomePage() {
                 <Box style={{ paddingTop: 56 }}>
                     {/* Hero Section */}
                     <Box
+                        className="fade-in"
                         style={{
                             minHeight: "100vh",
-                            backgroundColor: "#ffffff",
                             display: "flex",
                             alignItems: "center",
                             position: "relative",
@@ -30,10 +30,11 @@ export default function HomePage() {
                                         maxHeight: "450px",
                                         borderRadius: "50%",
                                         overflow: "hidden",
-                                        border: "4px solid white",
-                                        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                                        border: "3px solid #8b7355",
+                                        boxShadow: "0 12px 48px rgba(139, 115, 85, 0.25), 0 0 0 8px rgba(255, 255, 255, 0.9)",
                                         marginBottom: "1.5rem",
                                         position: "relative",
+                                        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                     }}
                                 >
                                     <Image
@@ -52,27 +53,31 @@ export default function HomePage() {
                                 <Title
                                     order={1}
                                     style={{
-                                        fontSize: "clamp(2.5rem, 8vw, 3.5rem)",
-                                        fontWeight: 300,
-                                        color: "#495057",
-                                        marginBottom: "0.5rem",
-                                        fontFamily: "serif",
+                                        fontSize: "clamp(2.5rem, 8vw, 4rem)",
+                                        fontWeight: 400,
+                                        color: "#2d2d2d",
+                                        marginBottom: "0",
+                                        fontFamily: "var(--font-playfair), serif",
                                         lineHeight: 1.2,
+                                        letterSpacing: "0.02em",
                                     }}
                                 >
                                     Rebecca & Matthew
                                 </Title>
 
+                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
+
                                 <Title
                                     order={2}
                                     style={{
-                                        fontSize: "clamp(1.2rem, 4vw, 1.5rem)",
+                                        fontSize: "clamp(1.3rem, 4vw, 1.75rem)",
                                         fontWeight: 300,
                                         color: "#8b7355",
-                                        marginBottom: "1.5rem",
-                                        fontFamily: "serif",
-                                        letterSpacing: "0.1em",
-                                        lineHeight: 1.3,
+                                        marginBottom: "0.5rem",
+                                        fontFamily: "var(--font-cormorant), serif",
+                                        letterSpacing: "0.15em",
+                                        lineHeight: 1.4,
+                                        textTransform: "uppercase",
                                     }}
                                 >
                                     May, 2026
@@ -81,10 +86,13 @@ export default function HomePage() {
                                 <Text
                                     size="xl"
                                     style={{
-                                        color: "#6c757d",
+                                        color: "#5a5a5a",
                                         maxWidth: 600,
-                                        lineHeight: 1.6,
-                                        marginBottom: "1.5rem",
+                                        lineHeight: 1.8,
+                                        marginTop: "1rem",
+                                        marginBottom: "2rem",
+                                        fontSize: "1.125rem",
+                                        fontFamily: "var(--font-geist-sans), sans-serif",
                                     }}
                                 >
                                     Join us for our special day! You can find all the details you need on this website.

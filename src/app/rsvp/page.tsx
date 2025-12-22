@@ -175,23 +175,25 @@ export default function RSVPPage() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
-                    <Container size="sm" py="xl">
+                    <Container size="sm" py="xl" className="fade-in">
                         <Stack gap="xl" align="center">
                             {/* Header */}
-                            <Box style={{ textAlign: "center" }}>
+                            <Box style={{ textAlign: "center", marginBottom: "1rem" }}>
                                 <Title
                                     order={1}
                                     style={{
-                                        fontSize: "clamp(2rem, 6vw, 3rem)",
-                                        fontWeight: 300,
-                                        color: "#495057",
-                                        marginBottom: "1rem",
-                                        fontFamily: "serif",
+                                        fontSize: "clamp(2.5rem, 6vw, 3.5rem)",
+                                        fontWeight: 400,
+                                        color: "var(--text-primary)",
+                                        marginBottom: "0",
+                                        fontFamily: "var(--font-playfair), serif",
+                                        letterSpacing: "0.02em",
                                     }}
                                 >
                                     RSVP
                                 </Title>
-                                <Text size="lg" style={{ color: "#6c757d" }}>
+                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
+                                <Text size="lg" style={{ color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 500, margin: "0 auto" }}>
                                     Please enter your unique RSVP code to respond to our invitation. Your code can be
                                     found in your invitation. Alternatively, click the link in your invitation or scan
                                     the QR code to take you to your personalised link.
@@ -199,7 +201,7 @@ export default function RSVPPage() {
                             </Box>
 
                             {/* RSVP Code Form */}
-                            <Paper shadow="md" radius="lg" p="xl" style={{ width: "100%", maxWidth: "400px" }}>
+                            <Paper className="elegant-card" radius="lg" p="xl" style={{ width: "100%", maxWidth: "400px" }}>
                                 <form onSubmit={handleSubmit}>
                                     <Stack gap="lg">
                                         <Box>
@@ -235,12 +237,12 @@ export default function RSVPPage() {
                                                                 ? "var(--mantine-color-green-6)"
                                                                 : validationState === "invalid"
                                                                 ? "var(--mantine-color-red-6)"
-                                                                : undefined,
+                                                                : "rgba(139, 115, 85, 0.3)",
                                                         "&:focus": {
                                                             borderColor:
                                                                 validationState === "valid"
                                                                     ? "var(--mantine-color-green-6)"
-                                                                    : "#8b7355",
+                                                                    : "var(--gold)",
                                                         },
                                                     },
                                                 }}
@@ -284,7 +286,14 @@ export default function RSVPPage() {
                                             size="lg"
                                             loading={loading || validationState === "validating"}
                                             disabled={rsvpCode.length !== 6 || validationState === "invalid"}
-                                            color="#8b7355"
+                                            className="primary-cta-button"
+                                            style={{
+                                                backgroundColor: "var(--gold)",
+                                                color: "#ffffff",
+                                                borderRadius: "8px",
+                                                fontWeight: 500,
+                                                letterSpacing: "0.02em",
+                                            }}
                                             fullWidth
                                         >
                                             Continue to RSVP Form
@@ -294,8 +303,8 @@ export default function RSVPPage() {
                             </Paper>
 
                             {/* Help Text */}
-                            <Paper shadow="sm" radius="md" p="md" style={{ backgroundColor: "#f8f9fa" }}>
-                                <Text size="sm" style={{ color: "#6c757d", textAlign: "center" }}>
+                            <Paper className="elegant-card" radius="md" p="md" style={{ backgroundColor: "rgba(250, 248, 245, 0.6)" }}>
+                                <Text size="sm" style={{ color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.7 }}>
                                     Your RSVP code can be found on your wedding invitation. If you need help, please
                                     contact us.
                                 </Text>
