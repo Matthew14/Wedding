@@ -10,18 +10,6 @@ export default defineConfig({
     screenshotOnRunFailure: true,
 
     setupNodeEvents(on, config) {
-      // Force light mode in Electron browser
-      on('before:browser:launch', (browser, launchOptions) => {
-        if (browser.family === 'chromium' || browser.name === 'electron') {
-          launchOptions.args.push('--force-color-profile=srgb');
-          launchOptions.args.push('--force-prefers-color-scheme=light');
-          launchOptions.preferences = launchOptions.preferences || {};
-          launchOptions.preferences.default_content_settings = {
-            media_stream: 1,
-          };
-        }
-        return launchOptions;
-      });
       // Database tasks for test isolation and verification
       on('task', {
         // Reset database to clean state with test data
