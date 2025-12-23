@@ -14,12 +14,18 @@ const WEDDING_EVENT = {
     location: "Gran Villa Rosa, Vilanova i la Geltrú, Spain",
     url: "https://maps.google.com/?q=Gran+Villa+Rosa,+Vilanova+i+la+Geltrú,+Spain",
     // Friday May 22 to Sunday May 24, 2026 (all-day event)
+    // Note: iCal end dates are exclusive, so May 25 means "through May 24"
     startDate: "20260522",
-    endDate: "20260524",
+    endDate: "20260525",
 };
 
 export function AddToCalendarButton({ rsvpCode }: AddToCalendarButtonProps) {
     const { trackEvent } = useTracking();
+
+    // Don't render if no RSVP code available
+    if (!rsvpCode) {
+        return null;
+    }
 
     const generateGoogleCalendarUrl = () => {
         const params = new URLSearchParams({
@@ -45,11 +51,6 @@ export function AddToCalendarButton({ rsvpCode }: AddToCalendarButtonProps) {
         }
 
         try {
-            trackEvent(RSVPEvents.CALENDAR_DOWNLOADED, {
-                code: rsvpCode,
-                calendar_type: calendarType,
-            });
-
             const response = await fetch(`/api/calendar/${rsvpCode}`);
             if (!response.ok) {
                 throw new Error(`Failed to download calendar: ${response.statusText}`);
@@ -64,6 +65,11 @@ export function AddToCalendarButton({ rsvpCode }: AddToCalendarButtonProps) {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+
+            trackEvent(RSVPEvents.CALENDAR_DOWNLOADED, {
+                code: rsvpCode,
+                calendar_type: calendarType,
+            });
         } catch (error) {
             console.error('Error downloading calendar file:', error);
             trackEvent(RSVPEvents.CALENDAR_DOWNLOAD_ERROR, {
