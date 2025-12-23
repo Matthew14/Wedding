@@ -662,6 +662,9 @@ export default function RSVPFormPage() {
                 centered
                 radius="lg"
                 padding="xl"
+                closeButtonProps={{
+                    'aria-label': 'Close confirmation modal',
+                }}
                 styles={{
                     content: {
                         backgroundColor: "rgba(255, 255, 255, 0.98)",
