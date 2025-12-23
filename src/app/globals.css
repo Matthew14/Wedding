@@ -42,14 +42,6 @@ strong {
     color: inherit !important;
 }
 
-.mantine-Button-root:disabled {
-    opacity: 1 !important;
-}
-
-.mantine-Button-root:disabled .mantine-Button-label {
-    opacity: 1 !important;
-}
-
 /* Force dark text colors to prevent automatic lightening in headless browsers */
 .mantine-Title-root,
 .mantine-Text-root,
