@@ -41,6 +41,7 @@
     "@tabler/icons-react": "^3.26.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
+    "ics": "^3.8.1",
     "isomorphic-dompurify": "^2.26.0",
     "next": "15.5.9",
     "posthog-js": "^1.310.0",

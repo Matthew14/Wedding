@@ -4,6 +4,7 @@ import { Container, Title, Text, Paper, Button, Stack, Box, Alert } from "@manti
 import { IconCheck, IconHeart, IconHeartBroken } from "@tabler/icons-react";
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
+import { AddToCalendarButton } from "@/components/AddToCalendarButton";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useTracking, RSVPEvents } from "@/hooks";
@@ -109,6 +110,9 @@ function RSVPSuccessContent() {
                                     >
                                         Amend RSVP
                                     </Button>
+
+                                    {/* Calendar Dropdown - Only show for accepted RSVPs */}
+                                    {isComing && <AddToCalendarButton rsvpCode={rsvpCode} />}
                                 </Stack>
                             </Paper>
                         </Stack>
