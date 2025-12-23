@@ -604,6 +604,15 @@ export default function RSVPFormPage() {
                                                 fontWeight: 500,
                                                 letterSpacing: "0.02em",
                                             }}
+                                            styles={{
+                                                root: {
+                                                    '&:disabled': {
+                                                        backgroundColor: '#8b7355',
+                                                        color: '#ffffff',
+                                                        opacity: 0.6,
+                                                    },
+                                                },
+                                            }}
                                             fullWidth
                                         >
                                             Submit RSVP
@@ -805,11 +814,20 @@ export default function RSVPFormPage() {
                             size="md"
                             style={{
                                 borderColor: "#6d5a44",
-                                color: "var(--gold-dark)",
+                                color: "#6d5a44",
                                 fontWeight: 500,
                                 borderWidth: "2px",
                                 borderRadius: "8px",
                                 flex: 1,
+                            }}
+                            styles={{
+                                root: {
+                                    '&:disabled': {
+                                        borderColor: '#8b7355',
+                                        color: '#8b7355',
+                                        opacity: 0.6,
+                                    },
+                                },
                             }}
                         >
                             Go Back & Edit
@@ -827,6 +845,15 @@ export default function RSVPFormPage() {
                                 fontWeight: 500,
                                 borderRadius: "8px",
                                 flex: 1,
+                            }}
+                            styles={{
+                                root: {
+                                    '&:disabled': {
+                                        backgroundColor: '#8b7355',
+                                        color: '#ffffff',
+                                        opacity: 0.6,
+                                    },
+                                },
                             }}
                             loading={submitting}
                         >
