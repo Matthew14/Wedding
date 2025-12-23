@@ -42,48 +42,6 @@ strong {
     color: inherit !important;
 }
 
-/* Force dark text colors to prevent automatic lightening in headless browsers */
-.mantine-Title-root,
-.mantine-Text-root,
-.mantine-Radio-label,
-.mantine-Checkbox-label,
-.mantine-Input-input,
-.mantine-InputWrapper-label,
-.mantine-Button-label {
-    filter: none !important;
-    -webkit-filter: none !important;
-}
-
-/* Override Mantine default colors to ensure proper contrast */
-.mantine-Title-root[data-order="3"] {
-    color: #2d2d2d !important;
-}
-
-.mantine-Text-root {
-    color: #2d2d2d !important;
-}
-
-.mantine-Text-root[data-size="sm"] {
-    color: #5a5a5a !important;
-}
-
-.mantine-Text-root[data-size="lg"] {
-    color: #2d2d2d !important;
-}
-
-.mantine-Radio-label,
-.mantine-Checkbox-label {
-    color: #2d2d2d !important;
-}
-
-.mantine-InputWrapper-label {
-    color: #2d2d2d !important;
-}
-
-.mantine-Input-input::placeholder {
-    color: #5a5a5a !important;
-}
-
 /* Mobile viewport fix and smooth scrolling */
 html {
     width: 100%;

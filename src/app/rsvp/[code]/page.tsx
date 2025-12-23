@@ -859,6 +859,7 @@ export default function RSVPFormPage() {
                                 },
                             }}
                             loading={submitting}
+                            disabled={submitting}
                         >
                             Confirm & Submit
                         </Button>
