@@ -18,7 +18,7 @@ export default function LocationPage() {
                                 <Title
                                     order={1}
                                     style={{
-                                        color: "#2d2d2d",
+                                        color: "var(--text-primary)",
                                         marginBottom: "0",
                                         fontFamily: "var(--font-playfair), serif",
                                         fontSize: "clamp(2.5rem, 8vw, 3.5rem)",
@@ -33,7 +33,7 @@ export default function LocationPage() {
                                     Location
                                 </Title>
                                 <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
-                                <Text size="xl" style={{ color: "#5a5a5a", maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontSize: "1.125rem" }}>
+                                <Text size="xl" style={{ color: "var(--text-secondary)", maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontSize: "1.125rem" }}>
                                     Join us in Vilanova i la Geltrú, Spain for our special celebration
                                 </Text>
                             </Box>
@@ -66,10 +66,10 @@ export default function LocationPage() {
                                 <Group align="flex-start" gap="lg">
                                     <IconMapPin size={32} color="#6d5a44" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "#2d2d2d", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
+                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Venue Details
                                         </Title>
-                                        <Text style={{ color: "#5a5a5a", lineHeight: 1.8, fontSize: "1.05rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             We&apos;ll be celebrating at{" "}
                                             <ExternalLink href="https://www.granvillarosa.com/" label="Gran Villa Rosa Website">
                                                 Gran Villa Rosa
@@ -86,13 +86,13 @@ export default function LocationPage() {
                                 <Group align="flex-start" gap="lg">
                                     <IconPlane size={32} color="#6d5a44" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "#2d2d2d", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
+                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Getting There
                                         </Title>
-                                        <Text style={{ color: "#5a5a5a", lineHeight: 1.8, fontSize: "1.05rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             <strong>Nearest Airport:</strong> Barcelona-El Prat Airport (BCN)
                                         </Text>
-                                        <Text style={{ color: "#5a5a5a", lineHeight: 1.8, fontSize: "1.05rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             {travelCopy}
                                         </Text>
                                     </Stack>
@@ -104,20 +104,20 @@ export default function LocationPage() {
                                 <Group align="flex-start" gap="lg">
                                     <IconCar size={32} color="#6d5a44" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "#2d2d2d", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
+                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Parking & Accessibility
                                         </Title>
-                                        <Text style={{ color: "#5a5a5a", lineHeight: 1.8, fontSize: "1.05rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             <strong>Ample parking is available on-site</strong> at Gran Villa Rosa,
                                             making driving a convenient option for guests.
                                         </Text>
-                                        <Text style={{ color: "#5a5a5a", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
                                             <strong>For international guests:</strong> Consider renting a car for
                                             flexibility in exploring the beautiful Catalonian coast. The venue is easily
                                             accessible by car, and having your own transport allows you to enjoy nearby
                                             Sitges and other coastal towns at your own pace.
                                         </Text>
-                                        <Text style={{ color: "#5a5a5a", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
+                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
                                             <strong>Alternative options:</strong> Taxis and ride-sharing services are
                                             also available for those who prefer not to drive. We&apos;re committed to
                                             ensuring all our guests can comfortably attend our celebration.
