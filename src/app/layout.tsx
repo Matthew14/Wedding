@@ -84,11 +84,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" data-mantine-color-scheme="light" data-scroll-behavior="smooth">
+        <html lang="en" data-mantine-color-scheme="light" data-scroll-behavior="smooth" style={{ colorScheme: 'light' }}>
             <head>
-                <ColorSchemeScript />
+                <ColorSchemeScript forceColorScheme="light" />
+                <meta name="color-scheme" content="light only" />
             </head>
-            <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} antialiased`}>
+            <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} antialiased`} style={{ colorScheme: 'light' }}>
                 <PostHogProvider>
                     <Suspense fallback={null}>
                         <PageViewTracker />

@@ -10,7 +10,7 @@ import 'cypress-plugin-tab';
 // This is a known issue with Mantine where the server/client renders differ slightly
 Cypress.on('uncaught:exception', (err) => {
     // Ignore hydration mismatch errors
-    if (err.message.includes('Hydration failed') || 
+    if (err.message.includes('Hydration failed') ||
         err.message.includes('hydration mismatch') ||
         err.message.includes('server rendered HTML')) {
         return false;

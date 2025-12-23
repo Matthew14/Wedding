@@ -210,6 +210,7 @@ export default function RSVPPage() {
                                                 label="RSVP Code"
                                                 placeholder="ABC123"
                                                 description="Enter the 6-character code from your invitation"
+                                                aria-label="RSVP Code - Enter the 6-character code from your invitation"
                                                 value={rsvpCode}
                                                 onChange={e => handleCodeChange(e.target.value)}
                                                 onPaste={handlePaste}
