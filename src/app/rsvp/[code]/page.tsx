@@ -260,8 +260,13 @@ export default function RSVPFormPage() {
             form.setFieldValue("invitees",
                 form.values.invitees.map(inv => ({ ...inv, coming: false }))
             );
+        } else if (form.values.invitees.length === 1) {
+            // For single-person invitations, auto-mark them as coming when accepting
+            form.setFieldValue("invitees",
+                form.values.invitees.map(inv => ({ ...inv, coming: true }))
+            );
         }
-        // Note: When changing from "No" to "Yes", we DON'T auto-check invitees
+        // Note: When changing from "No" to "Yes" with multiple invitees, we DON'T auto-check
         // Let the user manually select who's coming
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [form.values.accepted, isInitialLoad]);

@@ -17,6 +17,10 @@ export const useRSVPForm = () => {
             invitees: (value, values) => {
                 // Only validate if they're accepting the invitation
                 if (values.accepted === true) {
+                    // Skip validation for single-person invitations - they're implicitly attending
+                    if (value?.length === 1) {
+                        return null;
+                    }
                     const anyoneComing = value?.some(inv => inv.coming);
                     if (!anyoneComing) {
                         return "Please select at least one guest who will be attending";
