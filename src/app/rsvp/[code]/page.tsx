@@ -96,10 +96,10 @@ export default function RSVPFormPage() {
                             accepted: data.accepted,
                             invitees: inviteesWithResponses,
                             staying_villa: data.stayingVilla ? "yes" : "no",
-                            dietary_restrictions: data.dietaryRestrictions,
-                            song_request: data.songRequest,
-                            travel_plans: data.travelPlans,
-                            message: data.message,
+                            dietary_restrictions: data.dietaryRestrictions ?? "",
+                            song_request: data.songRequest ?? "",
+                            travel_plans: data.travelPlans ?? "",
+                            message: data.message ?? "",
                         };
 
                         form.setValues(loadedValues);
