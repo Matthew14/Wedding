@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Mock @supabase/ssr
 vi.mock("@supabase/ssr", () => ({
@@ -12,7 +13,7 @@ const mockCreateBrowserClient = vi.mocked(createBrowserClient);
 
 describe("Supabase Client Utils", () => {
     it("creates browser client with correct environment variables", () => {
-        const mockClient = { auth: {}, from: vi.fn() };
+        const mockClient = { auth: {}, from: vi.fn() } as unknown as SupabaseClient;
         mockCreateBrowserClient.mockReturnValue(mockClient);
 
         const client = createClient();
@@ -32,7 +33,7 @@ describe("Supabase Client Utils", () => {
         delete process.env.NEXT_PUBLIC_SUPABASE_URL;
         delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        const mockClient = { auth: {}, from: vi.fn() };
+        const mockClient = { auth: {}, from: vi.fn() } as unknown as SupabaseClient;
         mockCreateBrowserClient.mockReturnValue(mockClient);
 
         createClient();
