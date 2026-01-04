@@ -114,12 +114,14 @@ export default function RSVPFormPage() {
                         });
                     } else {
                         // Set default invitees only if no existing data
-                        // Initialize as unchecked - users must manually select who's coming
+                        // For single-person invitations, auto-mark as coming since checkbox is hidden
+                        // For multiple invitees, initialize unchecked - users must manually select
+                        const isSingleInvitee = data.invitees?.length === 1;
                         form.setFieldValue("invitees",
                             data.invitees?.map((inv: Invitee) => ({
                                 id: inv.id,
                                 name: `${inv.first_name} ${inv.last_name}`,
-                                coming: false,
+                                coming: isSingleInvitee,
                             })) || []
                         );
                     }
