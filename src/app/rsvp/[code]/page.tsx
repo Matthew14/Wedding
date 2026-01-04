@@ -83,10 +83,13 @@ export default function RSVPFormPage() {
                         setInfoText("You're amending your RSVP, last updated on " + formattedDate);
 
                         // Map invitees with their existing responses
+                        // For single invitees, auto-correct coming to true since the checkbox is hidden
+                        // and they're implicitly attending when accepted is true
+                        const isSingleInvitee = data.invitees?.length === 1;
                         const inviteesWithResponses = data.invitees?.map((inv: Invitee & { coming?: boolean }) => ({
                             id: inv.id,
                             name: `${inv.first_name} ${inv.last_name}`,
-                            coming: inv.coming ?? false,
+                            coming: isSingleInvitee && data.accepted ? true : (inv.coming ?? false),
                         })) || [];
 
                         const loadedValues = {
