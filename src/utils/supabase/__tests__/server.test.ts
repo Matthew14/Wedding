@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Mock @supabase/ssr
 vi.mock("@supabase/ssr", () => ({
@@ -27,7 +28,7 @@ describe("Supabase Server Utils", () => {
     });
 
     it("creates server client with cookie handling", async () => {
-        const mockClient = { auth: {}, from: vi.fn() };
+        const mockClient = { auth: {}, from: vi.fn() } as unknown as SupabaseClient;
         mockCreateServerClient.mockReturnValue(mockClient);
         mockCookies.getAll.mockReturnValue([]);
 
@@ -47,8 +48,14 @@ describe("Supabase Server Utils", () => {
     });
 
     it("properly handles cookie operations", async () => {
-        const mockClient = { auth: {}, from: vi.fn() };
-        mockCreateServerClient.mockImplementation((url, key, options) => {
+        const mockClient = { auth: {}, from: vi.fn() } as unknown as SupabaseClient;
+        type CookieHandlers = {
+            cookies: {
+                getAll: () => void;
+                setAll: (cookies: { name: string; value: string; options: object }[]) => void;
+            };
+        };
+        mockCreateServerClient.mockImplementation((_url, _key, options: CookieHandlers) => {
             // Test the cookie handlers
             const cookieHandler = options.cookies;
 
@@ -58,7 +65,6 @@ describe("Supabase Server Utils", () => {
 
             // Test setAll
             const testCookies = [{ name: "test", value: "value", options: {} }];
-            // @ts-expect-error - mockCookies is not a RequestCookies
             cookieHandler.setAll(testCookies);
             expect(mockCookies.set).toHaveBeenCalledWith("test", "value", {});
 
@@ -71,8 +77,7 @@ describe("Supabase Server Utils", () => {
     it("awaits cookies function properly", async () => {
         const cookiesPromise = Promise.resolve(mockCookies);
         const { cookies } = await import("next/headers");
-        // @ts-expect-error - mockCookies is not a RequestCookies
-        vi.mocked(cookies).mockReturnValue(cookiesPromise);
+        vi.mocked(cookies).mockReturnValue(cookiesPromise as unknown as ReturnType<typeof cookies>);
 
         await createClient();
 
