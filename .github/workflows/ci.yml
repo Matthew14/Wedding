@@ -65,7 +65,14 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    
+
+    # Runs tests in parallel with matrix strategy
+    # https://docs.cypress.io/guides/guides/parallelization
+    strategy:
+      fail-fast: false
+      matrix:
+        containers: [1, 2]
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -107,12 +114,17 @@ jobs:
         start: npm run dev:test
         wait-on: 'http://localhost:3907'
         wait-on-timeout: 120
+        record: true
+        parallel: true
+      env:
+        CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Cypress screenshots
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: cypress-screenshots
+        name: cypress-screenshots-${{ matrix.containers }}
         path: cypress/screenshots
         retention-days: 7
 
@@ -120,7 +132,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: failure()
       with:
-        name: cypress-videos
+        name: cypress-videos-${{ matrix.containers }}
         path: cypress/videos
         retention-days: 7
 
