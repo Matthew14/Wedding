@@ -30,6 +30,8 @@ export default function InvitationPage() {
     const { trackEvent } = useTracking();
 
     useEffect(() => {
+        const abortController = new AbortController();
+
         const fetchInvitation = async () => {
             try {
                 const slug = params.slug as string;
@@ -43,7 +45,14 @@ export default function InvitationPage() {
                     return;
                 }
 
-                const response = await fetch(`/api/invitation/${slug}`);
+                const response = await fetch(`/api/invitation/${slug}`, {
+                    signal: abortController.signal,
+                });
+
+                // Don't update state if request was aborted
+                if (abortController.signal.aborted) {
+                    return;
+                }
 
                 if (response.ok) {
                     const data: InvitationData = await response.json();
@@ -59,17 +68,34 @@ export default function InvitationPage() {
                     });
                 }
             } catch (err) {
+                // Ignore abort errors - these are expected when navigating away
+                if (err instanceof Error && err.name === "AbortError") {
+                    return;
+                }
                 console.error("Error fetching invitation:", err);
                 setError(true);
                 trackEvent(InvitationEvents.INVALID_LINK, {
                     reason: "fetch_error",
                 });
             } finally {
-                setLoading(false);
+                // Only update loading state if not aborted
+                if (!abortController.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 
+        // Reset state when slug changes
+        setLoading(true);
+        setError(false);
+        setInvitationData(null);
+
         fetchInvitation();
+
+        // Cleanup: abort in-flight request when slug changes or component unmounts
+        return () => {
+            abortController.abort();
+        };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [params.slug]);
 
