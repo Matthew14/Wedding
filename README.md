@@ -21,7 +21,7 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
 - **Language**: TypeScript
 - **UI Library**: Mantine Components v7.15.2
 - **Database**: Supabase (PostgreSQL)
-- **Styling**: Tailwind CSS + Custom CSS with Mantine integration
+- **Styling**: Custom CSS with Mantine integration
 - **Icons**: Tabler Icons
 - **Fonts**: Geist Sans & Geist Mono
 - **Testing**: Vitest with React Testing Library (unit tests), Cypress (E2E tests)
@@ -74,7 +74,7 @@ Wedding/
 │   │   ├── login/         # Admin login page
 │   │   ├── rsvp/          # RSVP pages (entry, form, success)
 │   │   ├── schedule/      # 3-day wedding schedule with timeline
-│   │   ├── globals.css    # Global styles with Tailwind & custom CSS
+│   │   ├── globals.css    # Global styles and custom CSS
 │   │   ├── layout.tsx     # Root layout with Mantine provider
 │   │   └── page.tsx       # Homepage with hero section
 │   ├── components/        # Reusable components
@@ -97,7 +97,7 @@ Wedding/
 ├── next.config.js         # Next.js configuration
 ├── vitest.config.ts       # Vitest test configuration
 ├── tsconfig.json         # TypeScript configuration
-├── postcss.config.mjs    # PostCSS with Tailwind
+├── postcss.config.mjs    # PostCSS configuration
 └── eslint.config.mjs     # ESLint configuration
 ```
 
