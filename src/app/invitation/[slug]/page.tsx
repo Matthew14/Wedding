@@ -225,7 +225,7 @@ export default function InvitationPage() {
                                             fontSize: "clamp(2rem, 6vw, 2.75rem)",
                                             fontWeight: 400,
                                             color: "var(--text-primary)",
-                                            fontFamily: "var(--font-playfair), serif",
+                                            fontFamily: "var(--font-great-vibes), cursive",
                                             letterSpacing: "0.02em",
                                             lineHeight: 1.2,
                                         }}

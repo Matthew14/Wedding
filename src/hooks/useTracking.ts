@@ -148,6 +148,13 @@ export const InvitationEvents = {
     INVALID_LINK: 'invitation_invalid_link',
 } as const;
 
+// Invitation page tracking events
+export const InvitationEvents = {
+    PAGE_VIEWED: 'invitation_page_viewed',
+    RSVP_CLICKED: 'invitation_rsvp_clicked',
+    INVALID_LINK: 'invitation_invalid_link',
+} as const;
+
 // Site-wide tracking events
 export const SiteEvents = {
     // Navigation
