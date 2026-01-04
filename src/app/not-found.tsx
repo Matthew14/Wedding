@@ -22,7 +22,7 @@ export default function NotFound() {
         <>
             <Navigation />
             <main id="main-content">
-                <Container size="sm" py="xl" style={{ paddingTop: 100 }}>
+                <Container size="sm" py="xl" style={{ paddingTop: 120 }}>
                     <Paper shadow="md" radius="lg" p="xl">
                         <Stack gap="xl" align="center">
                             <IconError404 size={100} color="var(--gold-dark)" stroke={1.5} />
