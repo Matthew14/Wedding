@@ -357,7 +357,7 @@ export default function RSVPFormPage() {
                                 <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }}>
                                     Let us know if you&apos;re coming to our wedding! Once you&apos;ve filled out this
                                     form, you will still be able to amend your details here up until the 1st of
-                                    December. After that please get in touch if something changes.
+                                    April. After that please get in touch if something changes.
                                 </Text>
                                 )}
                             </Box>
@@ -490,8 +490,16 @@ export default function RSVPFormPage() {
                                                         required
                                                     >
                                                         <Group gap="lg">
-                                                            <Radio value="yes" label="Yes" size="md" />
-                                                            <Radio value="no" label="No" size="md" />
+                                                            <Radio
+                                                                value="yes"
+                                                                label={form.values.invitees.length > 1 ? "Yes, we are staying" : "Yes, I am staying"}
+                                                                size="md"
+                                                            />
+                                                            <Radio
+                                                                value="no"
+                                                                label={form.values.invitees.length > 1 ? "No, we will not be staying" : "No, I will not be staying"}
+                                                                size="md"
+                                                            />
                                                         </Group>
                                                     </Radio.Group>
                                                 </Box>
@@ -548,7 +556,7 @@ export default function RSVPFormPage() {
                                                     <Group gap="sm" mb="md">
                                                         <IconPlane size={20} color="#6d5a44" />
                                                         <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                            Please add any travel plans so we can help with transfers
+                                                            Please add any travel plans you have
                                                         </Text>
                                                     </Group>
                                                     <Textarea
