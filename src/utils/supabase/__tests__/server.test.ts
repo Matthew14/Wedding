@@ -49,13 +49,8 @@ describe("Supabase Server Utils", () => {
 
     it("properly handles cookie operations", async () => {
         const mockClient = { auth: {}, from: vi.fn() } as unknown as SupabaseClient;
-        type CookieHandlers = {
-            cookies: {
-                getAll: () => void;
-                setAll: (cookies: { name: string; value: string; options: object }[]) => void;
-            };
-        };
-        mockCreateServerClient.mockImplementation((_url, _key, options: CookieHandlers) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        mockCreateServerClient.mockImplementation(((_url: any, _key: any, options: any) => {
             // Test the cookie handlers
             const cookieHandler = options.cookies;
 
@@ -69,7 +64,7 @@ describe("Supabase Server Utils", () => {
             expect(mockCookies.set).toHaveBeenCalledWith("test", "value", {});
 
             return mockClient;
-        });
+        }) as typeof createServerClient);
 
         await createClient();
     });
