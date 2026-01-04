@@ -1,6 +1,63 @@
 -- Seed data for testing Wedding project
 -- Test invitation, RSVP, and invitees data
 
+-- Seed test admin user for authentication
+-- Password: password123
+INSERT INTO auth.users (
+    instance_id,
+    id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    confirmation_token,
+    email_change,
+    email_change_token_new,
+    recovery_token
+) VALUES (
+    '00000000-0000-0000-0000-000000000000',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'authenticated',
+    'authenticated',
+    'admin@wedding.test',
+    extensions.crypt('password123', extensions.gen_salt('bf')),
+    NOW(),
+    '{"provider":"email","providers":["email"]}',
+    '{}',
+    NOW(),
+    NOW(),
+    '',
+    '',
+    '',
+    ''
+);
+
+-- Create identity for the user (required for login)
+INSERT INTO auth.identities (
+    id,
+    user_id,
+    provider_id,
+    identity_data,
+    provider,
+    last_sign_in_at,
+    created_at,
+    updated_at
+) VALUES (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    '{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","email":"admin@wedding.test"}',
+    'email',
+    NOW(),
+    NOW(),
+    NOW()
+);
+
 -- Insert test invitation
 INSERT INTO public.invitation (id, "isMatthewSide") VALUES
     ('11111111-1111-1111-1111-111111111111', true);
