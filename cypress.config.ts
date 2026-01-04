@@ -2,6 +2,7 @@ import { defineConfig } from 'cypress';
 import { resetDatabase, queryDatabase, queryDatabaseMultiple } from './cypress/support/database';
 
 export default defineConfig({
+  projectId: 'b4zibi',
   e2e: {
     baseUrl: 'http://localhost:3907',
     viewportWidth: 1280,
