@@ -15,16 +15,24 @@ interface RateLimitEntry {
     resetTime: number;
 }
 
+/** Response structure for rate limit errors */
+export interface RateLimitErrorResponse {
+    error: string;
+    retryAfter: number;
+}
+
 // Store for rate limit entries (per IP)
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Clean up old entries periodically to prevent memory leaks
-const CLEANUP_INTERVAL = 60 * 1000; // 1 minute
+const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const MAX_ENTRIES = 10000; // Maximum entries before forced cleanup
 let lastCleanup = Date.now();
 
 function cleanupOldEntries() {
     const now = Date.now();
-    if (now - lastCleanup < CLEANUP_INTERVAL) {
+    // Run cleanup if interval passed OR if we've exceeded max entries
+    if (now - lastCleanup < CLEANUP_INTERVAL && rateLimitStore.size < MAX_ENTRIES) {
         return;
     }
 
@@ -36,6 +44,17 @@ function cleanupOldEntries() {
     }
 }
 
+// IPv4 and IPv6 validation patterns
+const IPV4_PATTERN = /^(\d{1,3}\.){3}\d{1,3}$/;
+const IPV6_PATTERN = /^[0-9a-fA-F:]+$/;
+
+/**
+ * Validate IP address format to prevent header spoofing
+ */
+function isValidIp(ip: string): boolean {
+    return IPV4_PATTERN.test(ip) || IPV6_PATTERN.test(ip);
+}
+
 /**
  * Get the client IP address from the request
  */
@@ -44,12 +63,16 @@ function getClientIp(request: NextRequest): string {
     const forwardedFor = request.headers.get("x-forwarded-for");
     if (forwardedFor) {
         // x-forwarded-for can contain multiple IPs, take the first one
-        return forwardedFor.split(",")[0].trim();
+        const ip = forwardedFor.split(",")[0].trim();
+        // Validate IP format to prevent injection/spoofing
+        if (isValidIp(ip)) {
+            return ip;
+        }
     }
 
     // Fallback to x-real-ip
     const realIp = request.headers.get("x-real-ip");
-    if (realIp) {
+    if (realIp && isValidIp(realIp)) {
         return realIp;
     }
 
@@ -59,11 +82,11 @@ function getClientIp(request: NextRequest): string {
 
 export interface RateLimitConfig {
     /** Maximum number of requests allowed in the window */
-    limit: number;
+    readonly limit: number;
     /** Time window in seconds */
-    windowSeconds: number;
+    readonly windowSeconds: number;
     /** Optional key prefix for namespacing different endpoints */
-    keyPrefix?: string;
+    readonly keyPrefix?: string;
 }
 
 export interface RateLimitResult {
@@ -130,7 +153,7 @@ export function checkRateLimit(request: NextRequest, config: RateLimitConfig): R
 /**
  * Create a rate-limited response with appropriate headers
  */
-export function rateLimitedResponse(result: RateLimitResult): NextResponse {
+export function rateLimitedResponse(result: RateLimitResult): NextResponse<RateLimitErrorResponse> {
     const retryAfter = Math.ceil((result.resetTime - Date.now()) / 1000);
 
     return NextResponse.json(
@@ -161,16 +184,21 @@ export function addRateLimitHeaders(response: NextResponse, result: RateLimitRes
 }
 
 // Default rate limit configurations for different endpoint types
-export const RATE_LIMITS = {
-    // RSVP validation - stricter limit to prevent brute force
-    RSVP_VALIDATE: { limit: 10, windowSeconds: 60, keyPrefix: "rsvp-validate" },
+export const RATE_LIMITS: Readonly<{
+    RSVP_VALIDATE: Readonly<RateLimitConfig>;
+    RSVP_SUBMIT: Readonly<RateLimitConfig>;
+    INVITATION: Readonly<RateLimitConfig>;
+    GENERAL: Readonly<RateLimitConfig>;
+}> = Object.freeze({
+    // RSVP validation - strictest limit to prevent brute force code guessing
+    RSVP_VALIDATE: Object.freeze({ limit: 5, windowSeconds: 60, keyPrefix: "rsvp-validate" }),
 
     // RSVP form submission - moderate limit
-    RSVP_SUBMIT: { limit: 20, windowSeconds: 60, keyPrefix: "rsvp-submit" },
+    RSVP_SUBMIT: Object.freeze({ limit: 20, windowSeconds: 60, keyPrefix: "rsvp-submit" }),
 
     // Invitation lookup - moderate limit
-    INVITATION: { limit: 30, windowSeconds: 60, keyPrefix: "invitation" },
+    INVITATION: Object.freeze({ limit: 30, windowSeconds: 60, keyPrefix: "invitation" }),
 
     // General API - more lenient
-    GENERAL: { limit: 60, windowSeconds: 60, keyPrefix: "general" },
-} as const;
+    GENERAL: Object.freeze({ limit: 60, windowSeconds: 60, keyPrefix: "general" }),
+});

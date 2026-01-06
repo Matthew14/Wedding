@@ -40,11 +40,15 @@ This document outlines the security measures implemented in the wedding website.
 - **Why**: Prevents brute-force attacks, API abuse, and reduces costs
 - **Location**: `src/utils/api/rateLimit.ts` (reusable utility)
 - **Protected Endpoints**:
-    - `/api/rsvp/validate/[code]` - 10 requests/minute (strictest, prevents code guessing)
+    - `/api/rsvp/validate/[code]` - 5 requests/minute (strictest, prevents code guessing)
     - `/api/rsvp/[code]` - 20 requests/minute (RSVP form submission)
     - `/api/invitation/[slug]` - 30 requests/minute (invitation lookup)
     - `/api/generate-faq-id` - 10 requests/minute (OpenAI cost protection)
-- **Implementation**: In-memory rate limiter with per-IP tracking
+- **Implementation**: In-memory rate limiter with per-IP tracking and validation
+- **Security Features**:
+    - IP format validation prevents header spoofing attacks
+    - Automatic memory cleanup prevents resource exhaustion
+    - Rate limit headers on all responses for client backoff
 - **Response**: Returns HTTP 429 with `Retry-After` header and rate limit metadata
 
 ## 🔒 Existing Security Features
