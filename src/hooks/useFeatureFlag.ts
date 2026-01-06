@@ -1,63 +1,42 @@
-import { usePostHog } from 'posthog-js/react';
-import { useEffect, useState } from 'react';
+import { usePostHog, useFeatureFlagEnabled, useFeatureFlagVariantKey } from 'posthog-js/react';
 
 /**
  * Hook to check if a feature flag is enabled
+ * Uses PostHog's built-in React hook which handles cleanup properly
  * @param flagKey - The key of the feature flag to check
- * @param defaultValue - The default value if the flag is not set
+ * @param defaultValue - The default value if the flag is not loaded yet
  * @returns The value of the feature flag
  */
 export const useFeatureFlag = (flagKey: string, defaultValue: boolean = false): boolean => {
     const posthog = usePostHog();
-    const [isEnabled, setIsEnabled] = useState(defaultValue);
+    const isEnabled = useFeatureFlagEnabled(flagKey);
 
-    useEffect(() => {
-        if (posthog) {
-            // Get the initial value
-            const flagValue = posthog.isFeatureEnabled(flagKey);
-            setIsEnabled(flagValue ?? defaultValue);
-
-            // Listen for feature flag updates
-            const callback = () => {
-                const newValue = posthog.isFeatureEnabled(flagKey);
-                setIsEnabled(newValue ?? defaultValue);
-            };
-
-            posthog.onFeatureFlags(callback);
-
-            // Cleanup is not needed as PostHog doesn't provide an unsubscribe method
-            // The callback will simply not fire after unmount
-        }
-    }, [posthog, flagKey, defaultValue]);
+    // Return default if PostHog isn't available or flag hasn't loaded
+    if (!posthog || isEnabled === undefined) {
+        return defaultValue;
+    }
 
     return isEnabled;
 };
 
 /**
  * Hook to get a multivariate feature flag value
+ * Uses PostHog's built-in React hook which handles cleanup properly
  * @param flagKey - The key of the feature flag to check
- * @param defaultValue - The default value if the flag is not set
- * @returns The value of the feature flag
+ * @param defaultValue - The default value if the flag is not loaded yet
+ * @returns The variant key of the feature flag (string or boolean)
  */
-export const useFeatureFlagVariant = (flagKey: string, defaultValue?: string): string | boolean | undefined => {
+export const useFeatureFlagVariant = (
+    flagKey: string,
+    defaultValue?: string | boolean
+): string | boolean | undefined => {
     const posthog = usePostHog();
-    const [variant, setVariant] = useState<string | boolean | undefined>(defaultValue);
+    const variant = useFeatureFlagVariantKey(flagKey);
 
-    useEffect(() => {
-        if (posthog) {
-            // Get the initial value
-            const flagValue = posthog.getFeatureFlag(flagKey);
-            setVariant(flagValue ?? defaultValue);
-
-            // Listen for feature flag updates
-            const callback = () => {
-                const newValue = posthog.getFeatureFlag(flagKey);
-                setVariant(newValue ?? defaultValue);
-            };
-
-            posthog.onFeatureFlags(callback);
-        }
-    }, [posthog, flagKey, defaultValue]);
+    // Return default if PostHog isn't available or flag hasn't loaded
+    if (!posthog || variant === undefined) {
+        return defaultValue;
+    }
 
     return variant;
 };

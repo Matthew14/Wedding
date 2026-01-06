@@ -48,7 +48,12 @@ export default function RSVPFormPage() {
 
     const form = useRSVPForm();
     const { trackEvent, identifyUser, setUserProperties, setGroup } = useTracking();
-    const formAnalytics = useFormAnalytics({ formName: 'rsvp_form' });
+    // Field-level tracking disabled - we use more specific events (DIETARY_FILLED, etc.)
+    const formAnalytics = useFormAnalytics({
+        formName: 'rsvp_form',
+        trackFieldFocus: false,
+        trackFieldBlur: false,
+    });
     useScrollDepth('rsvp_form');
 
     useEffect(() => {
