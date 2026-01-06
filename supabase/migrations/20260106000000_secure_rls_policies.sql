@@ -8,10 +8,29 @@
 -- This migration implements defense-in-depth security. RLS policies serve as
 -- a backstop to API-level validation, not a replacement.
 --
--- IMPORTANT ASSUMPTIONS:
--- 1. The Supabase anon key is NEVER exposed to clients directly
--- 2. All database mutations go through API endpoints that validate RSVP codes
--- 3. The anon key is only used server-side in API routes
+-- SECURITY CONTEXT:
+-- The Supabase anon key is exposed to browsers via NEXT_PUBLIC_SUPABASE_ANON_KEY.
+-- This is necessary for client-side Supabase features (auth, realtime, etc.).
+--
+-- WHAT RLS PROTECTS AGAINST:
+-- 1. Direct INSERT on RSVPs/invitees tables (only admins can create)
+-- 2. Direct DELETE on RSVPs/invitees tables (only admins can delete)
+-- 3. Unauthorized access to authenticated-only endpoints (FAQs management)
+--
+-- WHAT RLS DOES NOT PROTECT AGAINST:
+-- 1. Direct UPDATE to RSVPs/invitees (mitigated by API validation of RSVP codes)
+-- 2. Reading all RSVPs/invitees data (acceptable for wedding site)
+--
+-- API-LEVEL PROTECTIONS (src/app/api/rsvp/[code]/route.ts):
+-- 1. RSVP code validation before any updates
+-- 2. Invitee ownership validation (invitation_id check) before updates
+--
+-- ACCEPTED RISK:
+-- A malicious user could theoretically read all RSVP data via direct Supabase
+-- queries. This is acceptable for a private wedding site where:
+-- - Guest list is not highly sensitive
+-- - Only invited guests have the site URL
+-- - No financial or PII data beyond names is stored
 --
 -- TABLE PERMISSIONS:
 -- +------------+--------+--------+--------+--------+---------------------------+
