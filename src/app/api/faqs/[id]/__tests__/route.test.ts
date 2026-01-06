@@ -42,6 +42,18 @@ const mockUnauthenticatedUser = () => {
 // Helper to create params promise
 const createParams = (id: string) => Promise.resolve({ id });
 
+// Helper to create a complete mock chain with all methods
+const createMockChain = (overrides: Record<string, unknown> = {}) => ({
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
+    ...overrides,
+});
+
 describe("/api/faqs/[id]", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -51,14 +63,12 @@ describe("/api/faqs/[id]", () => {
         it("returns FAQ successfully", async () => {
             const mockFAQ = { id: "test-1", question: "Test Q", answer: "Test A" };
 
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
+            const mockChain = createMockChain({
                 single: vi.fn().mockResolvedValue({
                     data: mockFAQ,
                     error: null,
                 }),
-            };
+            });
             mockSupabaseClient.from.mockReturnValue(mockChain);
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1");
@@ -70,14 +80,12 @@ describe("/api/faqs/[id]", () => {
         });
 
         it("returns 404 for non-existent FAQ", async () => {
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
+            const mockChain = createMockChain({
                 single: vi.fn().mockResolvedValue({
                     data: null,
                     error: { code: "PGRST116", message: "Not found" },
                 }),
-            };
+            });
             mockSupabaseClient.from.mockReturnValue(mockChain);
 
             const request = new NextRequest("http://localhost:3000/api/faqs/nonexistent");
@@ -109,15 +117,12 @@ describe("/api/faqs/[id]", () => {
             mockAuthenticatedUser();
             const updatedFAQ = { id: "test-1", question: "Updated Q", answer: "Updated A" };
 
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                update: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
+            const mockChain = createMockChain({
                 single: vi.fn().mockResolvedValue({
                     data: updatedFAQ,
                     error: null,
                 }),
-            };
+            });
             mockSupabaseClient.from.mockReturnValue(mockChain);
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
@@ -150,15 +155,12 @@ describe("/api/faqs/[id]", () => {
         it("returns 404 for non-existent FAQ", async () => {
             mockAuthenticatedUser();
 
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                update: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
+            const mockChain = createMockChain({
                 single: vi.fn().mockResolvedValue({
                     data: null,
                     error: { code: "PGRST116", message: "Not found" },
                 }),
-            };
+            });
             mockSupabaseClient.from.mockReturnValue(mockChain);
 
             const request = new NextRequest("http://localhost:3000/api/faqs/nonexistent", {
@@ -192,12 +194,11 @@ describe("/api/faqs/[id]", () => {
         it("deletes FAQ successfully when authenticated", async () => {
             mockAuthenticatedUser();
 
-            const mockChain = {
-                delete: vi.fn().mockReturnThis(),
+            const mockChain = createMockChain({
                 eq: vi.fn().mockResolvedValue({
                     error: null,
                 }),
-            };
+            });
             mockSupabaseClient.from.mockReturnValue(mockChain);
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
@@ -214,12 +215,11 @@ describe("/api/faqs/[id]", () => {
         it("handles database errors during deletion", async () => {
             mockAuthenticatedUser();
 
-            const mockChain = {
-                delete: vi.fn().mockReturnThis(),
+            const mockChain = createMockChain({
                 eq: vi.fn().mockResolvedValue({
                     error: { message: "Delete failed" },
                 }),
-            };
+            });
             mockSupabaseClient.from.mockReturnValue(mockChain);
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
