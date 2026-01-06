@@ -11,6 +11,7 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
     hasError: boolean;
     error: Error | null;
+    resetKey: number;
 }
 
 // Theme gold color - hardcoded to avoid SSR issues with useMantineTheme hook
@@ -29,10 +30,10 @@ class ErrorBoundaryInner extends Component<
 > {
     constructor(props: ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog> }) {
         super(props);
-        this.state = { hasError: false, error: null };
+        this.state = { hasError: false, error: null, resetKey: 0 };
     }
 
-    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
         return { hasError: true, error };
     }
 
@@ -63,7 +64,13 @@ class ErrorBoundaryInner extends Component<
                             We&apos;re sorry for the inconvenience. Please try refreshing the page.
                         </Text>
                         <Button
-                            onClick={() => this.setState({ hasError: false, error: null })}
+                            onClick={() => this.setState(prev => ({
+                                hasError: false,
+                                error: null,
+                                // Increment key to force React to remount children
+                                // This prevents immediate re-errors from stale component state
+                                resetKey: prev.resetKey + 1,
+                            }))}
                             size="lg"
                             style={{ backgroundColor: GOLD_COLOR, marginRight: '0.5rem' }}
                         >
@@ -94,7 +101,9 @@ class ErrorBoundaryInner extends Component<
             );
         }
 
-        return this.props.children;
+        // Use resetKey to force remount of children after recovery
+        // This prevents stale component state from causing immediate re-errors
+        return <div key={this.state.resetKey}>{this.props.children}</div>;
     }
 }
 

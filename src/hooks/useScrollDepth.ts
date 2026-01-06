@@ -19,7 +19,15 @@ export const useScrollDepth = (pageName: string) => {
     }, [trackEvent, pageName]);
 
     useEffect(() => {
+        // Throttle scroll handling to improve performance (100ms)
+        let lastScrollTime = 0;
+        const THROTTLE_MS = 100;
+
         const handleScroll = () => {
+            const now = Date.now();
+            if (now - lastScrollTime < THROTTLE_MS) return;
+            lastScrollTime = now;
+
             const windowHeight = window.innerHeight;
             const documentHeight = document.documentElement.scrollHeight;
             const scrollTop = window.scrollY;

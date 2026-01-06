@@ -21,16 +21,14 @@ export const useSurvey = () => {
 
     /**
      * Manually trigger a survey to be shown
+     * Note: PostHog surveys are shown automatically based on targeting rules
+     * This is a placeholder for any custom survey display logic
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const showSurvey = useCallback((surveyId: string) => {
-        if (posthog) {
-            // Surveys are shown automatically by PostHog based on targeting rules
-            // This is a placeholder for any custom survey display logic
-            if (process.env.NODE_ENV === 'development') {
-                console.log(`Survey ${surveyId} should be shown`);
-            }
-        }
-    }, [posthog]);
+        // Surveys are shown automatically by PostHog based on targeting rules
+        // This method exists for future custom survey display logic
+    }, []);
 
     /**
      * Dismiss a survey
