@@ -22,17 +22,17 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
 interface Invitation {
-    id: number;
+    id: string;
     created_at: string;
     isMatthewSide: boolean;
 }
 
 interface Invitee {
-    id: number;
+    id: string;
     created_at: string;
     first_name: string;
     last_name: string;
-    invitation_id: number | null;
+    invitation_id: string | null;
 }
 
 export default function InvitationsPage() {
@@ -65,7 +65,7 @@ export default function InvitationsPage() {
 
     const [invitationForm, setInvitationForm] = useState({
         isMatthewSide: true,
-        selectedInvitees: [] as number[],
+        selectedInvitees: [] as string[],
     });
 
     const [invitationErrors, setInvitationErrors] = useState<{ [key: string]: string }>({});
@@ -145,7 +145,7 @@ export default function InvitationsPage() {
         }
     };
 
-    const getInviteesForInvitation = (invitationId: number) => {
+    const getInviteesForInvitation = (invitationId: string) => {
         return invitees.filter(invitee => invitee.invitation_id === invitationId);
     };
 
@@ -361,11 +361,11 @@ export default function InvitationsPage() {
                                     value: invitee.id.toString(),
                                     label: `${invitee.first_name} ${invitee.last_name}`,
                                 }))}
-                            value={invitationForm.selectedInvitees.map(id => id.toString())}
+                            value={invitationForm.selectedInvitees}
                             onChange={values =>
                                 setInvitationForm(prev => ({
                                     ...prev,
-                                    selectedInvitees: values.map(v => parseInt(v)),
+                                    selectedInvitees: values,
                                 }))
                             }
                             searchable

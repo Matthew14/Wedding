@@ -268,7 +268,7 @@ export default function RSVPFormPage() {
         }
     };
 
-    const handleInviteeChange = (inviteeId: number, coming: boolean) => {
+    const handleInviteeChange = (inviteeId: string, coming: boolean) => {
         const updatedInvitees = form.values.invitees.map(inv =>
             inv.id === inviteeId ? { ...inv, coming } : inv
         );
