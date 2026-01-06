@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { checkRateLimit, rateLimitedResponse, RATE_LIMITS } from "@/utils/api/rateLimit";
 
 interface Invitee {
     id: string;
@@ -43,6 +44,12 @@ export async function GET(
     { params }: { params: Promise<{ slug: string }> }
 ) {
     try {
+        // Rate limit: 30 requests per minute per IP
+        const rateLimit = checkRateLimit(request, RATE_LIMITS.INVITATION);
+        if (!rateLimit.success) {
+            return rateLimitedResponse(rateLimit);
+        }
+
         const { slug } = await params;
 
         // Parse the slug to get names and code

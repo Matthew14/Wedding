@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { checkRateLimit, rateLimitedResponse, RATE_LIMITS } from "@/utils/api/rateLimit";
 
 // GET: Fetch RSVP data and invitees
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
     try {
+        // Rate limit: 20 requests per minute per IP
+        const rateLimit = checkRateLimit(request, RATE_LIMITS.RSVP_SUBMIT);
+        if (!rateLimit.success) {
+            return rateLimitedResponse(rateLimit);
+        }
+
         const { code } = await params;
 
         if (!code || code.length !== 6) {
@@ -55,6 +62,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // POST: Submit RSVP form
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
     try {
+        // Rate limit: 20 requests per minute per IP
+        const rateLimit = checkRateLimit(request, RATE_LIMITS.RSVP_SUBMIT);
+        if (!rateLimit.success) {
+            return rateLimitedResponse(rateLimit);
+        }
+
         const { code } = await params;
         const body = await request.json();
 
