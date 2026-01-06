@@ -49,6 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     position: "sticky",
                     top: 0,
                     zIndex: 100,
+                    overflow: "visible",
                 }}
             >
                 <Container size="xl" style={{ padding: "1rem 1rem" }}>
