@@ -2,7 +2,7 @@
 
 import { Component, ReactNode } from 'react';
 import { usePostHog } from 'posthog-js/react';
-import { Container, Title, Text, Button, Stack, Paper, Code, useMantineTheme, MantineTheme } from '@mantine/core';
+import { Container, Title, Text, Button, Stack, Paper, Code } from '@mantine/core';
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -13,19 +13,21 @@ interface ErrorBoundaryState {
     error: Error | null;
 }
 
-// Wrapper component to access PostHog hook and theme
+// Theme gold color - hardcoded to avoid SSR issues with useMantineTheme hook
+const GOLD_COLOR = '#8b7355';
+
+// Wrapper component to access PostHog hook
 function ErrorBoundaryWithPostHog({ children }: ErrorBoundaryProps) {
     const posthog = usePostHog();
-    const theme = useMantineTheme();
-    return <ErrorBoundaryInner posthog={posthog} theme={theme}>{children}</ErrorBoundaryInner>;
+    return <ErrorBoundaryInner posthog={posthog}>{children}</ErrorBoundaryInner>;
 }
 
 // Class component for error boundary
 class ErrorBoundaryInner extends Component<
-    ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog>; theme: MantineTheme },
+    ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog> },
     ErrorBoundaryState
 > {
-    constructor(props: ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog>; theme: MantineTheme }) {
+    constructor(props: ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog> }) {
         super(props);
         this.state = { hasError: false, error: null };
     }
@@ -51,12 +53,10 @@ class ErrorBoundaryInner extends Component<
 
     render() {
         if (this.state.hasError) {
-            const goldColor = this.props.theme.colors.gold?.[4] || '#8b7355';
-
             return (
                 <Container size="md" py="xl">
                     <Stack align="center" gap="lg">
-                        <Title order={1} style={{ color: goldColor, textAlign: 'center' }}>
+                        <Title order={1} style={{ color: GOLD_COLOR, textAlign: 'center' }}>
                             Oops! Something went wrong
                         </Title>
                         <Text size="lg" ta="center">
@@ -65,7 +65,7 @@ class ErrorBoundaryInner extends Component<
                         <Button
                             onClick={() => this.setState({ hasError: false, error: null })}
                             size="lg"
-                            style={{ backgroundColor: goldColor, marginRight: '0.5rem' }}
+                            style={{ backgroundColor: GOLD_COLOR, marginRight: '0.5rem' }}
                         >
                             Try Again
                         </Button>
@@ -73,7 +73,7 @@ class ErrorBoundaryInner extends Component<
                             onClick={() => window.location.reload()}
                             size="lg"
                             variant="outline"
-                            style={{ borderColor: goldColor, color: goldColor }}
+                            style={{ borderColor: GOLD_COLOR, color: GOLD_COLOR }}
                         >
                             Refresh Page
                         </Button>
