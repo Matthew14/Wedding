@@ -27,16 +27,25 @@ export async function GET() {
     }
 }
 
-// POST /api/faqs - Create a new FAQ
+// POST /api/faqs - Create a new FAQ (requires authentication)
 export async function POST(request: NextRequest) {
     try {
+        const supabase = await createClient();
+
+        // Verify user is authenticated
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { id, question, answer }: FAQ = await request.json();
 
         if (!question || !answer) {
             return NextResponse.json({ error: "Question and answer are required" }, { status: 400 });
         }
-
-        const supabase = await createClient();
 
         // Prepare the insert data
         const insertData: Partial<FAQ> = {

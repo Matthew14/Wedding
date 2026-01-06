@@ -52,4 +52,6 @@ cypress/videos
 cypress.env.json
 cypress/downloads
 
+# MCP configuration (contains credentials)
+.mcp.json
 markdowns/.mcp.json

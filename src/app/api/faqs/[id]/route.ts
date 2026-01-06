@@ -31,17 +31,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 }
 
-// PUT /api/faqs/[id] - Update a specific FAQ
+// PUT /api/faqs/[id] - Update a specific FAQ (requires authentication)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const supabase = await createClient();
+
+        // Verify user is authenticated
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const { id } = await params;
         const { id: newId, question, answer }: FAQ = await request.json();
 
         if (!question || !answer) {
             return NextResponse.json({ error: "Question and answer are required" }, { status: 400 });
         }
-
-        const supabase = await createClient();
 
         // Prepare the update data
         const updateData: Partial<FAQ> = {
@@ -71,11 +80,21 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 }
 
-// DELETE /api/faqs/[id] - Delete a specific FAQ
+// DELETE /api/faqs/[id] - Delete a specific FAQ (requires authentication)
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = await params;
         const supabase = await createClient();
+
+        // Verify user is authenticated
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await params;
 
         const { error } = await supabase.from("FAQs").delete().eq("id", id);
 
