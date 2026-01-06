@@ -39,6 +39,14 @@ const mockUnauthenticatedUser = () => {
     });
 };
 
+// Helper to mock auth service error
+const mockAuthServiceError = () => {
+    mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Auth service unavailable" },
+    });
+};
+
 describe("/api/faqs", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -99,6 +107,21 @@ describe("/api/faqs", () => {
     describe("POST /api/faqs", () => {
         it("returns 401 when user is not authenticated", async () => {
             mockUnauthenticatedUser();
+
+            const request = new NextRequest("http://localhost:3000/api/faqs", {
+                method: "POST",
+                body: JSON.stringify({ question: "Test", answer: "Test" }),
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(data.error).toBe("Unauthorized");
+        });
+
+        it("returns 401 when auth service returns an error", async () => {
+            mockAuthServiceError();
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
                 method: "POST",

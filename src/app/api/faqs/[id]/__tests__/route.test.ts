@@ -39,6 +39,14 @@ const mockUnauthenticatedUser = () => {
     });
 };
 
+// Helper to mock auth service error
+const mockAuthServiceError = () => {
+    mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Auth service unavailable" },
+    });
+};
+
 // Helper to create params promise
 const createParams = (id: string) => Promise.resolve({ id });
 
@@ -100,6 +108,21 @@ describe("/api/faqs/[id]", () => {
     describe("PUT /api/faqs/[id]", () => {
         it("returns 401 when user is not authenticated", async () => {
             mockUnauthenticatedUser();
+
+            const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
+                method: "PUT",
+                body: JSON.stringify({ question: "Updated Q", answer: "Updated A" }),
+            });
+
+            const response = await PUT(request, { params: createParams("test-1") });
+            const data = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(data.error).toBe("Unauthorized");
+        });
+
+        it("returns 401 when auth service returns an error", async () => {
+            mockAuthServiceError();
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "PUT",
@@ -179,6 +202,20 @@ describe("/api/faqs/[id]", () => {
     describe("DELETE /api/faqs/[id]", () => {
         it("returns 401 when user is not authenticated", async () => {
             mockUnauthenticatedUser();
+
+            const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
+                method: "DELETE",
+            });
+
+            const response = await DELETE(request, { params: createParams("test-1") });
+            const data = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(data.error).toBe("Unauthorized");
+        });
+
+        it("returns 401 when auth service returns an error", async () => {
+            mockAuthServiceError();
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "DELETE",

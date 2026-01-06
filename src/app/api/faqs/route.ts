@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { requireAuth } from "@/utils/api/requireAuth";
 
 export interface FAQ {
     id?: string;
@@ -33,12 +34,9 @@ export async function POST(request: NextRequest) {
         const supabase = await createClient();
 
         // Verify user is authenticated
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const auth = await requireAuth(supabase);
+        if (!auth.success) {
+            return auth.response;
         }
 
         const { id, question, answer }: FAQ = await request.json();
