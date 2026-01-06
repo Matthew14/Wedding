@@ -36,11 +36,16 @@ This document outlines the security measures implemented in the wedding website.
 
 ### 4. Rate Limiting
 
-- **What**: Request limiting for the OpenAI API endpoint
-- **Why**: Prevents API abuse and reduces costs
-- **Location**: `src/app/api/generate-faq-id/route.ts`
-- **Limits**: 10 requests per minute per IP address
-- **Response**: Returns HTTP 429 with retry information when limit exceeded
+- **What**: Request limiting for public API endpoints
+- **Why**: Prevents brute-force attacks, API abuse, and reduces costs
+- **Location**: `src/utils/api/rateLimit.ts` (reusable utility)
+- **Protected Endpoints**:
+    - `/api/rsvp/validate/[code]` - 10 requests/minute (strictest, prevents code guessing)
+    - `/api/rsvp/[code]` - 20 requests/minute (RSVP form submission)
+    - `/api/invitation/[slug]` - 30 requests/minute (invitation lookup)
+    - `/api/generate-faq-id` - 10 requests/minute (OpenAI cost protection)
+- **Implementation**: In-memory rate limiter with per-IP tracking
+- **Response**: Returns HTTP 429 with `Retry-After` header and rate limit metadata
 
 ## 🔒 Existing Security Features
 
@@ -121,6 +126,7 @@ For production deployment, consider:
 - [x] Add security headers
 - [x] Implement input sanitization
 - [x] Add rate limiting for external APIs
+- [x] Add rate limiting for public endpoints (RSVP, invitation)
 - [x] Validate all user inputs
 - [x] Use environment variables for secrets
 - [x] Keep dependencies updated

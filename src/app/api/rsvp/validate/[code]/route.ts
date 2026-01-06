@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { checkRateLimit, rateLimitedResponse, RATE_LIMITS } from "@/utils/api/rateLimit";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
     try {
+        // Rate limit: 10 requests per minute per IP
+        const rateLimit = checkRateLimit(request, RATE_LIMITS.RSVP_VALIDATE);
+        if (!rateLimit.success) {
+            return rateLimitedResponse(rateLimit);
+        }
+
         const { code } = await params;
 
         if (!code || code.length !== 6) {
