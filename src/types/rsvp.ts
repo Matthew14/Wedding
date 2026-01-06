@@ -17,6 +17,8 @@ export interface Invitee {
 export interface DatabaseRSVPResponse {
     invitees: Invitee[];
     accepted: boolean;
+    rsvpId: number;
+    invitationId: number;
     stayingVilla: boolean;
     dietaryRestrictions: string;
     songRequest: string;

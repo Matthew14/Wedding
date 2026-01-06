@@ -31,7 +31,7 @@ import {
 } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
 import { RSVPFormData, Invitee, DatabaseRSVPResponse } from "@/types";
-import { useRSVPForm, useTracking, RSVPEvents } from "@/hooks";
+import { useRSVPForm, useTracking, RSVPEvents, useFormAnalytics, useScrollDepth } from "@/hooks";
 
 export default function RSVPFormPage() {
     const params = useParams();
@@ -47,7 +47,9 @@ export default function RSVPFormPage() {
     const previousAcceptedRef = useRef<boolean | null>(null);
 
     const form = useRSVPForm();
-    const { trackEvent } = useTracking();
+    const { trackEvent, identifyUser, setUserProperties, setGroup } = useTracking();
+    const formAnalytics = useFormAnalytics({ formName: 'rsvp_form' });
+    useScrollDepth('rsvp_form');
 
     useEffect(() => {
         const fetchRSVPData = async () => {
@@ -61,6 +63,24 @@ export default function RSVPFormPage() {
                     const data: DatabaseRSVPResponse = await response.json();
                     const isReturningUser = !!(data && data.updatedAt);
                     const inviteeCount = data.invitees?.length || 0;
+
+                    // Identify user in PostHog
+                    const guestNames = data.invitees?.map((inv: Invitee) =>
+                        `${inv.first_name} ${inv.last_name}`
+                    ).join(', ') || 'Unknown Guest';
+
+                    identifyUser(code, {
+                        rsvp_code: code,
+                        guest_names: guestNames,
+                        invitee_count: inviteeCount,
+                        is_returning_user: isReturningUser,
+                    });
+
+                    // Set group for invitation-level analytics
+                    setGroup('invitation', data.invitationId.toString(), {
+                        invitee_count: inviteeCount,
+                        guest_names: guestNames,
+                    });
 
                     // Track form view (page view tracked by PageViewTracker component)
                     trackEvent(RSVPEvents.FORM_VIEWED, {
@@ -186,11 +206,34 @@ export default function RSVPFormPage() {
 
             if (response.ok) {
                 setSuccess(true);
+
+                // Update user properties with RSVP choices
+                const attendingInvitees = values.invitees
+                    .filter(inv => inv.coming)
+                    .map(inv => inv.name)
+                    .join(', ');
+
+                setUserProperties({
+                    accepted: values.accepted,
+                    attending_count: attendingCount,
+                    staying_villa: values.staying_villa === "yes",
+                    has_dietary_restrictions: !!values.dietary_restrictions,
+                    has_song_request: !!values.song_request,
+                    has_travel_plans: !!values.travel_plans,
+                    has_message: !!values.message,
+                    attending_invitees: attendingInvitees || 'None',
+                    last_updated: new Date().toISOString(),
+                });
+
                 trackEvent(RSVPEvents.SUBMIT_SUCCESS, {
                     code,
                     accepted: values.accepted,
                     attending_count: attendingCount,
                 });
+
+                // Track form submission completion
+                formAnalytics.trackFormSubmission(true);
+
                 setTimeout(() => {
                     router.push(`/rsvp/success?accepted=${values.accepted ? 'yes' : 'no'}&code=${params.code}`);
                 }, 500);
@@ -203,6 +246,9 @@ export default function RSVPFormPage() {
                     code,
                     error: errorMessage,
                 });
+
+                // Track form submission error
+                formAnalytics.trackFormSubmission(false, errorMessage);
             }
         } catch (err) {
             setError("Something went wrong. Please try again.");
@@ -211,6 +257,9 @@ export default function RSVPFormPage() {
                 code: params.code as string,
                 error: String(err),
             });
+
+            // Track form submission error
+            formAnalytics.trackFormSubmission(false, String(err));
         }
     };
 

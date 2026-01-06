@@ -20,9 +20,87 @@ export const useTracking = () => {
         }
     }, [posthog]);
 
+    const trackException = useCallback((error: Error, properties?: Record<string, unknown>) => {
+        if (posthog) {
+            posthog.captureException(error, properties);
+        }
+    }, [posthog]);
+
+    const identifyUser = useCallback((userId: string, properties?: Record<string, unknown>) => {
+        if (posthog) {
+            posthog.identify(userId, properties);
+        }
+    }, [posthog]);
+
+    const setUserProperties = useCallback((properties: Record<string, unknown>) => {
+        if (posthog) {
+            posthog.setPersonProperties(properties);
+        }
+    }, [posthog]);
+
+    const trackPerformance = useCallback((
+        eventName: string,
+        startTime: number,
+        properties?: Record<string, unknown>
+    ) => {
+        const duration = Math.round(performance.now() - startTime);
+        if (posthog) {
+            posthog.capture(eventName, {
+                duration_ms: duration,
+                ...properties,
+            });
+        }
+        return duration;
+    }, [posthog]);
+
+    const trackAPICall = useCallback(async <T,>(
+        apiCall: () => Promise<T>,
+        eventName: string,
+        properties?: Record<string, unknown>
+    ): Promise<T> => {
+        const startTime = performance.now();
+        try {
+            const result = await apiCall();
+            const duration = Math.round(performance.now() - startTime);
+
+            if (posthog) {
+                posthog.capture(`${eventName}_success`, {
+                    duration_ms: duration,
+                    ...properties,
+                });
+            }
+
+            return result;
+        } catch (error) {
+            const duration = Math.round(performance.now() - startTime);
+
+            if (posthog) {
+                posthog.capture(`${eventName}_error`, {
+                    duration_ms: duration,
+                    error: error instanceof Error ? error.message : String(error),
+                    ...properties,
+                });
+            }
+
+            throw error;
+        }
+    }, [posthog]);
+
+    const setGroup = useCallback((groupType: string, groupKey: string, properties?: Record<string, unknown>) => {
+        if (posthog) {
+            posthog.group(groupType, groupKey, properties);
+        }
+    }, [posthog]);
+
     return {
         trackEvent,
         trackPageView,
+        trackException,
+        identifyUser,
+        setUserProperties,
+        trackPerformance,
+        trackAPICall,
+        setGroup,
     };
 };
 

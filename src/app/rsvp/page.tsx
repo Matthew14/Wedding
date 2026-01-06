@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { IconMail, IconCheck, IconX, IconAlertCircle } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
-import { useTracking, RSVPEvents } from "@/hooks";
+import { useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
 
 type ValidationState = "idle" | "validating" | "valid" | "invalid";
 
@@ -19,6 +19,7 @@ export default function RSVPPage() {
     const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const router = useRouter();
     const { trackEvent } = useTracking();
+    useScrollDepth('rsvp_code_entry');
 
     // Track page view on mount
     useEffect(() => {
