@@ -14,7 +14,6 @@ const nextConfig = {
         domains: [""],
         remotePatterns: [],
     },
-    serverExternalPackages: ["isomorphic-dompurify"],
     experimental: {
         optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
     },

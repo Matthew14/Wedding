@@ -38,18 +38,15 @@ export async function POST(request: NextRequest) {
 
         const supabase = await createClient();
 
-        // Dynamic import of DOMPurify to avoid ES Module issues in production
-        const { default: DOMPurify } = await import("isomorphic-dompurify");
-
-        // Prepare the insert data with sanitization
+        // Prepare the insert data
         const insertData: Partial<FAQ> = {
-            question: DOMPurify.sanitize(question.trim()),
-            answer: DOMPurify.sanitize(answer.trim()),
+            question: question.trim(),
+            answer: answer.trim(),
         };
 
-        // Only include id if it's provided (sanitize ID too)
+        // Only include id if it's provided
         if (id && id.trim()) {
-            insertData.id = DOMPurify.sanitize(id.trim());
+            insertData.id = id.trim();
         }
 
         const { data: faq, error } = await supabase.from("FAQs").insert([insertData]).select().single();
