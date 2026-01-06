@@ -76,7 +76,7 @@ describe('Authentication Flow', () => {
 
         // Should redirect to dashboard
         cy.url({ timeout: 10000 }).should('include', '/dashboard');
-        cy.contains('Dashboard', { timeout: 5000 }).should('be.visible');
+        cy.contains('Dashboard', { timeout: 5000 }).scrollIntoView().should('be.visible');
       });
     });
 
