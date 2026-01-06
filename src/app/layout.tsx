@@ -9,7 +9,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { UTMTracker } from "@/components/UTMTracker";
 import { Footer } from "@/components/Footer";
 import { Suspense } from "react";
 
@@ -97,7 +96,6 @@ export default function RootLayout({
                     <ErrorBoundary>
                         <Suspense fallback={null}>
                             <PageViewTracker />
-                            <UTMTracker />
                         </Suspense>
                         <MantineProvider theme={theme} forceColorScheme="light">
                             <AuthProvider>

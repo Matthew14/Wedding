@@ -52,4 +52,4 @@ cypress/videos
 cypress.env.json
 cypress/downloads
 
-markdowns/
+markdowns/.mcp.json
