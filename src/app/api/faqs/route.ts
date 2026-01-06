@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import DOMPurify from "isomorphic-dompurify";
 
 export interface FAQ {
     id?: string;
@@ -38,6 +37,9 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = await createClient();
+
+        // Dynamic import of DOMPurify to avoid ES Module issues in production
+        const { default: DOMPurify } = await import("isomorphic-dompurify");
 
         // Prepare the insert data with sanitization
         const insertData: Partial<FAQ> = {
