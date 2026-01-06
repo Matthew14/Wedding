@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTracking } from './useTracking';
 
 export const useUTMTracking = () => {
     const searchParams = useSearchParams();
     const { trackEvent, setUserProperties } = useTracking();
+    const hasTrackedUTMRef = useRef(false);
+    const hasTrackedReferrerRef = useRef(false);
 
     useEffect(() => {
         // Extract UTM parameters
@@ -14,8 +16,10 @@ export const useUTMTracking = () => {
         const utmTerm = searchParams.get('utm_term');
         const utmContent = searchParams.get('utm_content');
 
-        // Track if any UTM parameters are present
-        if (utmSource || utmMedium || utmCampaign || utmTerm || utmContent) {
+        // Track if any UTM parameters are present (only once per session)
+        if (!hasTrackedUTMRef.current && (utmSource || utmMedium || utmCampaign || utmTerm || utmContent)) {
+            hasTrackedUTMRef.current = true;
+
             const utmParams = {
                 utm_source: utmSource || undefined,
                 utm_medium: utmMedium || undefined,
@@ -35,8 +39,10 @@ export const useUTMTracking = () => {
             });
         }
 
-        // Also track referrer if present
-        if (document.referrer) {
+        // Also track referrer if present (only once per session)
+        if (!hasTrackedReferrerRef.current && document.referrer) {
+            hasTrackedReferrerRef.current = true;
+
             try {
                 const referrerUrl = new URL(document.referrer);
                 const referrerDomain = referrerUrl.hostname;
@@ -53,5 +59,8 @@ export const useUTMTracking = () => {
                 // Invalid referrer URL, ignore
             }
         }
-    }, [searchParams, trackEvent, setUserProperties]);
+        // searchParams changes on navigation, trackEvent/setUserProperties are stable
+        // Only track once per session using refs
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 };

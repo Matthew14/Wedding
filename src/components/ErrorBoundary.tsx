@@ -2,6 +2,7 @@
 
 import { Component, ReactNode } from 'react';
 import { usePostHog } from 'posthog-js/react';
+import { Container, Title, Text, Button, Stack, Paper, Code } from '@mantine/core';
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -49,21 +50,36 @@ class ErrorBoundaryInner extends Component<
 
     render() {
         if (this.state.hasError) {
-            // You can customize this error UI
             return (
-                <div style={{ padding: '2rem', textAlign: 'center' }}>
-                    <h1>Oops! Something went wrong</h1>
-                    <p>We&apos;re sorry for the inconvenience. Please try refreshing the page.</p>
-                    {process.env.NODE_ENV === 'development' && this.state.error && (
-                        <details style={{ marginTop: '1rem', textAlign: 'left' }}>
-                            <summary>Error details (development only)</summary>
-                            <pre style={{ overflow: 'auto', padding: '1rem', background: '#f5f5f5' }}>
-                                {this.state.error.toString()}
-                                {this.state.error.stack}
-                            </pre>
-                        </details>
-                    )}
-                </div>
+                <Container size="md" py="xl">
+                    <Stack align="center" gap="lg">
+                        <Title order={1} style={{ color: '#8b7355', textAlign: 'center' }}>
+                            Oops! Something went wrong
+                        </Title>
+                        <Text size="lg" ta="center">
+                            We&apos;re sorry for the inconvenience. Please try refreshing the page.
+                        </Text>
+                        <Button
+                            onClick={() => window.location.reload()}
+                            size="lg"
+                            style={{ backgroundColor: '#8b7355' }}
+                        >
+                            Refresh Page
+                        </Button>
+                        {process.env.NODE_ENV === 'development' && this.state.error && (
+                            <Paper withBorder p="md" w="100%" mt="xl">
+                                <Title order={4} mb="sm">
+                                    Error details (development only)
+                                </Title>
+                                <Code block style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                    {this.state.error.toString()}
+                                    {'\n\n'}
+                                    {this.state.error.stack}
+                                </Code>
+                            </Paper>
+                        )}
+                    </Stack>
+                </Container>
             );
         }
 
