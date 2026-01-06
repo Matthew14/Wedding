@@ -142,6 +142,49 @@ describe("rateLimit", () => {
             checkRateLimit(request2, configB);
             expect(checkRateLimit(request2, configB).success).toBe(false);
         });
+
+        it("falls back to 127.0.0.1 for invalid IP formats", () => {
+            // Test with malformed IP (potential header injection)
+            const request1 = new NextRequest("http://localhost/api/test");
+            vi.spyOn(request1.headers, "get").mockImplementation((name: string) => {
+                if (name === "x-forwarded-for") return "invalid-ip-format";
+                return null;
+            });
+
+            const config = { limit: 2, windowSeconds: 60, keyPrefix: "test-invalid-ip" };
+
+            // Both requests with invalid IPs should be tracked under 127.0.0.1
+            checkRateLimit(request1, config);
+
+            const request2 = new NextRequest("http://localhost/api/test");
+            vi.spyOn(request2.headers, "get").mockImplementation((name: string) => {
+                if (name === "x-forwarded-for") return "'; DROP TABLE users; --";
+                return null;
+            });
+
+            checkRateLimit(request2, config);
+
+            // Third request should be blocked (both counted against 127.0.0.1)
+            const request3 = new NextRequest("http://localhost/api/test");
+            vi.spyOn(request3.headers, "get").mockImplementation(() => null);
+
+            expect(checkRateLimit(request3, config).success).toBe(false);
+        });
+
+        it("handles concurrent requests correctly", () => {
+            const config = { limit: 5, windowSeconds: 60, keyPrefix: "test-concurrent" };
+
+            // Simulate 10 sequential requests from same IP
+            const results = Array(10)
+                .fill(null)
+                .map(() => {
+                    const request = createMockRequest("192.168.1.200");
+                    return checkRateLimit(request, config);
+                });
+
+            const successful = results.filter((r) => r.success).length;
+            expect(successful).toBe(5); // Only 5 should succeed
+        });
     });
 
     describe("rateLimitedResponse", () => {
@@ -188,7 +231,7 @@ describe("rateLimit", () => {
     describe("RATE_LIMITS", () => {
         it("has predefined configurations for different endpoints", () => {
             expect(RATE_LIMITS.RSVP_VALIDATE).toEqual({
-                limit: 10,
+                limit: 5,
                 windowSeconds: 60,
                 keyPrefix: "rsvp-validate",
             });

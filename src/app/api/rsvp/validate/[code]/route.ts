@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { checkRateLimit, rateLimitedResponse, RATE_LIMITS } from "@/utils/api/rateLimit";
+import { checkRateLimit, rateLimitedResponse, addRateLimitHeaders, RATE_LIMITS } from "@/utils/api/rateLimit";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
     try {
-        // Rate limit: 10 requests per minute per IP
+        // Rate limit: 5 requests per minute per IP (strictest to prevent code guessing)
         const rateLimit = checkRateLimit(request, RATE_LIMITS.RSVP_VALIDATE);
         if (!rateLimit.success) {
             return rateLimitedResponse(rateLimit);
@@ -44,11 +44,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             );
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             valid: true,
             rsvpId: data.id,
             code: data.short_url,
         });
+        return addRateLimitHeaders(response, rateLimit);
     } catch (error) {
         console.error("Error validating RSVP code:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

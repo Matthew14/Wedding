@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { checkRateLimit, rateLimitedResponse, RATE_LIMITS } from "@/utils/api/rateLimit";
+import { checkRateLimit, rateLimitedResponse, addRateLimitHeaders, RATE_LIMITS } from "@/utils/api/rateLimit";
 
 // GET: Fetch RSVP data and invitees
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "Failed to fetch invitees" }, { status: 500 });
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             accepted: rsvpData.accepted,
             rsvpId: rsvpData.id,
             invitationId: rsvpData.invitation_id,
@@ -53,6 +53,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             message: rsvpData.message,
             invitees: invitees || [],
         });
+        return addRateLimitHeaders(response, rateLimit);
     } catch (error) {
         console.error("Error fetching RSVP data:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -124,10 +125,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             }
         }
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
             message: "RSVP submitted successfully",
         });
+        return addRateLimitHeaders(response, rateLimit);
     } catch (error) {
         console.error("Error submitting RSVP:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

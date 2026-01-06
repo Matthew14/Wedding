@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { checkRateLimit, rateLimitedResponse, RATE_LIMITS } from "@/utils/api/rateLimit";
+import { checkRateLimit, rateLimitedResponse, addRateLimitHeaders, RATE_LIMITS } from "@/utils/api/rateLimit";
 
 interface Invitee {
     id: string;
@@ -121,12 +121,13 @@ export async function GET(
             (inv: Invitee) => inv.first_name
         );
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             valid: true,
             code: rsvpData.short_url,
             guestNames: formattedNames,
             invitationId: rsvpData.invitation_id,
         });
+        return addRateLimitHeaders(response, rateLimit);
     } catch (error) {
         console.error("Error validating invitation:", error);
         return NextResponse.json(
