@@ -24,9 +24,19 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
                 capture_performance: true, // Enable automatic performance tracking
                 enable_recording_console_log: true, // Capture console logs in session recordings
                 session_recording: {
-                    maskAllInputs: false, // Allow recording of form inputs
+                    maskAllInputs: true, // Mask all form inputs for privacy by default
                     maskInputOptions: {
-                        password: true, // Only mask password fields
+                        password: true, // Ensure password fields are always masked
+                    },
+                    // Unmask non-sensitive fields (e.g., attendance selection, generic counts)
+                    // Fields must be explicitly marked with data-ph-capture-attribute="true"
+                    maskInputFn: (text, element) => {
+                        // Allow unmasking of elements explicitly marked as safe
+                        if (element?.getAttribute('data-ph-capture-attribute') === 'true') {
+                            return text;
+                        }
+                        // Mask everything else
+                        return '*'.repeat(text.length);
                     },
                     recordCrossOriginIframes: false, // Don't record iframes for privacy
                 },

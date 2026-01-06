@@ -464,8 +464,8 @@ export default function RSVPFormPage() {
                                                 required
                                             >
                                                 <Group gap="lg">
-                                                    <Radio value="yes" label="Yes" size="md" />
-                                                    <Radio value="no" label="No" size="md" />
+                                                    <Radio value="yes" label="Yes" size="md" data-ph-capture-attribute="true" />
+                                                    <Radio value="no" label="No" size="md" data-ph-capture-attribute="true" />
                                                 </Group>
                                             </Radio.Group>
                                         </Box>
@@ -548,11 +548,13 @@ export default function RSVPFormPage() {
                                                                 value="yes"
                                                                 label={form.values.invitees.length > 1 ? "Yes, we are staying" : "Yes, I am staying"}
                                                                 size="md"
+                                                                data-ph-capture-attribute="true"
                                                             />
                                                             <Radio
                                                                 value="no"
                                                                 label={form.values.invitees.length > 1 ? "No, we will not be staying" : "No, I will not be staying"}
                                                                 size="md"
+                                                                data-ph-capture-attribute="true"
                                                             />
                                                         </Group>
                                                     </Radio.Group>

@@ -25,9 +25,12 @@ export const useFormAnalytics = (options: FormAnalyticsOptions) => {
 
         return () => {
             // Track form abandonment if form was never submitted
-            if (formStartTimeRef.current) {
-                const timeSpent = Math.round(performance.now() - formStartTimeRef.current);
-                const interactedFields = fieldInteractionsRef.current;
+            // Capture ref values in the cleanup to avoid stale closure issues
+            const startTime = formStartTimeRef.current;
+            const interactedFields = fieldInteractionsRef.current;
+
+            if (startTime) {
+                const timeSpent = Math.round(performance.now() - startTime);
                 trackEvent('form_abandoned', {
                     form_name: formName,
                     time_spent_ms: timeSpent,
@@ -36,7 +39,9 @@ export const useFormAnalytics = (options: FormAnalyticsOptions) => {
                 });
             }
         };
-    }, [formName, trackEvent]);
+        // trackEvent is stable from useTracking's useCallback, formName is primitive
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formName]);
 
     const trackFieldFocusEvent = useCallback((fieldName: string) => {
         if (!trackFieldFocus) return;
