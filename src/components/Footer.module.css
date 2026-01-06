@@ -1,0 +1,15 @@
+.footer {
+    margin-top: auto;
+    padding: 2rem 0;
+    border-top: 1px solid #e8e0d5;
+    background-color: #faf8f5;
+}
+
+.link {
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.link:hover {
+    color: #8b7355 !important;
+}

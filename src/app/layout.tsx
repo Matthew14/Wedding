@@ -10,6 +10,7 @@ import { PostHogProvider } from "@/components/PostHogProvider";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { UTMTracker } from "@/components/UTMTracker";
+import { Footer } from "@/components/Footer";
 import { Suspense } from "react";
 
 const geist = Geist({
@@ -91,7 +92,7 @@ export default function RootLayout({
                 <ColorSchemeScript forceColorScheme="light" />
                 <meta name="color-scheme" content="light only" />
             </head>
-            <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} antialiased`} style={{ colorScheme: 'light' }}>
+            <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} antialiased`} style={{ colorScheme: 'light', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 <PostHogProvider>
                     <ErrorBoundary>
                         <Suspense fallback={null}>
@@ -99,7 +100,12 @@ export default function RootLayout({
                             <UTMTracker />
                         </Suspense>
                         <MantineProvider theme={theme} forceColorScheme="light">
-                            <AuthProvider>{children}</AuthProvider>
+                            <AuthProvider>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                    {children}
+                                </div>
+                                <Footer />
+                            </AuthProvider>
                         </MantineProvider>
                     </ErrorBoundary>
                 </PostHogProvider>
