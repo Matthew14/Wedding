@@ -1,9 +1,12 @@
 "use client";
 
-import { Container, Title, Text, Stack, Box, List, Paper, Divider } from "@mantine/core";
+import { Container, Title, Text, Stack, Box, List, Paper, Divider, useMantineTheme } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
 
 export default function PrivacyPolicyPage() {
+    const theme = useMantineTheme();
+    const goldColor = theme.colors.gold?.[4] || '#8b7355';
+
     return (
         <>
             <Navigation />
@@ -11,18 +14,18 @@ export default function PrivacyPolicyPage() {
                 <Box style={{ paddingTop: 56 }}>
                     <Container size="md" py="xl">
                         <Stack gap="xl" style={{ paddingTop: "2rem", paddingBottom: "3rem" }}>
-                            <Title order={1} style={{ color: "#8b7355", textAlign: "center" }}>
+                            <Title order={1} style={{ color: goldColor, textAlign: "center" }}>
                                 Privacy Policy
                             </Title>
 
                             <Text size="sm" c="dimmed" ta="center">
-                                Last updated: {new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                Last updated: 6 January 2026
                             </Text>
 
                             <Paper p="xl" withBorder>
                                 <Stack gap="lg">
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Introduction
                                         </Title>
                                         <Text>
@@ -35,7 +38,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Information We Collect
                                         </Title>
                                         <Text mb="sm">
@@ -67,7 +70,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             How We Use Your Information
                                         </Title>
                                         <Text mb="sm">We use the information we collect to:</Text>
@@ -84,7 +87,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Analytics and Tracking
                                         </Title>
                                         <Text mb="sm">
@@ -117,7 +120,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Data Storage and Security
                                         </Title>
                                         <Text mb="sm">
@@ -134,7 +137,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Data Sharing
                                         </Title>
                                         <Text mb="sm">
@@ -155,7 +158,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Your Rights
                                         </Title>
                                         <Text mb="sm">You have the right to:</Text>
@@ -181,7 +184,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Cookies and Local Storage
                                         </Title>
                                         <Text>
@@ -194,7 +197,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Data Retention
                                         </Title>
                                         <Text>
@@ -207,7 +210,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Changes to This Policy
                                         </Title>
                                         <Text>
@@ -219,7 +222,7 @@ export default function PrivacyPolicyPage() {
                                     <Divider />
 
                                     <Box>
-                                        <Title order={2} size="h3" mb="sm" style={{ color: "#8b7355" }}>
+                                        <Title order={2} size="h3" mb="sm" style={{ color: goldColor }}>
                                             Contact Us
                                         </Title>
                                         <Text>

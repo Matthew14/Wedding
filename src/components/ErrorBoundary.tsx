@@ -2,7 +2,7 @@
 
 import { Component, ReactNode } from 'react';
 import { usePostHog } from 'posthog-js/react';
-import { Container, Title, Text, Button, Stack, Paper, Code } from '@mantine/core';
+import { Container, Title, Text, Button, Stack, Paper, Code, useMantineTheme, MantineTheme } from '@mantine/core';
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -13,18 +13,19 @@ interface ErrorBoundaryState {
     error: Error | null;
 }
 
-// Wrapper component to access PostHog hook
+// Wrapper component to access PostHog hook and theme
 function ErrorBoundaryWithPostHog({ children }: ErrorBoundaryProps) {
     const posthog = usePostHog();
-    return <ErrorBoundaryInner posthog={posthog}>{children}</ErrorBoundaryInner>;
+    const theme = useMantineTheme();
+    return <ErrorBoundaryInner posthog={posthog} theme={theme}>{children}</ErrorBoundaryInner>;
 }
 
 // Class component for error boundary
 class ErrorBoundaryInner extends Component<
-    ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog> },
+    ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog>; theme: MantineTheme },
     ErrorBoundaryState
 > {
-    constructor(props: ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog> }) {
+    constructor(props: ErrorBoundaryProps & { posthog: ReturnType<typeof usePostHog>; theme: MantineTheme }) {
         super(props);
         this.state = { hasError: false, error: null };
     }
@@ -50,19 +51,29 @@ class ErrorBoundaryInner extends Component<
 
     render() {
         if (this.state.hasError) {
+            const goldColor = this.props.theme.colors.gold?.[4] || '#8b7355';
+
             return (
                 <Container size="md" py="xl">
                     <Stack align="center" gap="lg">
-                        <Title order={1} style={{ color: '#8b7355', textAlign: 'center' }}>
+                        <Title order={1} style={{ color: goldColor, textAlign: 'center' }}>
                             Oops! Something went wrong
                         </Title>
                         <Text size="lg" ta="center">
                             We&apos;re sorry for the inconvenience. Please try refreshing the page.
                         </Text>
                         <Button
+                            onClick={() => this.setState({ hasError: false, error: null })}
+                            size="lg"
+                            style={{ backgroundColor: goldColor, marginRight: '0.5rem' }}
+                        >
+                            Try Again
+                        </Button>
+                        <Button
                             onClick={() => window.location.reload()}
                             size="lg"
-                            style={{ backgroundColor: '#8b7355' }}
+                            variant="outline"
+                            style={{ borderColor: goldColor, color: goldColor }}
                         >
                             Refresh Page
                         </Button>
