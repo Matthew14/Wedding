@@ -18,3 +18,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: anthropics/claude-code-action@v1
+        with:
+          auto_review: true
