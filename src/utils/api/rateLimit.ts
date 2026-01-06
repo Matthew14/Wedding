@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
+ * Check if rate limiting should be disabled (e.g., in test environments)
+ */
+function isRateLimitingDisabled(): boolean {
+    return process.env.DISABLE_RATE_LIMITING === "true";
+}
+
+/**
  * Simple in-memory rate limiter for serverless environments.
  *
  * Note: This provides per-instance rate limiting. In serverless environments
@@ -110,6 +117,16 @@ export interface RateLimitResult {
  * }
  */
 export function checkRateLimit(request: NextRequest, config: RateLimitConfig): RateLimitResult {
+    // Skip rate limiting in test environments
+    if (isRateLimitingDisabled()) {
+        return {
+            success: true,
+            limit: config.limit,
+            remaining: config.limit,
+            resetTime: Date.now() + config.windowSeconds * 1000,
+        };
+    }
+
     cleanupOldEntries();
 
     const ip = getClientIp(request);
