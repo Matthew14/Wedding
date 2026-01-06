@@ -24,14 +24,15 @@ This document outlines the security measures implemented in the wedding website.
     - `Permissions-Policy` - Restricts access to browser features
     - `Content-Security-Policy` - Prevents XSS and other injection attacks
 
-### 3. Input Sanitization
+### 3. XSS Protection
 
-- **What**: HTML sanitization using DOMPurify for all user inputs
-- **Why**: Prevents stored XSS attacks through malicious HTML/JavaScript injection
-- **Location**:
-    - `src/app/api/faqs/route.ts`
-    - `src/app/api/faqs/[id]/route.ts`
-- **Implementation**: All FAQ questions, answers, and IDs are sanitized before database storage
+- **What**: Automatic HTML escaping via React's JSX rendering
+- **Why**: Prevents XSS attacks by escaping potentially dangerous characters
+- **Implementation**:
+    - React automatically escapes all text content rendered in JSX
+    - FAQ data is displayed as plain text (no `dangerouslySetInnerHTML`)
+    - Input validation and trimming in API routes (`src/app/api/faqs/`)
+    - Admin-only access for FAQ creation/editing through authentication
 
 ### 4. Rate Limiting
 

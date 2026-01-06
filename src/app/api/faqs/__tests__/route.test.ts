@@ -19,13 +19,6 @@ vi.mock("@/utils/supabase/server", () => ({
     createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
 }));
 
-// Mock DOMPurify
-vi.mock("isomorphic-dompurify", () => ({
-    default: {
-        sanitize: vi.fn((input: string) => input), // Return input unchanged for tests
-    },
-}));
-
 describe("/api/faqs", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -158,27 +151,42 @@ describe("/api/faqs", () => {
             expect(data.error).toBe("Failed to create FAQ");
         });
 
-        it("sanitizes input data", async () => {
-            const faqWithHtml = {
-                question: '<script>alert("xss")</script>Question',
-                answer: "<b>Bold</b> answer",
+        it("trims input data", async () => {
+            const faqWithWhitespace = {
+                id: "  test-id  ",
+                question: "  Test Question  ",
+                answer: "  Test Answer  ",
             };
 
-            mockSupabaseClient.from().insert.mockResolvedValue({
-                data: [faqWithHtml],
-                error: null,
-            });
+            const mockChain = {
+                select: vi.fn().mockReturnThis(),
+                insert: vi.fn().mockReturnThis(),
+                update: vi.fn().mockReturnThis(),
+                delete: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({
+                    data: { id: "test-id", question: "Test Question", answer: "Test Answer" },
+                    error: null,
+                }),
+            };
+            mockSupabaseClient.from.mockReturnValue(mockChain);
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
                 method: "POST",
-                body: JSON.stringify(faqWithHtml),
+                body: JSON.stringify(faqWithWhitespace),
             });
 
             await POST(request);
 
-            // Verify DOMPurify.sanitize was called
-            const DOMPurify = await import("isomorphic-dompurify");
-            expect(DOMPurify.default.sanitize).toHaveBeenCalledTimes(2); // question and answer
+            // Verify insert was called with trimmed data
+            expect(mockChain.insert).toHaveBeenCalledWith([
+                {
+                    id: "test-id",
+                    question: "Test Question",
+                    answer: "Test Answer",
+                },
+            ]);
         });
     });
 });
