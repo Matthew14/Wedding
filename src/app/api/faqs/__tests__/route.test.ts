@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { GET, POST } from "../route";
 
 // Mock Supabase
+const mockGetUser = vi.fn();
 const mockSupabaseClient = {
     from: vi.fn(() => ({
         select: vi.fn().mockReturnThis(),
@@ -13,11 +14,30 @@ const mockSupabaseClient = {
         order: vi.fn().mockReturnThis(),
         single: vi.fn().mockReturnThis(),
     })),
+    auth: {
+        getUser: mockGetUser,
+    },
 };
 
 vi.mock("@/utils/supabase/server", () => ({
     createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
 }));
+
+// Helper to mock authenticated user
+const mockAuthenticatedUser = () => {
+    mockGetUser.mockResolvedValue({
+        data: { user: { id: "test-user-id", email: "test@example.com" } },
+        error: null,
+    });
+};
+
+// Helper to mock unauthenticated user
+const mockUnauthenticatedUser = () => {
+    mockGetUser.mockResolvedValue({
+        data: { user: null },
+        error: null,
+    });
+};
 
 describe("/api/faqs", () => {
     beforeEach(() => {
@@ -77,7 +97,23 @@ describe("/api/faqs", () => {
     });
 
     describe("POST /api/faqs", () => {
-        it("creates FAQ successfully", async () => {
+        it("returns 401 when user is not authenticated", async () => {
+            mockUnauthenticatedUser();
+
+            const request = new NextRequest("http://localhost:3000/api/faqs", {
+                method: "POST",
+                body: JSON.stringify({ question: "Test", answer: "Test" }),
+            });
+
+            const response = await POST(request);
+            const data = await response.json();
+
+            expect(response.status).toBe(401);
+            expect(data.error).toBe("Unauthorized");
+        });
+
+        it("creates FAQ successfully when authenticated", async () => {
+            mockAuthenticatedUser();
             const newFAQ = { id: "new-faq", question: "New Question", answer: "New Answer" };
 
             const mockChain = {
@@ -108,6 +144,7 @@ describe("/api/faqs", () => {
         });
 
         it("validates required fields", async () => {
+            mockAuthenticatedUser();
             const invalidFAQ = { question: "", answer: "Some answer" };
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
@@ -123,6 +160,7 @@ describe("/api/faqs", () => {
         });
 
         it("handles database errors during creation", async () => {
+            mockAuthenticatedUser();
             const newFAQ = { question: "Valid Question", answer: "Valid Answer" };
 
             const mockChain = {
@@ -152,6 +190,7 @@ describe("/api/faqs", () => {
         });
 
         it("trims input data", async () => {
+            mockAuthenticatedUser();
             const faqWithWhitespace = {
                 id: "  test-id  ",
                 question: "  Test Question  ",
