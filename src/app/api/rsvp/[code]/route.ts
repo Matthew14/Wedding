@@ -110,6 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
                 if (inviteeError) {
                     console.error("Error updating invitee:", inviteeError);
+                    return NextResponse.json({ error: "Failed to update invitee attendance" }, { status: 500 });
                 }
             }
         }
