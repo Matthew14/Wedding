@@ -15,30 +15,39 @@ export const useFormAnalytics = (options: FormAnalyticsOptions) => {
     const fieldFocusTimesRef = useRef<Record<string, number>>({});
     const fieldInteractionsRef = useRef<Set<string>>(new Set());
 
+    // Use a ref to store trackEvent to avoid re-running the effect
+    const trackEventRef = useRef(trackEvent);
+    useEffect(() => {
+        trackEventRef.current = trackEvent;
+    }, [trackEvent]);
+
     // Start tracking when component mounts
     useEffect(() => {
         formStartTimeRef.current = performance.now();
 
-        trackEvent('form_started', {
+        trackEventRef.current('form_started', {
             form_name: formName,
         });
 
+        // We intentionally read ref values at cleanup time because:
+        // - formStartTimeRef is set to null on successful submission (so we skip abandoned tracking)
+        // - fieldInteractionsRef contains the final set of fields interacted with
         return () => {
-            // Track form abandonment if form was never submitted
-            // Check current ref value at cleanup time (not when effect was created)
-            // formStartTimeRef.current is set to null on successful submission
-            if (formStartTimeRef.current) {
-                const timeSpent = Math.round(performance.now() - formStartTimeRef.current);
-                trackEvent('form_abandoned', {
+            const startTime = formStartTimeRef.current;
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+            const fieldInteractions = fieldInteractionsRef.current;
+
+            // Only track abandonment if form was never submitted
+            if (startTime) {
+                const timeSpent = Math.round(performance.now() - startTime);
+                trackEventRef.current('form_abandoned', {
                     form_name: formName,
                     time_spent_ms: timeSpent,
-                    fields_interacted: Array.from(fieldInteractionsRef.current),
-                    interaction_count: fieldInteractionsRef.current.size,
+                    fields_interacted: fieldInteractions ? Array.from(fieldInteractions) : [],
+                    interaction_count: fieldInteractions?.size || 0,
                 });
             }
         };
-        // trackEvent is stable from useTracking's useCallback, formName is primitive
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formName]);
 
     const trackFieldFocusEvent = useCallback((fieldName: string) => {
