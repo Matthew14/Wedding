@@ -7,6 +7,17 @@ export const useScrollDepth = (pageName: string) => {
     const depthMilestonesRef = useRef(new Set<number>());
     const hasSentFinalRef = useRef(false);
 
+    // Use refs to store current values, preventing listener re-registration
+    // when trackEvent changes and avoiding potential memory leaks
+    const trackEventRef = useRef(trackEvent);
+    const pageNameRef = useRef(pageName);
+
+    // Keep refs in sync with current values
+    useEffect(() => {
+        trackEventRef.current = trackEvent;
+        pageNameRef.current = pageName;
+    }, [trackEvent, pageName]);
+
     useEffect(() => {
         const handleScroll = () => {
             const windowHeight = window.innerHeight;
@@ -29,8 +40,8 @@ export const useScrollDepth = (pageName: string) => {
             milestones.forEach(milestone => {
                 if (scrollPercent >= milestone && !depthMilestonesRef.current.has(milestone)) {
                     depthMilestonesRef.current.add(milestone);
-                    trackEvent('scroll_depth', {
-                        page: pageName,
+                    trackEventRef.current('scroll_depth', {
+                        page: pageNameRef.current,
                         depth_percent: milestone,
                     });
                 }
@@ -39,19 +50,19 @@ export const useScrollDepth = (pageName: string) => {
 
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [pageName, trackEvent]);
+    }, []); // Empty deps - listener registered once, uses refs for current values
 
-    // Track final scroll depth on unmount
+    // Track final scroll depth on unmount only
     useEffect(() => {
         return () => {
             // Only send final event once to prevent duplicates
             if (maxDepthRef.current > 0 && !hasSentFinalRef.current) {
                 hasSentFinalRef.current = true;
-                trackEvent('scroll_depth_final', {
-                    page: pageName,
+                trackEventRef.current('scroll_depth_final', {
+                    page: pageNameRef.current,
                     max_depth_percent: maxDepthRef.current,
                 });
             }
         };
-    }, [pageName, trackEvent]);
+    }, []); // Empty deps - cleanup runs only on unmount
 };

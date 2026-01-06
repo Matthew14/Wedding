@@ -47,9 +47,10 @@ export const useUTMTracking = () => {
                 const referrerUrl = new URL(document.referrer);
                 const referrerDomain = referrerUrl.hostname;
 
+                // Only track the domain, not the full URL, to avoid capturing
+                // sensitive data like tokens or session IDs in query parameters
                 trackEvent('referrer_detected', {
                     referrer_domain: referrerDomain,
-                    referrer_url: document.referrer,
                 });
 
                 setUserProperties({
