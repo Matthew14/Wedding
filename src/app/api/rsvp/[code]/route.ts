@@ -64,10 +64,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         const supabase = await createClient();
 
-        // Get the RSVP record
+        // Get the RSVP record (include invitation_id for invitee validation)
         const { data: rsvpData, error: rsvpError } = await supabase
             .from("RSVPs")
-            .select("id")
+            .select("id, invitation_id")
             .eq("short_url", code.toUpperCase())
             .single();
 
@@ -95,15 +95,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
 
         // Update individual invitee attendance if provided
+        // Security: Only update invitees that belong to this invitation
         if (body.invitees && body.invitees.length > 0) {
             for (const invitee of body.invitees) {
+                // Update only if invitee belongs to this invitation (prevents cross-invitation updates)
                 const { error: inviteeError } = await supabase
                     .from("invitees")
                     .update({
                         coming: invitee.coming,
                         updated_at: new Date().toISOString(),
                     })
-                    .eq("id", invitee.id);
+                    .eq("id", invitee.id)
+                    .eq("invitation_id", rsvpData.invitation_id);
 
                 if (inviteeError) {
                     console.error("Error updating invitee:", inviteeError);
