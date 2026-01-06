@@ -25,17 +25,15 @@ export const useFormAnalytics = (options: FormAnalyticsOptions) => {
 
         return () => {
             // Track form abandonment if form was never submitted
-            // Capture ref values in the cleanup to avoid stale closure issues
-            const startTime = formStartTimeRef.current;
-            const interactedFields = fieldInteractionsRef.current;
-
-            if (startTime) {
-                const timeSpent = Math.round(performance.now() - startTime);
+            // Check current ref value at cleanup time (not when effect was created)
+            // formStartTimeRef.current is set to null on successful submission
+            if (formStartTimeRef.current) {
+                const timeSpent = Math.round(performance.now() - formStartTimeRef.current);
                 trackEvent('form_abandoned', {
                     form_name: formName,
                     time_spent_ms: timeSpent,
-                    fields_interacted: Array.from(interactedFields),
-                    interaction_count: interactedFields.size,
+                    fields_interacted: Array.from(fieldInteractionsRef.current),
+                    interaction_count: fieldInteractionsRef.current.size,
                 });
             }
         };

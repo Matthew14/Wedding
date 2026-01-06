@@ -26,7 +26,9 @@ export const useSurvey = () => {
         if (posthog) {
             // Surveys are shown automatically by PostHog based on targeting rules
             // This is a placeholder for any custom survey display logic
-            console.log(`Survey ${surveyId} should be shown`);
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`Survey ${surveyId} should be shown`);
+            }
         }
     }, [posthog]);
 
