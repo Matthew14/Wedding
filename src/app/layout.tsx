@@ -8,6 +8,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PageViewTracker } from "@/components/PageViewTracker";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { UTMTracker } from "@/components/UTMTracker";
 import { Suspense } from "react";
 
 const geist = Geist({
@@ -91,12 +93,15 @@ export default function RootLayout({
             </head>
             <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} antialiased`} style={{ colorScheme: 'light' }}>
                 <PostHogProvider>
-                    <Suspense fallback={null}>
-                        <PageViewTracker />
-                    </Suspense>
-                    <MantineProvider theme={theme} forceColorScheme="light">
-                        <AuthProvider>{children}</AuthProvider>
-                    </MantineProvider>
+                    <ErrorBoundary>
+                        <Suspense fallback={null}>
+                            <PageViewTracker />
+                            <UTMTracker />
+                        </Suspense>
+                        <MantineProvider theme={theme} forceColorScheme="light">
+                            <AuthProvider>{children}</AuthProvider>
+                        </MantineProvider>
+                    </ErrorBoundary>
                 </PostHogProvider>
                 <Analytics />
                 <SpeedInsights />
