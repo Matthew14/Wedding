@@ -34,6 +34,24 @@ vi.mock("@/utils/supabase/server", () => ({
     createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
 }));
 
+// Mock rate limiting to always allow requests in tests
+vi.mock("@/utils/api/rateLimit", () => ({
+    checkRateLimit: vi.fn(() => ({
+        success: true,
+        limit: 20,
+        remaining: 19,
+        resetTime: Date.now() + 60000,
+    })),
+    rateLimitedResponse: vi.fn(),
+    addRateLimitHeaders: vi.fn((response) => response),
+    RATE_LIMITS: {
+        RSVP_SUBMIT: { limit: 20, windowSeconds: 60, keyPrefix: "rsvp-submit" },
+        RSVP_VALIDATE: { limit: 5, windowSeconds: 60, keyPrefix: "rsvp-validate" },
+        INVITATION: { limit: 30, windowSeconds: 60, keyPrefix: "invitation" },
+        GENERAL: { limit: 60, windowSeconds: 60, keyPrefix: "general" },
+    },
+}));
+
 describe("/api/rsvp/[code]", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -312,6 +330,416 @@ describe("/api/rsvp/[code]", () => {
             await POST(request, { params: Promise.resolve({ code: "abcdef" }) });
 
             expect(codeUsedForLookup).toBe("ABCDEF");
+        });
+    });
+
+    describe("Edge Cases", () => {
+        describe("Empty and Null Handling", () => {
+            it("handles empty invitees array gracefully", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        return createMockChain({ data: mockRsvp, error: null });
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: true,
+                        invitees: [],
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+                const data = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(data.success).toBe(true);
+            });
+
+            it("handles null/undefined invitees field", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        return createMockChain({ data: mockRsvp, error: null });
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: false,
+                        // invitees field omitted entirely
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+                const data = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(data.success).toBe(true);
+            });
+
+            it("handles empty string fields correctly", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+                let updatedFields: Record<string, unknown> = {};
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        const chain = createMockChain({ data: mockRsvp, error: null });
+                        chain.update = vi.fn().mockImplementation((fields: Record<string, unknown>) => {
+                            updatedFields = fields;
+                            return createMockChain({ data: null, error: null });
+                        });
+                        return chain;
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: true,
+                        dietary_restrictions: "",
+                        song_request: "",
+                        travel_plans: "",
+                        message: "",
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+                expect(response.status).toBe(200);
+                // Empty strings should be converted to null
+                expect(updatedFields.dietary_restrictions).toBeNull();
+                expect(updatedFields.song_request).toBeNull();
+                expect(updatedFields.travel_plans).toBeNull();
+                expect(updatedFields.message).toBeNull();
+            });
+        });
+
+        describe("Special Characters and Unicode", () => {
+            it("handles special characters in dietary restrictions", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+                let updatedFields: Record<string, unknown> = {};
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        const chain = createMockChain({ data: mockRsvp, error: null });
+                        chain.update = vi.fn().mockImplementation((fields: Record<string, unknown>) => {
+                            updatedFields = fields;
+                            return createMockChain({ data: null, error: null });
+                        });
+                        return chain;
+                    }
+                    return createMockChain();
+                });
+
+                const specialChars = "Gluten-free, dairy-free & nut allergy! <script>alert('xss')</script>";
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: true,
+                        dietary_restrictions: specialChars,
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+                expect(response.status).toBe(200);
+                expect(updatedFields.dietary_restrictions).toBe(specialChars);
+            });
+
+            it("handles unicode and emoji in message field", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+                let updatedFields: Record<string, unknown> = {};
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        const chain = createMockChain({ data: mockRsvp, error: null });
+                        chain.update = vi.fn().mockImplementation((fields: Record<string, unknown>) => {
+                            updatedFields = fields;
+                            return createMockChain({ data: null, error: null });
+                        });
+                        return chain;
+                    }
+                    return createMockChain();
+                });
+
+                const unicodeMessage = "Can't wait! 🎉🎊 Félicitations! 日本語 مرحبا";
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: true,
+                        message: unicodeMessage,
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+                expect(response.status).toBe(200);
+                expect(updatedFields.message).toBe(unicodeMessage);
+            });
+
+            it("handles SQL injection attempt in text fields", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+                let updatedFields: Record<string, unknown> = {};
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        const chain = createMockChain({ data: mockRsvp, error: null });
+                        chain.update = vi.fn().mockImplementation((fields: Record<string, unknown>) => {
+                            updatedFields = fields;
+                            return createMockChain({ data: null, error: null });
+                        });
+                        return chain;
+                    }
+                    return createMockChain();
+                });
+
+                const sqlInjection = "'; DROP TABLE RSVPs; --";
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: true,
+                        song_request: sqlInjection,
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+                // Should succeed - Supabase handles SQL injection protection
+                expect(response.status).toBe(200);
+                expect(updatedFields.song_request).toBe(sqlInjection);
+            });
+        });
+
+        describe("Invalid Input Handling", () => {
+            it("handles malformed JSON body", async () => {
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: "{ invalid json }",
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+                expect(response.status).toBe(500);
+            });
+
+            it("handles code with special characters", async () => {
+                // Mock database to return not found for special character codes
+                mockSupabaseClient.from.mockReturnValue(
+                    createMockChain({ data: null, error: { message: "Not found" } })
+                );
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABC<>F", {
+                    method: "POST",
+                    body: JSON.stringify({ accepted: true }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABC<>F" }) });
+
+                // 6 characters but invalid - should still try lookup and fail gracefully
+                expect(response.status).toBe(404);
+            });
+
+            it("handles extremely long code parameter", async () => {
+                const longCode = "A".repeat(1000);
+                const request = new NextRequest(`http://localhost:3000/api/rsvp/${longCode}`, {
+                    method: "POST",
+                    body: JSON.stringify({ accepted: true }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: longCode }) });
+
+                expect(response.status).toBe(400);
+                const data = await response.json();
+                expect(data.error).toBe("Invalid RSVP code format");
+            });
+
+            it("handles invitee with missing id field", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        return createMockChain({ data: mockRsvp, error: null });
+                    }
+                    if (table === "invitees") {
+                        // The update with undefined id should still be called
+                        return createMockChain({ data: null, error: null });
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: true,
+                        invitees: [{ coming: true }], // missing 'id' field
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+                // Should succeed - the database query will just match nothing
+                expect(response.status).toBe(200);
+            });
+
+            it("handles boolean string values for accepted field", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+                let updatedFields: Record<string, unknown> = {};
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        const chain = createMockChain({ data: mockRsvp, error: null });
+                        chain.update = vi.fn().mockImplementation((fields: Record<string, unknown>) => {
+                            updatedFields = fields;
+                            return createMockChain({ data: null, error: null });
+                        });
+                        return chain;
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        accepted: "true", // string instead of boolean
+                    }),
+                });
+                const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+                expect(response.status).toBe(200);
+                // Note: JavaScript truthy - "true" string is truthy
+                expect(updatedFields.accepted).toBe("true");
+            });
+        });
+
+        describe("Concurrent Operations", () => {
+            it("handles multiple simultaneous updates to same RSVP", async () => {
+                const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+                let updateCount = 0;
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        const chain = createMockChain({ data: mockRsvp, error: null });
+                        chain.update = vi.fn().mockImplementation(() => {
+                            updateCount++;
+                            return createMockChain({ data: null, error: null });
+                        });
+                        return chain;
+                    }
+                    return createMockChain();
+                });
+
+                // Send multiple concurrent requests
+                const requests = Array.from({ length: 5 }, () =>
+                    new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                        method: "POST",
+                        body: JSON.stringify({ accepted: true }),
+                    })
+                );
+
+                const responses = await Promise.all(
+                    requests.map((req) => POST(req, { params: Promise.resolve({ code: "ABCDEF" }) }))
+                );
+
+                // All requests should succeed
+                responses.forEach((response) => {
+                    expect(response.status).toBe(200);
+                });
+                expect(updateCount).toBe(5);
+            });
+        });
+
+        describe("GET Edge Cases", () => {
+            it("returns empty invitees array when no invitees exist", async () => {
+                const mockRsvp = {
+                    id: "rsvp-123",
+                    invitation_id: "inv-456",
+                    updated_at: null,
+                    staying_villa: false,
+                    dietary_restrictions: null,
+                    song_request: null,
+                    travel_plans: null,
+                    message: null,
+                    accepted: null,
+                };
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        return createMockChain({ data: mockRsvp, error: null });
+                    }
+                    if (table === "invitees") {
+                        return createMockChain({ data: [], error: null });
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF");
+                const response = await GET(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+                const data = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(data.invitees).toEqual([]);
+            });
+
+            it("returns null invitees as empty array", async () => {
+                const mockRsvp = {
+                    id: "rsvp-123",
+                    invitation_id: "inv-456",
+                    updated_at: null,
+                    staying_villa: false,
+                    dietary_restrictions: null,
+                    song_request: null,
+                    travel_plans: null,
+                    message: null,
+                    accepted: null,
+                };
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        return createMockChain({ data: mockRsvp, error: null });
+                    }
+                    if (table === "invitees") {
+                        return createMockChain({ data: null, error: null });
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF");
+                const response = await GET(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+                const data = await response.json();
+
+                expect(response.status).toBe(200);
+                expect(data.invitees).toEqual([]);
+            });
+
+            it("handles invitees fetch error", async () => {
+                const mockRsvp = {
+                    id: "rsvp-123",
+                    invitation_id: "inv-456",
+                    updated_at: null,
+                    staying_villa: false,
+                    dietary_restrictions: null,
+                    song_request: null,
+                    travel_plans: null,
+                    message: null,
+                    accepted: null,
+                };
+
+                mockSupabaseClient.from.mockImplementation((table: string) => {
+                    if (table === "RSVPs") {
+                        return createMockChain({ data: mockRsvp, error: null });
+                    }
+                    if (table === "invitees") {
+                        return createMockChain({ data: null, error: { message: "Database error" } });
+                    }
+                    return createMockChain();
+                });
+
+                const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF");
+                const response = await GET(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+                const data = await response.json();
+
+                expect(response.status).toBe(500);
+                expect(data.error).toBe("Failed to fetch invitees");
+            });
         });
     });
 });

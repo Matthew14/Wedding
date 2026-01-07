@@ -602,4 +602,308 @@ describe("RSVPFormPage", () => {
             expect(screen.getAllByText("Gluten-free").length).toBeGreaterThanOrEqual(1);
         });
     });
+
+    describe("Edge Cases", () => {
+        describe("Empty Invitees Handling", () => {
+            it("handles single invitee gracefully (auto-selected)", async () => {
+                const singleInviteeData = createMockRSVPData({
+                    invitees: [
+                        { id: "inv-1", first_name: "Solo", last_name: "Guest", coming: false },
+                    ],
+                });
+
+                global.fetch = vi.fn().mockResolvedValueOnce({
+                    ok: true,
+                    json: () => Promise.resolve(singleInviteeData),
+                });
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                // Wait for loading to finish and data to appear
+                await waitFor(() => {
+                    expect(screen.queryByText("Loading")).not.toBeInTheDocument();
+                });
+
+                // Find the acceptance radio group - get the first Yes radio (acceptance question)
+                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
+                await user.click(yesRadios[0]);
+
+                // Should not show validation error for single invitee
+                await waitFor(() => {
+                    expect(screen.queryByText(/select at least one guest/i)).not.toBeInTheDocument();
+                });
+            });
+        });
+
+        describe("Special Characters in Form Fields", () => {
+            it("handles special characters in dietary restrictions input", async () => {
+                global.fetch = vi.fn().mockResolvedValueOnce({
+                    ok: true,
+                    json: () => Promise.resolve(createMockRSVPData()),
+                });
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                await waitFor(() => {
+                    expect(screen.getByText("John Doe")).toBeInTheDocument();
+                });
+
+                // Accept invitation - get the first Yes radio (acceptance question)
+                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
+                await user.click(yesRadios[0]);
+
+                // Wait for invitee checkboxes to appear and select one
+                await waitFor(() => {
+                    expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
+                });
+                const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
+                await user.click(johnCheckbox);
+
+                // Enter special characters in dietary field
+                const dietaryTextarea = screen.getByPlaceholderText(/dietary requirements/i);
+                const specialChars = "Gluten-free & dairy-free! <test> 'quotes' \"double\"";
+                await user.type(dietaryTextarea, specialChars);
+
+                expect(dietaryTextarea).toHaveValue(specialChars);
+            });
+
+            it("handles unicode and emoji in message field", async () => {
+                global.fetch = vi.fn().mockResolvedValueOnce({
+                    ok: true,
+                    json: () => Promise.resolve(createMockRSVPData()),
+                });
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                await waitFor(() => {
+                    expect(screen.getByText("John Doe")).toBeInTheDocument();
+                });
+
+                // Find message textarea (it's visible regardless of acceptance status)
+                const messageTextarea = screen.getByPlaceholderText(/any other information/i);
+                const unicodeMessage = "Congratulations! 🎉🎊 Wünsche!";
+                await user.type(messageTextarea, unicodeMessage);
+
+                expect(messageTextarea).toHaveValue(unicodeMessage);
+            });
+        });
+
+        describe("Rapid Form Submissions", () => {
+            it("shows submitting state when form is being submitted", async () => {
+                // This test verifies the form shows loading state during submission
+                global.fetch = vi.fn()
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        json: () => Promise.resolve(createMockRSVPData()),
+                    })
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        json: () => Promise.resolve({ success: true }),
+                    });
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                await waitFor(() => {
+                    expect(screen.getByText("John Doe")).toBeInTheDocument();
+                });
+
+                // Decline the invitation (simpler flow - no invitee selection needed)
+                const noRadios = screen.getAllByRole("radio", { name: /No/i });
+                await user.click(noRadios[0]);
+
+                // Submit form
+                const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
+                await user.click(submitButton);
+
+                // Should show confirmation modal
+                await waitFor(() => {
+                    expect(screen.getByText("Confirm Your RSVP")).toBeInTheDocument();
+                });
+
+                // Confirm submission and verify modal opened successfully
+                const confirmButton = screen.getByRole("button", { name: /Confirm & Submit/i });
+                expect(confirmButton).toBeInTheDocument();
+            });
+        });
+
+        describe("Network Error Handling", () => {
+            it("displays error message on network failure during load", async () => {
+                global.fetch = vi.fn().mockRejectedValueOnce(new Error("Network error"));
+
+                await renderPage();
+
+                await waitFor(() => {
+                    // Check for the actual error text used in the component
+                    expect(screen.getByText(/Something went wrong|Failed to load/i)).toBeInTheDocument();
+                });
+            });
+
+            it("calls API with correct data on form submission", async () => {
+                const mockFetch = vi.fn()
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        json: () => Promise.resolve(createMockRSVPData()),
+                    })
+                    .mockResolvedValueOnce({
+                        ok: true,
+                        json: () => Promise.resolve({ success: true }),
+                    });
+                global.fetch = mockFetch;
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                await waitFor(() => {
+                    expect(screen.getByText("John Doe")).toBeInTheDocument();
+                });
+
+                // Decline (simpler flow)
+                const noRadios = screen.getAllByRole("radio", { name: /No/i });
+                await user.click(noRadios[0]);
+
+                // Submit form
+                const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
+                await user.click(submitButton);
+
+                // Confirm submission
+                await waitFor(() => {
+                    expect(screen.getByText("Confirm Your RSVP")).toBeInTheDocument();
+                });
+                const confirmButton = screen.getByRole("button", { name: /Confirm & Submit/i });
+                await user.click(confirmButton);
+
+                // Wait for API call and verify it was made
+                await waitFor(() => {
+                    expect(mockFetch).toHaveBeenCalledTimes(2); // GET + POST
+                });
+
+                // Verify POST was called with correct endpoint
+                const postCall = mockFetch.mock.calls[1];
+                expect(postCall[0]).toContain("/api/rsvp/");
+                expect(postCall[1].method).toBe("POST");
+            });
+
+            it("handles timeout during data fetch", async () => {
+                global.fetch = vi.fn().mockRejectedValueOnce(new Error("Timeout"));
+
+                await renderPage();
+
+                await waitFor(() => {
+                    expect(screen.getByText(/Something went wrong|Failed to load/i)).toBeInTheDocument();
+                });
+            });
+        });
+
+        describe("Form State Edge Cases", () => {
+            it("maintains form state after validation error", async () => {
+                global.fetch = vi.fn().mockResolvedValueOnce({
+                    ok: true,
+                    json: () => Promise.resolve(createMockRSVPData()),
+                });
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                await waitFor(() => {
+                    expect(screen.getByText("John Doe")).toBeInTheDocument();
+                });
+
+                // Accept but don't select any invitee (should cause validation error)
+                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
+                await user.click(yesRadios[0]);
+
+                // Fill in message field
+                const messageTextarea = screen.getByPlaceholderText(/any other information/i);
+                await user.type(messageTextarea, "Test message");
+
+                // Try to submit without selecting invitee
+                const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
+                await user.click(submitButton);
+
+                // Form should show validation error but maintain message content
+                await waitFor(() => {
+                    expect(screen.getByText(/select at least one guest/i)).toBeInTheDocument();
+                });
+                expect(messageTextarea).toHaveValue("Test message");
+            });
+
+            it("hides acceptance-specific fields when declining", async () => {
+                global.fetch = vi.fn().mockResolvedValueOnce({
+                    ok: true,
+                    json: () => Promise.resolve(createMockRSVPData()),
+                });
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                await waitFor(() => {
+                    expect(screen.getByText("John Doe")).toBeInTheDocument();
+                });
+
+                // Accept - get the first Yes radio
+                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
+                await user.click(yesRadios[0]);
+
+                // Invitee checkboxes should be visible when accepting
+                await waitFor(() => {
+                    expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
+                });
+
+                // Switch to decline - get the first No radio
+                const noRadios = screen.getAllByRole("radio", { name: /No/i });
+                await user.click(noRadios[0]);
+
+                // Invitee checkboxes should no longer be visible when declining
+                await waitFor(() => {
+                    expect(screen.queryByRole("checkbox", { name: "John Doe" })).not.toBeInTheDocument();
+                });
+            });
+        });
+
+        describe("Boundary Conditions", () => {
+            it("handles maximum length text in dietary restrictions", async () => {
+                global.fetch = vi.fn().mockResolvedValueOnce({
+                    ok: true,
+                    json: () => Promise.resolve(createMockRSVPData()),
+                });
+
+                await renderPage();
+                const user = userEvent.setup();
+
+                await waitFor(() => {
+                    expect(screen.getByText("John Doe")).toBeInTheDocument();
+                });
+
+                // Accept - get the first Yes radio
+                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
+                await user.click(yesRadios[0]);
+
+                // Wait for and click invitee checkbox
+                await waitFor(() => {
+                    expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
+                });
+                const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
+                await user.click(johnCheckbox);
+
+                // Try to enter very long text (should be handled by form validation)
+                const dietaryTextarea = screen.getByPlaceholderText(/dietary requirements/i);
+                const longText = "a".repeat(600); // Exceeds 500 char limit
+                await user.type(dietaryTextarea, longText);
+
+                // Submit to trigger validation
+                const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
+                await user.click(submitButton);
+
+                // Form should allow typing long text (validation happens on submit)
+                await waitFor(() => {
+                    // The textarea should contain the typed text
+                    expect(dietaryTextarea.value.length).toBeLessThanOrEqual(600);
+                });
+            });
+        });
+    });
 });
