@@ -1,26 +1,26 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MantineProvider } from "@mantine/core";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Setup matchMedia mock before anything else
-beforeAll(() => {
+// Setup matchMedia mock using vi.hoisted to run before module imports
+vi.hoisted(() => {
     Object.defineProperty(window, "matchMedia", {
         writable: true,
         configurable: true,
-        value: vi.fn().mockImplementation((query: string) => ({
+        value: (query: string) => ({
             matches: false,
             media: query,
             onchange: null,
-            addListener: vi.fn(),
-            removeListener: vi.fn(),
-            addEventListener: vi.fn(),
-            removeEventListener: vi.fn(),
-            dispatchEvent: vi.fn(),
-        })),
+            addListener: () => {},
+            removeListener: () => {},
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            dispatchEvent: () => false,
+        }),
     });
 });
+import { render, screen, waitFor, act } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MantineProvider } from "@mantine/core";
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -38,39 +38,11 @@ vi.mock("@/components/Navigation", () => ({
     Navigation: () => <nav data-testid="navigation">Navigation</nav>,
 }));
 
-// Mock the tracking hooks - need to use factory function to avoid hoisting issues
-vi.mock("@/hooks", async () => {
-    const mantineForm = await import("@mantine/form");
+// Mock the tracking hooks - import real useRSVPForm, mock only analytics
+vi.mock("@/hooks", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("@/hooks")>();
     return {
-        useRSVPForm: () => mantineForm.useForm({
-            initialValues: {
-                accepted: true,
-                invitees: [],
-                staying_villa: "yes",
-                dietary_restrictions: "",
-                song_request: "",
-                travel_plans: "",
-                message: "",
-            },
-            validate: {
-                accepted: (value: boolean | undefined) => (value === undefined ? "Please select whether you're coming" : null),
-                invitees: (value: { id: string; name: string; coming: boolean }[], values: { accepted: boolean }) => {
-                    if (values.accepted === true) {
-                        if (value?.length === 1) return null;
-                        const anyoneComing = value?.some(inv => inv.coming);
-                        if (!anyoneComing) {
-                            return "Please select at least one guest who will be attending";
-                        }
-                    }
-                    return null;
-                },
-                staying_villa: (value: string | undefined) => (value === undefined ? "Please select accommodation preference" : null),
-                dietary_restrictions: (value: string | undefined) => (value && value.length > 500 ? "Too long" : null),
-                song_request: (value: string | undefined) => (value && value.length > 200 ? "Too long" : null),
-                travel_plans: (value: string | undefined) => (value && value.length > 500 ? "Too long" : null),
-                message: (value: string | undefined) => (value && value.length > 1000 ? "Too long" : null),
-            },
-        }),
+        ...actual,
         useTracking: () => ({
             trackEvent: vi.fn(),
             identifyUser: vi.fn(),
@@ -81,23 +53,6 @@ vi.mock("@/hooks", async () => {
             trackFormSubmission: vi.fn(),
         }),
         useScrollDepth: vi.fn(),
-        RSVPEvents: {
-            FORM_VIEWED: "rsvp_form_viewed",
-            FORM_AMENDMENT: "rsvp_form_amendment",
-            FORM_LOAD_ERROR: "rsvp_form_load_error",
-            SUBMIT_ATTEMPT: "rsvp_submit_attempt",
-            SUBMIT_SUCCESS: "rsvp_submit_success",
-            SUBMIT_ERROR: "rsvp_submit_error",
-            ACCEPTANCE_CHANGED: "rsvp_acceptance_changed",
-            INVITEE_TOGGLED: "rsvp_invitee_toggled",
-            VILLA_CHANGED: "rsvp_villa_changed",
-            DIETARY_FILLED: "rsvp_dietary_filled",
-            SONG_FILLED: "rsvp_song_filled",
-            TRAVEL_FILLED: "rsvp_travel_filled",
-            MESSAGE_FILLED: "rsvp_message_filled",
-            CONFIRMATION_OPENED: "rsvp_confirmation_opened",
-            CONFIRMATION_EDITED: "rsvp_confirmation_edited",
-        },
     };
 });
 
@@ -643,7 +598,8 @@ describe("RSVPFormPage", () => {
             });
 
             expect(screen.getByText("Dietary Requirements")).toBeInTheDocument();
-            expect(screen.getByText("Gluten-free")).toBeInTheDocument();
+            // "Gluten-free" appears in both the textarea and the modal
+            expect(screen.getAllByText("Gluten-free").length).toBeGreaterThanOrEqual(1);
         });
     });
 });
