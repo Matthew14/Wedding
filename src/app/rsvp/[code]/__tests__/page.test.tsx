@@ -890,7 +890,9 @@ describe("RSVPFormPage", () => {
                 await user.click(johnCheckbox);
 
                 // Try to enter very long text (should be handled by form validation)
-                const dietaryTextarea = screen.getByPlaceholderText(/dietary requirements/i);
+                const dietaryTextarea = screen.getByPlaceholderText(
+                    /dietary requirements/i
+                ) as HTMLTextAreaElement;
                 const longText = "a".repeat(600); // Exceeds 500 char limit
                 await user.type(dietaryTextarea, longText);
 
