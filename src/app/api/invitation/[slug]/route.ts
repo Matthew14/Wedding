@@ -1,42 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { checkRateLimit, rateLimitedResponse, addRateLimitHeaders, RATE_LIMITS } from "@/utils/api/rateLimit";
+import { parseSlug } from "@/utils/invitation";
 
 interface Invitee {
     id: string;
     first_name: string;
     last_name: string;
-}
-
-/**
- * Parse the slug to extract names and code
- * Format: name-name-CODE or name-CODE
- * The code is always the last 6 characters (alphanumeric)
- */
-function parseSlug(slug: string): { names: string[]; code: string } | null {
-    // Slug must be at least 8 chars: 1 char name + hyphen + 6 char code
-    if (!slug || slug.length < 8) {
-        return null;
-    }
-
-    const parts = slug.split("-");
-    if (parts.length < 2) {
-        return null;
-    }
-
-    // The last part should be the 6-character code
-    const code = parts[parts.length - 1];
-    if (code.length !== 6 || !/^[A-Za-z0-9]+$/.test(code)) {
-        return null;
-    }
-
-    // Everything before the code is the names
-    const names = parts.slice(0, -1).filter((name) => name.length > 0);
-    if (names.length === 0) {
-        return null;
-    }
-
-    return { names, code };
 }
 
 export async function GET(
@@ -65,11 +35,11 @@ export async function GET(
 
         const supabase = await createClient();
 
-        // Find the RSVP by code
+        // Find the RSVP by code (parseSlug already uppercases it)
         const { data: rsvpData, error: rsvpError } = await supabase
             .from("RSVPs")
             .select("id, invitation_id, short_url")
-            .eq("short_url", code.toUpperCase())
+            .eq("short_url", code)
             .single();
 
         if (rsvpError || !rsvpData) {

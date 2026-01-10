@@ -1,36 +1,10 @@
 import { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
+import { parseSlug, formatGuestNames } from "@/utils/invitation";
 import InvitationContent from "./InvitationContent";
 
 interface PageProps {
     params: Promise<{ slug: string }>;
-}
-
-// Helper to parse slug and extract names/code
-function parseSlug(slug: string): { names: string[]; code: string } | null {
-    if (!slug || slug.length < 8) return null; // Minimum: "a-XXXXXX"
-
-    const parts = slug.split("-");
-    if (parts.length < 2) return null;
-
-    const code = parts[parts.length - 1].toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(code)) return null;
-
-    const names = parts.slice(0, -1);
-    if (names.length === 0) return null;
-
-    return { names, code };
-}
-
-// Helper to format guest names for display
-function formatGuestNames(names: string[]): string {
-    if (names.length === 1) {
-        return names[0];
-    }
-    if (names.length === 2) {
-        return `${names[0]} & ${names[1]}`;
-    }
-    return names.slice(0, -1).join(", ") + " & " + names[names.length - 1];
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -122,7 +96,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
                 images: ["/og-invitation.png"],
             },
         };
-    } catch {
+    } catch (error) {
+        console.error("Error generating invitation metadata:", error);
         return defaultMetadata;
     }
 }

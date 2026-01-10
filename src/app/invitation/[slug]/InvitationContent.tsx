@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Navigation } from "@/components/Navigation";
 import { useTracking, InvitationEvents } from "@/hooks";
+import { formatGuestNames } from "@/utils/invitation";
 
 interface InvitationData {
     valid: boolean;
@@ -109,17 +110,6 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
             });
             router.push(`/rsvp/${invitationData.code}`);
         }
-    };
-
-    // Format guest names for display
-    const formatGuestNames = (names: string[]): string => {
-        if (names.length === 1) {
-            return names[0];
-        }
-        if (names.length === 2) {
-            return `${names[0]} & ${names[1]}`;
-        }
-        return names.slice(0, -1).join(", ") + " & " + names[names.length - 1];
     };
 
     if (loading) {
