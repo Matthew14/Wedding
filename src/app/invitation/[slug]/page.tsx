@@ -8,9 +8,11 @@ import {
     Stack,
     Box,
     Paper,
+    Group,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { Navigation } from "@/components/Navigation";
 import { useTracking, InvitationEvents } from "@/hooks";
 
@@ -201,145 +203,246 @@ export default function InvitationPage() {
         <>
             <Navigation />
             <main id="main-content">
-                <Box style={{ paddingTop: 56 }}>
+                <Box style={{ paddingTop: 56, background: "linear-gradient(180deg, #fdfcfa 0%, #f8f6f1 100%)", minHeight: "100vh" }}>
                     <Container size="sm" py="xl" className="fade-in">
-                        <Stack gap="xl" align="center">
+                        <Stack gap="md" align="center">
                             {/* Invitation Card */}
                             <Paper
-                                className="elegant-card"
                                 radius="lg"
                                 p="xl"
                                 style={{
                                     textAlign: "center",
-                                    maxWidth: 550,
+                                    maxWidth: 600,
                                     width: "100%",
-                                    background: "linear-gradient(180deg, #ffffff 0%, #faf8f5 100%)",
-                                    border: "2px solid rgba(139, 115, 85, 0.2)",
+                                    background: "linear-gradient(180deg, #fdfcfa 0%, #f9f7f2 100%)",
+                                    boxShadow: "0 4px 24px rgba(139, 115, 85, 0.12)",
                                 }}
                             >
-                                <Stack gap="lg" align="center">
-                                    {/* Couple Names */}
+                                <Stack gap="sm" align="center">
+                                    {/* Villa Rosa Image */}
+                                    <Box
+                                        style={{
+                                            width: "100%",
+                                            maxWidth: 400,
+                                            position: "relative",
+                                            aspectRatio: "4/3",
+                                            marginBottom: "0.5rem",
+                                        }}
+                                    >
+                                        <Image
+                                            src="/villarosa.png"
+                                            alt="Gran Villa Rosa - Wedding Venue"
+                                            fill
+                                            sizes="(max-width: 600px) 100vw, 400px"
+                                            style={{
+                                                objectFit: "contain",
+                                            }}
+                                            priority
+                                        />
+                                    </Box>
+
+                                    {/* Couple Names - Script Font */}
                                     <Title
                                         order={1}
                                         style={{
-                                            fontSize: "clamp(2rem, 6vw, 2.75rem)",
+                                            fontSize: "clamp(2.5rem, 8vw, 3.5rem)",
                                             fontWeight: 400,
-                                            color: "var(--text-primary)",
+                                            color: "var(--gold-dark)",
                                             fontFamily: "var(--font-great-vibes), cursive",
                                             letterSpacing: "0.02em",
-                                            lineHeight: 1.2,
+                                            lineHeight: 1.1,
+                                            marginBottom: "0.25rem",
                                         }}
                                     >
                                         Rebecca & Matthew
                                     </Title>
 
-                                    {/* Date */}
+                                    {/* Wish to invite */}
                                     <Text
                                         style={{
-                                            fontSize: "clamp(1rem, 3vw, 1.25rem)",
-                                            fontWeight: 300,
+                                            fontSize: "clamp(1rem, 3vw, 1.2rem)",
                                             color: "var(--gold-dark)",
-                                            fontFamily: "var(--font-great-vibes), cursive",
+                                            fontFamily: "var(--font-cormorant), serif",
+                                            letterSpacing: "0.1em",
+                                            marginTop: "0.5rem",
+                                        }}
+                                    >
+                                        Wish to invite
+                                    </Text>
+
+                                    {/* Guest Names */}
+                                    <Title
+                                        order={2}
+                                        style={{
+                                            fontSize: "clamp(1.25rem, 4vw, 1.5rem)",
+                                            fontWeight: 400,
+                                            color: "var(--gold-dark)",
+                                            fontFamily: "var(--font-cormorant), serif",
                                             letterSpacing: "0.05em",
                                         }}
                                     >
-                                        22 - 24 May 2026
-                                    </Text>
+                                        {formatGuestNames(invitationData.guestNames)}
+                                    </Title>
 
-                                    <div className="decorative-divider" style={{ margin: "0.5rem auto" }}></div>
-
-                                    {/* Personal Greeting */}
-                                    <Box style={{ marginTop: "0.5rem" }}>
-                                        <Text
-                                            style={{
-                                                fontSize: "1.125rem",
-                                                color: "var(--text-secondary)",
-                                                fontStyle: "italic",
-                                                marginBottom: "0.5rem",
-                                            }}
-                                        >
-                                            Dear
-                                        </Text>
-                                        <Title
-                                            order={2}
-                                            style={{
-                                                fontSize: "clamp(1.5rem, 5vw, 2rem)",
-                                                fontWeight: 400,
-                                                color: "var(--gold-dark)",
-                                                fontFamily: "var(--font-great-vibes), cursive",
-                                                letterSpacing: "0.02em",
-                                            }}
-                                        >
-                                            {formatGuestNames(invitationData.guestNames)}
-                                        </Title>
-                                    </Box>
-
-                                    {/* Invitation Text */}
+                                    {/* To join them */}
                                     <Text
-                                        size="lg"
                                         style={{
-                                            color: "var(--text-primary)",
-                                            lineHeight: 1.8,
-                                            maxWidth: 450,
-                                            marginTop: "1rem",
+                                            fontSize: "clamp(1rem, 3vw, 1.2rem)",
+                                            color: "var(--gold-dark)",
+                                            fontFamily: "var(--font-cormorant), serif",
+                                            letterSpacing: "0.1em",
                                         }}
                                     >
-                                        You are cordially invited to celebrate our wedding
+                                        to join them to celebrate their marriage
                                     </Text>
 
-                                    {/* Venue */}
-                                    <Box style={{ marginTop: "0.5rem" }}>
-                                        <Text
-                                            style={{
-                                                fontSize: "1.25rem",
-                                                fontWeight: 400,
-                                                color: "var(--text-primary)",
-                                                fontFamily: "var(--font-great-vibes), cursive",
-                                            }}
-                                        >
-                                            Gran Villa Rosa
-                                        </Text>
-                                        <Text
-                                            style={{
-                                                fontSize: "1rem",
-                                                color: "var(--text-secondary)",
-                                            }}
-                                        >
-                                            Vilanova i la Geltrú, Spain
-                                        </Text>
-                                    </Box>
+                                    {/* Venue and Date - Side by Side */}
+                                    <Group
+                                        justify="center"
+                                        align="center"
+                                        gap="xl"
+                                        style={{ marginTop: "1.5rem", marginBottom: "1rem" }}
+                                        wrap="wrap"
+                                    >
+                                        {/* Venue Address */}
+                                        <Box style={{ textAlign: "left" }}>
+                                            <Text
+                                                style={{
+                                                    fontSize: "1rem",
+                                                    color: "var(--gold-dark)",
+                                                    fontFamily: "var(--font-cormorant), serif",
+                                                    letterSpacing: "0.05em",
+                                                    lineHeight: 1.6,
+                                                }}
+                                            >
+                                                Gran Villa Rosa
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    fontSize: "1rem",
+                                                    color: "var(--gold-dark)",
+                                                    fontFamily: "var(--font-cormorant), serif",
+                                                    letterSpacing: "0.05em",
+                                                    lineHeight: 1.6,
+                                                }}
+                                            >
+                                                Vilanova i la Geltrú
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    fontSize: "1rem",
+                                                    color: "var(--gold-dark)",
+                                                    fontFamily: "var(--font-cormorant), serif",
+                                                    letterSpacing: "0.05em",
+                                                    lineHeight: 1.6,
+                                                }}
+                                            >
+                                                08800 Barcelona
+                                            </Text>
+                                        </Box>
 
-                                    <div className="decorative-divider" style={{ margin: "1rem auto" }}></div>
+                                        {/* Divider */}
+                                        <div className="decorative-divider" style={{ margin: "0 1rem", transform: "rotate(90deg)", width: 60 }} />
+
+                                        {/* Date */}
+                                        <Box style={{ textAlign: "center" }}>
+                                            <Text
+                                                style={{
+                                                    fontSize: "1rem",
+                                                    color: "var(--gold-dark)",
+                                                    fontFamily: "var(--font-cormorant), serif",
+                                                    letterSpacing: "0.05em",
+                                                    lineHeight: 1.6,
+                                                }}
+                                            >
+                                                Saturday, 23<sup>rd</sup> May 2026
+                                            </Text>
+                                        </Box>
+                                    </Group>
 
                                     {/* RSVP CTA Button */}
                                     <Button
                                         onClick={handleRSVPClick}
-                                        size="xl"
-                                        className="primary-cta-button"
+                                        size="lg"
+                                        variant="outline"
                                         style={{
-                                            backgroundColor: "var(--gold-dark)",
-                                            color: "#ffffff",
-                                            borderRadius: 30,
-                                            padding: "16px 48px",
-                                            fontSize: "1.25rem",
-                                            fontWeight: 600,
-                                            boxShadow: "0 6px 24px rgba(109, 90, 68, 0.35)",
+                                            borderColor: "var(--gold-dark)",
+                                            color: "var(--gold-dark)",
+                                            borderRadius: 8,
+                                            padding: "12px 48px",
+                                            fontSize: "1.1rem",
+                                            fontFamily: "var(--font-cormorant), serif",
+                                            fontWeight: 500,
+                                            letterSpacing: "0.1em",
+                                            borderWidth: "2px",
                                             transition: "all 0.3s ease",
-                                            marginTop: "0.5rem",
-                                            letterSpacing: "0.02em",
+                                            marginTop: "1rem",
+                                            marginBottom: "1rem",
+                                            backgroundColor: "transparent",
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = "var(--gold-dark)";
+                                            e.currentTarget.style.color = "#ffffff";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = "transparent";
+                                            e.currentTarget.style.color = "var(--gold-dark)";
                                         }}
                                     >
-                                        Click to RSVP
+                                        Please click here to RSVP
                                     </Button>
 
+                                    {/* Website info */}
+                                    <Box style={{ marginTop: "0.5rem" }}>
+                                        <Text
+                                            style={{
+                                                fontSize: "0.95rem",
+                                                color: "var(--gold-dark)",
+                                                fontFamily: "var(--font-cormorant), serif",
+                                                letterSpacing: "0.05em",
+                                                lineHeight: 1.6,
+                                            }}
+                                        >
+                                            For more information on our wedding
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                fontSize: "0.95rem",
+                                                color: "var(--gold-dark)",
+                                                fontFamily: "var(--font-cormorant), serif",
+                                                letterSpacing: "0.05em",
+                                                lineHeight: 1.6,
+                                            }}
+                                        >
+                                            please visit the website.
+                                        </Text>
+                                        <Text
+                                            component="a"
+                                            href="https://oneill.wedding/"
+                                            target="_blank"
+                                            style={{
+                                                fontSize: "0.95rem",
+                                                color: "var(--gold-dark)",
+                                                fontFamily: "var(--font-cormorant), serif",
+                                                letterSpacing: "0.05em",
+                                                textDecoration: "none",
+                                            }}
+                                        >
+                                            https://oneill.wedding/
+                                        </Text>
+                                    </Box>
+
+                                    {/* Invitation Code */}
                                     <Text
-                                        size="sm"
                                         style={{
-                                            color: "var(--text-secondary)",
-                                            marginTop: "0.5rem",
+                                            fontSize: "0.9rem",
+                                            color: "var(--gold-dark)",
+                                            fontFamily: "var(--font-cormorant), serif",
+                                            letterSpacing: "0.1em",
+                                            marginTop: "1.5rem",
                                         }}
                                     >
-                                        We can&apos;t wait to celebrate with you!
+                                        Invitation Code: <strong>{invitationData.code}</strong>
                                     </Text>
                                 </Stack>
                             </Paper>
