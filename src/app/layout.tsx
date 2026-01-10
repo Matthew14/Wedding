@@ -37,8 +37,8 @@ const greatVibes = Great_Vibes({
 
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://wedding.matthewoneill.com"),
-    title: "Rebecca & Matthew's Wedding",
-    description: "Join us for our special day! Find all the details about our wedding celebration.",
+    title: "Rebecca & Matthew's Wedding - May 2026 in Barcelona, Spain",
+    description: "You're invited to celebrate the wedding of Rebecca and Matthew on Saturday 23rd May 2026 at Gran Villa Rosa, Vilanova i la Geltrú, Barcelona, Spain.",
     keywords: ["wedding", "Rebecca", "Matthew", "celebration", "Vilanova i la Geltrú"],
     icons: {
         icon: "/favicon.ico",
@@ -46,8 +46,8 @@ export const metadata: Metadata = {
         apple: "/favicon.ico",
     },
     openGraph: {
-        title: "Rebecca & Matthew's Wedding",
-        description: "Join us for our special day! Find all the details about our wedding celebration.",
+        title: "Rebecca & Matthew's Wedding - May 2026 in Barcelona, Spain",
+        description: "You're invited to celebrate the wedding of Rebecca and Matthew on Saturday 23rd May 2026 at Gran Villa Rosa, Vilanova i la Geltrú, Barcelona, Spain.",
         type: "website",
         images: [
             {
@@ -60,8 +60,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: "summary_large_image",
-        title: "Rebecca & Matthew's Wedding",
-        description: "Join us for our special day! Find all the details about our wedding celebration.",
+        title: "Rebecca & Matthew's Wedding - May 2026 in Barcelona, Spain",
+        description: "You're invited to celebrate the wedding of Rebecca and Matthew on Saturday 23rd May 2026 at Gran Villa Rosa, Vilanova i la Geltrú, Barcelona, Spain.",
         images: ["/og-invitation.png"],
     },
     other: {
