@@ -52,12 +52,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "Failed to fetch invitees" }, { status: 500 });
         }
 
+        // Convert staying_villa boolean from database to "yes"/"no" string for client form
+        const stayingVillaString = rsvpData.staying_villa === true ? "yes" : "no";
+
         const response = NextResponse.json({
             accepted: rsvpData.accepted,
             rsvpId: rsvpData.id,
             invitationId: rsvpData.invitation_id,
             updatedAt: rsvpData.updated_at,
-            stayingVilla: rsvpData.staying_villa,
+            stayingVilla: stayingVillaString,
             dietaryRestrictions: rsvpData.dietary_restrictions,
             songRequest: rsvpData.song_request,
             travelPlans: rsvpData.travel_plans,
@@ -119,12 +122,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             );
         }
 
+        // SECURITY: Validate staying_villa value
+        if (body.staying_villa !== undefined && body.staying_villa !== "yes" && body.staying_villa !== "no") {
+            return NextResponse.json(
+                { error: "Invalid villa accommodation value" },
+                { status: 400 }
+            );
+        }
+
+        // Server-side text field length validation (matches client-side limits)
+        const TEXT_LIMITS = {
+            dietary_restrictions: 500,
+            song_request: 200,
+            travel_plans: 500,
+            message: 1000,
+        } as const;
+
+        for (const [field, maxLength] of Object.entries(TEXT_LIMITS)) {
+            const value = body[field];
+            if (value && typeof value === 'string' && value.length > maxLength) {
+                return NextResponse.json(
+                    { error: `${field.replace('_', ' ')} exceeds maximum length of ${maxLength} characters` },
+                    { status: 400 }
+                );
+            }
+        }
+
         // Update the RSVP record with form data
+        // Convert staying_villa from "yes"/"no" string to boolean for database
+        const stayingVillaBoolean = villaOffered ? body.staying_villa === "yes" : false;
+
         const { error: updateError } = await supabase
             .from("RSVPs")
             .update({
                 accepted: body.accepted,
-                staying_villa: villaOffered ? body.staying_villa : "no",
+                staying_villa: stayingVillaBoolean,
                 dietary_restrictions: body.dietary_restrictions || null,
                 song_request: body.song_request || null,
                 travel_plans: body.travel_plans || null,
