@@ -477,28 +477,14 @@ export default function InvitationPage() {
                                                 lineHeight: 1.6,
                                             }}
                                         >
-                                            please visit the website.
-                                        </Text>
-                                        <Text
-                                            component="a"
-                                            href="https://oneill.wedding/"
-                                            target="_blank"
-                                            style={{
-                                                fontSize: "0.95rem",
-                                                color: "var(--gold-dark)",
-                                                fontFamily: "var(--font-cormorant), serif",
-                                                letterSpacing: "0.05em",
-                                                textDecoration: "none",
-                                            }}
-                                        >
-                                            https://oneill.wedding/
+                                            please look around this website.
                                         </Text>
                                     </Box>
 
                                     {/* Invitation Code */}
                                     <Text
                                         style={{
-                                            fontSize: "0.9rem",
+                                            fontSize: "0.75rem",
                                             color: "var(--gold-dark)",
                                             fontFamily: "var(--font-cormorant), serif",
                                             letterSpacing: "0.1em",
