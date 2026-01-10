@@ -55,7 +55,7 @@ export async function GET(
             .from("invitees")
             .select("id, first_name, last_name")
             .eq("invitation_id", rsvpData.invitation_id)
-            .order("created_at", { ascending: true });
+            .order("is_primary", { ascending: false });
 
         if (inviteesError || !invitees || invitees.length === 0) {
             return NextResponse.json(
