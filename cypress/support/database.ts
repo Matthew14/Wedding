@@ -143,6 +143,107 @@ export async function resetDatabase(): Promise<void> {
     errors.push(`Error inserting invitee 3: ${invitee3Error.message}`);
   }
 
+  // Third test invitation with 3 invitees (TEST03)
+  const { error: inv3Error } = await supabase.from('invitation').insert({
+    id: '88888888-8888-8888-8888-888888888888',
+    "isMatthewSide": true,
+  });
+  if (inv3Error) {
+    errors.push(`Error inserting invitation 3: ${inv3Error.message}`);
+  }
+
+  const { error: rsvp3Error } = await supabase.from('RSVPs').insert({
+    id: '99999999-9999-9999-9999-999999999999',
+    invitation_id: '88888888-8888-8888-8888-888888888888',
+    short_url: 'TEST03',
+    accepted: null,
+    staying_villa: null,
+  });
+  if (rsvp3Error) {
+    errors.push(`Error inserting RSVP 3: ${rsvp3Error.message}`);
+  }
+
+  const { error: invitees3Error } = await supabase.from('invitees').insert([
+    {
+      id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+      invitation_id: '88888888-8888-8888-8888-888888888888',
+      first_name: 'Michael',
+      last_name: 'Johnson',
+      coming: null,
+    },
+    {
+      id: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
+      invitation_id: '88888888-8888-8888-8888-888888888888',
+      first_name: 'Sarah',
+      last_name: 'Johnson',
+      coming: null,
+    },
+    {
+      id: 'cccccccc-dddd-eeee-ffff-111111111111',
+      invitation_id: '88888888-8888-8888-8888-888888888888',
+      first_name: 'Emma',
+      last_name: 'Johnson',
+      coming: null,
+    },
+  ]);
+  if (invitees3Error) {
+    errors.push(`Error inserting invitees for invitation 3: ${invitees3Error.message}`);
+  }
+
+  // Fourth test invitation with 4 invitees (TEST04)
+  const { error: inv4Error } = await supabase.from('invitation').insert({
+    id: 'dddddddd-eeee-ffff-1111-222222222222',
+    "isMatthewSide": false,
+  });
+  if (inv4Error) {
+    errors.push(`Error inserting invitation 4: ${inv4Error.message}`);
+  }
+
+  const { error: rsvp4Error } = await supabase.from('RSVPs').insert({
+    id: 'eeeeeeee-ffff-1111-2222-333333333333',
+    invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+    short_url: 'TEST04',
+    accepted: null,
+    staying_villa: null,
+  });
+  if (rsvp4Error) {
+    errors.push(`Error inserting RSVP 4: ${rsvp4Error.message}`);
+  }
+
+  const { error: invitees4Error } = await supabase.from('invitees').insert([
+    {
+      id: 'ffffffff-1111-2222-3333-444444444444',
+      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      first_name: 'James',
+      last_name: 'Williams',
+      coming: null,
+    },
+    {
+      id: '11111111-2222-3333-4444-555555555555',
+      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      first_name: 'Sarah',
+      last_name: 'Williams',
+      coming: null,
+    },
+    {
+      id: '22222222-3333-4444-5555-666666666666',
+      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      first_name: 'Tom',
+      last_name: 'Williams',
+      coming: null,
+    },
+    {
+      id: '33333333-4444-5555-6666-777777777777',
+      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      first_name: 'Lucy',
+      last_name: 'Williams',
+      coming: null,
+    },
+  ]);
+  if (invitees4Error) {
+    errors.push(`Error inserting invitees for invitation 4: ${invitees4Error.message}`);
+  }
+
   // Create test auth user
   const { error: authUserError } = await supabase.auth.admin.createUser({
     email: 'admin@wedding.test',
