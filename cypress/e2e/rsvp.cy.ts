@@ -337,8 +337,8 @@ describe('RSVP Flow', () => {
       // Submit
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
-      // Confirm in modal
-      cy.contains('Confirm & Submit').click();
+      // Confirm in modal (wait for modal to appear)
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
 
       cy.url({ timeout: 10000 })
         .should('include', '/rsvp/success')
