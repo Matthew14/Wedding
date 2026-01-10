@@ -15,14 +15,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Navigation } from "@/components/Navigation";
 import { useTracking, InvitationEvents } from "@/hooks";
-import { formatGuestNames } from "@/utils/invitation";
-
-interface InvitationData {
-    valid: boolean;
-    code: string;
-    guestNames: string[];
-    invitationId: string;
-}
+import { formatGuestNames, InvitationData } from "@/utils/invitation";
 
 interface InvitationContentProps {
     slug: string;
@@ -82,7 +75,9 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
                 if (err instanceof Error && err.name === "AbortError") {
                     return;
                 }
-                console.error("Error fetching invitation:", err);
+                if (process.env.NODE_ENV === "development") {
+                    console.error("Error fetching invitation:", err);
+                }
                 setError(true);
                 trackEvent(InvitationEvents.INVALID_LINK, {
                     reason: "fetch_error",
@@ -101,9 +96,7 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
         return () => {
             abortController.abort();
         };
-    // trackEvent is stable (from useTracking hook) and doesn't need to be in deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [slug]);
+    }, [slug, trackEvent]);
 
     const handleRSVPClick = () => {
         if (invitationData) {
@@ -122,7 +115,12 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
                     <Box style={{ paddingTop: 56 }}>
                         <Container size="sm" py="xl">
                             <Stack gap="xl" align="center" justify="center" style={{ minHeight: "60vh" }}>
-                                <Text size="lg" style={{ color: "var(--text-secondary)" }}>
+                                <Text
+                                    size="lg"
+                                    style={{ color: "var(--text-secondary)" }}
+                                    role="status"
+                                    aria-live="polite"
+                                >
                                     Loading your invitation...
                                 </Text>
                             </Stack>
