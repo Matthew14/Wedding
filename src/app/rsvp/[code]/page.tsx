@@ -474,20 +474,6 @@ export default function RSVPFormPage() {
                                         {guestNames}
                                     </Title>
                                 )}
-                                <Title
-                                    order={2}
-                                    style={{
-                                        fontSize: "clamp(1.5rem, 4vw, 2rem)",
-                                        fontWeight: 400,
-                                        color: "#2d2d2d",
-                                        marginBottom: "0",
-                                        fontFamily: "var(--font-great-vibes), cursive",
-                                        letterSpacing: "0.02em",
-                                    }}
-                                >
-                                    Répondez s&apos;il vous plaît
-                                </Title>
-                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
                                 {infoText ? (
                                     <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }} pb="md">
                                         {infoText}

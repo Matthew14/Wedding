@@ -127,13 +127,13 @@ export default function RSVPPage() {
         e.preventDefault();
 
         if (!rsvpCode.trim()) {
-            setError("Please enter your RSVP code");
+            setError("Please enter your invitation code");
             setValidationState("invalid");
             return;
         }
 
         if (rsvpCode.trim().length !== 6) {
-            setError(`RSVP code must be exactly 6 characters (you entered ${rsvpCode.length})`);
+            setError(`invitation code must be exactly 6 characters (you entered ${rsvpCode.length})`);
             setValidationState("invalid");
             return;
         }
@@ -150,7 +150,7 @@ export default function RSVPPage() {
         setValidationMessage("Verifying code...");
 
         try {
-            // Check if the RSVP code exists
+            // Check if the invitation code exists
             const response = await fetch(`/api/rsvp/validate/${rsvpCode.trim()}`);
 
             if (response.ok) {
@@ -158,7 +158,7 @@ export default function RSVPPage() {
                 router.push(`/rsvp/${rsvpCode.trim()}`);
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                setError(errorData.suggestion || "Invalid RSVP code. Please check and try again.");
+                setError(errorData.suggestion || "Invalid invitation code. Please check and try again.");
                 setValidationState("invalid");
                 setValidationMessage(errorData.suggestion || "Code not found");
             }
@@ -194,24 +194,32 @@ export default function RSVPPage() {
                                     RSVP
                                 </Title>
                                 <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
-                                <Text size="lg" style={{ color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 500, margin: "0 auto" }}>
-                                    Please enter your unique RSVP code to respond to our invitation. Your code can be
-                                    found in your invitation. Alternatively, click the link in your invitation or scan
-                                    the QR code to take you to your personalised link.
+                                <Text
+                                    size="lg"
+                                    style={{
+                                        color: "var(--text-secondary)",
+                                        lineHeight: 1.8,
+                                        maxWidth: 500,
+                                        margin: "0 auto",
+                                    }}
+                                >
+                                    Please enter your unique invitation code to respond to our invitation.
+                                    Your code can be found in your invitation. Alternatively, click the link
+                                    in your invitation to go directly to your personalised page.
                                 </Text>
                             </Box>
 
-                            {/* RSVP Code Form */}
+                            {/* invitation code Form */}
                             <Paper className="elegant-card" radius="lg" p="xl" style={{ width: "100%", maxWidth: "400px" }}>
                                 <form onSubmit={handleSubmit}>
                                     <Stack gap="lg">
                                         <Box>
                                             <TextInput
                                                 ref={inputRef}
-                                                label="RSVP Code"
+                                                label="invitation code"
                                                 placeholder="ABC123"
                                                 description="Enter the 6-character code from your invitation"
-                                                aria-label="RSVP Code - Enter the 6-character code from your invitation"
+                                                aria-label="invitation code - Enter the 6-character code from your invitation"
                                                 value={rsvpCode}
                                                 onChange={e => handleCodeChange(e.target.value)}
                                                 onPaste={handlePaste}
@@ -307,8 +315,7 @@ export default function RSVPPage() {
                             {/* Help Text */}
                             <Paper className="elegant-card" radius="md" p="md" style={{ backgroundColor: "rgba(250, 248, 245, 0.6)" }}>
                                 <Text size="sm" style={{ color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.7 }}>
-                                    Your RSVP code can be found on your wedding invitation. If you need help, please
-                                    contact us.
+                                    If you need help, please contact us.
                                 </Text>
                             </Paper>
                         </Stack>
