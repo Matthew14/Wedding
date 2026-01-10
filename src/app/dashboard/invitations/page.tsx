@@ -28,6 +28,7 @@ interface Invitation {
     created_at: string;
     isMatthewSide: boolean;
     sent: boolean;
+    villa_offered: boolean;
     rsvp_code?: string;
 }
 
@@ -72,12 +73,13 @@ export default function InvitationsPage() {
     };
 
     const resetInvitationForm = () => {
-        setInvitationForm({ isMatthewSide: true, selectedInvitees: [] });
+        setInvitationForm({ isMatthewSide: true, villaOffered: true, selectedInvitees: [] });
         setInvitationErrors({});
     };
 
     const [invitationForm, setInvitationForm] = useState({
         isMatthewSide: true,
+        villaOffered: true,
         selectedInvitees: [] as string[],
     });
 
@@ -95,6 +97,7 @@ export default function InvitationsPage() {
                     created_at,
                     isMatthewSide,
                     sent,
+                    villa_offered,
                     RSVPs (short_url)
                 `)
                 .order("created_at", { ascending: false });
@@ -152,7 +155,10 @@ export default function InvitationsPage() {
             // Create the invitation first
             const { data: invitationData, error: invitationError } = await supabase
                 .from("invitation")
-                .insert([{ isMatthewSide: invitationForm.isMatthewSide }])
+                .insert([{
+                    isMatthewSide: invitationForm.isMatthewSide,
+                    villa_offered: invitationForm.villaOffered,
+                }])
                 .select()
                 .single();
 
@@ -234,6 +240,25 @@ export default function InvitationsPage() {
         } catch (error) {
             console.error("Error updating sent status:", error);
             showAlert("error", "Failed to update sent status");
+        }
+    };
+
+    const handleVillaToggle = async (invitationId: string, currentValue: boolean) => {
+        try {
+            const { error } = await supabase
+                .from("invitation")
+                .update({ villa_offered: !currentValue })
+                .eq("id", invitationId);
+
+            if (error) throw error;
+
+            // Update local state
+            setInvitations(prev =>
+                prev.map(inv => (inv.id === invitationId ? { ...inv, villa_offered: !currentValue } : inv))
+            );
+        } catch (error) {
+            console.error("Error updating villa offered status:", error);
+            showAlert("error", "Failed to update villa offered status");
         }
     };
 
@@ -345,6 +370,11 @@ export default function InvitationsPage() {
                             <th
                                 style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
                             >
+                                Villa
+                            </th>
+                            <th
+                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
+                            >
                                 Sent
                             </th>
                             <th
@@ -450,6 +480,16 @@ export default function InvitationsPage() {
                                     </td>
                                     <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
                                         <Checkbox
+                                            checked={invitation.villa_offered}
+                                            onChange={() => handleVillaToggle(invitation.id, invitation.villa_offered)}
+                                            color="#8b7355"
+                                            size="md"
+                                            style={{ display: "flex", justifyContent: "center" }}
+                                            aria-label="Villa offered"
+                                        />
+                                    </td>
+                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
+                                        <Checkbox
                                             checked={invitation.sent}
                                             onChange={() => handleSentToggle(invitation.id, invitation.sent)}
                                             color="#8b7355"
@@ -491,6 +531,14 @@ export default function InvitationsPage() {
                                 setInvitationForm(prev => ({ ...prev, isMatthewSide: event.currentTarget.checked }))
                             }
                             error={invitationErrors.isMatthewSide}
+                        />
+
+                        <Checkbox
+                            label="Offer villa accommodation to these guests?"
+                            checked={invitationForm.villaOffered}
+                            onChange={event =>
+                                setInvitationForm(prev => ({ ...prev, villaOffered: event.currentTarget.checked }))
+                            }
                         />
 
                         <MultiSelect
