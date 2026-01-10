@@ -18,7 +18,7 @@ vi.hoisted(() => {
         }),
     });
 });
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MantineProvider } from "@mantine/core";
 
@@ -890,11 +890,12 @@ describe("RSVPFormPage", () => {
                 await user.click(johnCheckbox);
 
                 // Try to enter very long text (should be handled by form validation)
+                // Use fireEvent.change instead of user.type for performance (typing 600 chars is slow)
                 const dietaryTextarea = screen.getByPlaceholderText(
                     /dietary requirements/i
                 ) as HTMLTextAreaElement;
                 const longText = "a".repeat(600); // Exceeds 500 char limit
-                await user.type(dietaryTextarea, longText);
+                fireEvent.change(dietaryTextarea, { target: { value: longText } });
 
                 // Submit to trigger validation
                 const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
