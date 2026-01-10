@@ -254,6 +254,89 @@ export async function resetDatabase(): Promise<void> {
     errors.push(`Error inserting invitees for invitation 4: ${invitees4Error.message}`);
   }
 
+  // Fifth test invitation with mixed surnames (TEST05)
+  const { error: inv5Error } = await supabase.from('invitation').insert({
+    id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    "isMatthewSide": true,
+  });
+  if (inv5Error) {
+    errors.push(`Error inserting invitation 5: ${inv5Error.message}`);
+  }
+
+  const { error: rsvp5Error } = await supabase.from('RSVPs').insert({
+    id: '22222222-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    short_url: 'TEST05',
+    accepted: null,
+    staying_villa: null,
+  });
+  if (rsvp5Error) {
+    errors.push(`Error inserting RSVP 5: ${rsvp5Error.message}`);
+  }
+
+  const { error: invitees5Error } = await supabase.from('invitees').insert([
+    {
+      id: '33333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      first_name: 'Michael',
+      last_name: 'Carter',
+      coming: null,
+      is_primary: false,
+    },
+    {
+      id: '44444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      first_name: 'Emily',
+      last_name: 'Carter',
+      coming: null,
+      is_primary: false,
+    },
+    {
+      id: '55555555-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      first_name: 'David',
+      last_name: 'Wilson',
+      coming: null,
+      is_primary: true,
+    },
+  ]);
+  if (invitees5Error) {
+    errors.push(`Error inserting invitees for invitation 5: ${invitees5Error.message}`);
+  }
+
+  // Sixth test invitation with villa_offered=false (TEST06)
+  const { error: inv6Error } = await supabase.from('invitation').insert({
+    id: '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    "isMatthewSide": false,
+    villa_offered: false,
+  });
+  if (inv6Error) {
+    errors.push(`Error inserting invitation 6: ${inv6Error.message}`);
+  }
+
+  const { error: rsvp6Error } = await supabase.from('RSVPs').insert({
+    id: '77777777-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    invitation_id: '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    short_url: 'TEST06',
+    accepted: null,
+    staying_villa: null,
+  });
+  if (rsvp6Error) {
+    errors.push(`Error inserting RSVP 6: ${rsvp6Error.message}`);
+  }
+
+  const { error: invitee6Error } = await supabase.from('invitees').insert({
+    id: '88888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    invitation_id: '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    first_name: 'Robert',
+    last_name: 'Green',
+    coming: null,
+    is_primary: true,
+  });
+  if (invitee6Error) {
+    errors.push(`Error inserting invitee 6: ${invitee6Error.message}`);
+  }
+
   // Create test auth user
   const { error: authUserError } = await supabase.auth.admin.createUser({
     email: 'admin@wedding.test',
