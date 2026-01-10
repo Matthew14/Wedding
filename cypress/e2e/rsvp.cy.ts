@@ -21,7 +21,7 @@ describe('RSVP Flow', () => {
 
       // Check page elements
       cy.contains('RSVP').should('be.visible');
-      cy.contains('Please enter your unique RSVP code').should('be.visible');
+      cy.contains('Please enter your unique invitation code').should('be.visible');
       cy.get('input[placeholder="ABC123"]').should('be.visible');
       cy.get('button[type="submit"]').should('contain', 'Continue to RSVP Form');
     });
