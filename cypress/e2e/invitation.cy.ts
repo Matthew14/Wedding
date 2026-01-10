@@ -14,19 +14,19 @@ describe('Invitation Page', () => {
 
       // Check page loads without error
       cy.contains('Rebecca & Matthew').should('be.visible');
-      cy.contains('22 - 24 May 2026').should('be.visible');
+      cy.contains('May 2026').should('be.visible');
 
       // Check personalized greeting
-      cy.contains('Dear').should('be.visible');
+      cy.contains('Wish to invite').should('be.visible');
       cy.contains('John & Jane').should('be.visible');
 
       // Check invitation content
-      cy.contains('You are cordially invited to celebrate our wedding').should('be.visible');
+      cy.contains('to join them to celebrate their marriage').should('be.visible');
       cy.contains('Gran Villa Rosa').should('be.visible');
-      cy.contains('Vilanova i la Geltrú, Spain').should('be.visible');
+      cy.contains('Vilanova i la Geltrú').should('be.visible');
 
       // Check RSVP CTA button
-      cy.contains('Click to RSVP').should('be.visible');
+      cy.contains('Please click here to RSVP').should('be.visible');
     });
 
     it('should display personalized invitation for a single guest', () => {
@@ -35,11 +35,11 @@ describe('Invitation Page', () => {
       cy.visit('/invitation/alice-TEST02');
 
       // Check personalized greeting for single guest
-      cy.contains('Dear').should('be.visible');
+      cy.contains('Wish to invite').should('be.visible');
       cy.contains('Alice').should('be.visible');
 
       // Check RSVP CTA button
-      cy.contains('Click to RSVP').should('be.visible');
+      cy.contains('Please click here to RSVP').should('be.visible');
     });
 
     it('should handle case-insensitive names in URL', () => {
@@ -47,7 +47,7 @@ describe('Invitation Page', () => {
       cy.visit('/invitation/JOHN-JANE-TEST01');
 
       cy.contains('John & Jane').should('be.visible');
-      cy.contains('Click to RSVP').should('be.visible');
+      cy.contains('Please click here to RSVP').should('be.visible');
     });
 
     it('should handle names in different order', () => {
@@ -55,7 +55,7 @@ describe('Invitation Page', () => {
       cy.visit('/invitation/jane-john-TEST01');
 
       cy.contains('John & Jane').should('be.visible');
-      cy.contains('Click to RSVP').should('be.visible');
+      cy.contains('Please click here to RSVP').should('be.visible');
     });
   });
 
@@ -67,7 +67,7 @@ describe('Invitation Page', () => {
       cy.contains('John & Jane').should('be.visible');
 
       // Click the RSVP button
-      cy.contains('button', 'Click to RSVP').should('be.visible').click();
+      cy.contains('button', 'Please click here to RSVP').should('be.visible').click();
 
       // Should navigate to RSVP form with the code
       cy.url({ timeout: 15000 }).should('include', '/rsvp/TEST01');
@@ -127,7 +127,7 @@ describe('Invitation Page', () => {
 
       cy.contains('Rebecca & Matthew').should('be.visible');
       cy.contains('John & Jane').should('be.visible');
-      cy.contains('Click to RSVP').should('be.visible');
+      cy.contains('Please click here to RSVP').should('be.visible');
     });
 
     it('should display correctly on tablet', () => {
@@ -135,7 +135,7 @@ describe('Invitation Page', () => {
       cy.visit('/invitation/john-jane-TEST01');
 
       cy.contains('Rebecca & Matthew').should('be.visible');
-      cy.contains('Click to RSVP').should('be.visible');
+      cy.contains('Please click here to RSVP').should('be.visible');
     });
   });
 
