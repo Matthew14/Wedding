@@ -147,7 +147,7 @@ describe('RSVP Flow', () => {
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
 
       // Should redirect to success page with correct query parameters
       cy.url({ timeout: 10000 })
@@ -202,7 +202,7 @@ describe('RSVP Flow', () => {
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
 
       // Should redirect to success page with correct query parameters
       cy.url({ timeout: 10000 })
@@ -278,7 +278,7 @@ describe('RSVP Flow', () => {
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
 
       cy.url({ timeout: 10000 })
         .should('include', '/rsvp/success')
@@ -304,7 +304,7 @@ describe('RSVP Flow', () => {
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
 
       // Wait for redirect with correct query parameters
       cy.url({ timeout: 10000 })
@@ -430,7 +430,7 @@ describe('RSVP Flow', () => {
 
       // Submit form
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
 
       // Wait for redirect to success page
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -461,7 +461,7 @@ describe('RSVP Flow', () => {
         .click({ force: true });
       cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Return to form to amend
@@ -493,7 +493,7 @@ describe('RSVP Flow', () => {
         .click({ force: true });
       cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Return to form
@@ -527,7 +527,7 @@ describe('RSVP Flow', () => {
       cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
       cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Return to form
@@ -561,7 +561,7 @@ describe('RSVP Flow', () => {
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Return to form
@@ -596,7 +596,7 @@ describe('RSVP Flow', () => {
 
       // Don't fill optional fields - they'll be stored as null
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Return to form
@@ -640,7 +640,7 @@ describe('RSVP Flow', () => {
       cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').should('not.be.checked');
 
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
 
       // Return to amend - invitee states should be preserved
@@ -696,7 +696,7 @@ describe('RSVP Flow', () => {
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
-      cy.contains('Confirm & Submit').click();
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
 
       // Check success page with correct query parameters
       cy.url({ timeout: 10000 })
