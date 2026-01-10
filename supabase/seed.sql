@@ -86,9 +86,9 @@ INSERT INTO public."RSVPs" (
 );
 
 -- Insert test invitees for the test invitation
-INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming) VALUES
-    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'John', 'Doe', NULL),
-    ('44444444-4444-4444-4444-444444444444', '11111111-1111-1111-1111-111111111111', 'Jane', 'Doe', NULL);
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming, is_primary) VALUES
+    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'John', 'Doe', NULL, TRUE),
+    ('44444444-4444-4444-4444-444444444444', '11111111-1111-1111-1111-111111111111', 'Jane', 'Doe', NULL, FALSE);
 
 -- Insert test FAQ
 INSERT INTO public."FAQs" (id, question, answer) VALUES
@@ -112,8 +112,8 @@ INSERT INTO public."RSVPs" (
     NULL
 );
 
-INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming) VALUES
-    ('77777777-7777-7777-7777-777777777777', '55555555-5555-5555-5555-555555555555', 'Alice', 'Smith', NULL);
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming, is_primary) VALUES
+    ('77777777-7777-7777-7777-777777777777', '55555555-5555-5555-5555-555555555555', 'Alice', 'Smith', NULL, TRUE);
 
 -- Third test invitation with 3 invitees
 INSERT INTO public.invitation (id, "isMatthewSide") VALUES
@@ -133,10 +133,10 @@ INSERT INTO public."RSVPs" (
     NULL
 );
 
-INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming) VALUES
-    ('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', '88888888-8888-8888-8888-888888888888', 'Michael', 'Johnson', NULL),
-    ('bbbbbbbb-cccc-dddd-eeee-ffffffffffff', '88888888-8888-8888-8888-888888888888', 'Sarah', 'Johnson', NULL),
-    ('cccccccc-dddd-eeee-ffff-111111111111', '88888888-8888-8888-8888-888888888888', 'Emma', 'Johnson', NULL);
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming, is_primary) VALUES
+    ('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', '88888888-8888-8888-8888-888888888888', 'Michael', 'Johnson', NULL, TRUE),
+    ('bbbbbbbb-cccc-dddd-eeee-ffffffffffff', '88888888-8888-8888-8888-888888888888', 'Sarah', 'Johnson', NULL, FALSE),
+    ('cccccccc-dddd-eeee-ffff-111111111111', '88888888-8888-8888-8888-888888888888', 'Emma', 'Johnson', NULL, FALSE);
 
 -- Fourth test invitation with 4 invitees (family)
 INSERT INTO public.invitation (id, "isMatthewSide") VALUES
@@ -156,8 +156,8 @@ INSERT INTO public."RSVPs" (
     NULL
 );
 
-INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming) VALUES
-    ('ffffffff-1111-2222-3333-444444444444', 'dddddddd-eeee-ffff-1111-222222222222', 'James', 'Williams', NULL),
-    ('11111111-2222-3333-4444-555555555555', 'dddddddd-eeee-ffff-1111-222222222222', 'Sarah', 'Williams', NULL),
-    ('22222222-3333-4444-5555-666666666666', 'dddddddd-eeee-ffff-1111-222222222222', 'Tom', 'Williams', NULL),
-    ('33333333-4444-5555-6666-777777777777', 'dddddddd-eeee-ffff-1111-222222222222', 'Lucy', 'Williams', NULL);
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming, is_primary) VALUES
+    ('ffffffff-1111-2222-3333-444444444444', 'dddddddd-eeee-ffff-1111-222222222222', 'James', 'Williams', NULL, TRUE),
+    ('11111111-2222-3333-4444-555555555555', 'dddddddd-eeee-ffff-1111-222222222222', 'Sarah', 'Williams', NULL, FALSE),
+    ('22222222-3333-4444-5555-666666666666', 'dddddddd-eeee-ffff-1111-222222222222', 'Tom', 'Williams', NULL, FALSE),
+    ('33333333-4444-5555-6666-777777777777', 'dddddddd-eeee-ffff-1111-222222222222', 'Lucy', 'Williams', NULL, FALSE);

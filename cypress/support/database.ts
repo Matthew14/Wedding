@@ -89,6 +89,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'John',
       last_name: 'Doe',
       coming: null,
+      is_primary: true,
     },
     {
       id: '44444444-4444-4444-4444-444444444444',
@@ -96,6 +97,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'Jane',
       last_name: 'Doe',
       coming: null,
+      is_primary: false,
     },
   ]);
   if (inviteesError) {
@@ -138,6 +140,7 @@ export async function resetDatabase(): Promise<void> {
     first_name: 'Alice',
     last_name: 'Smith',
     coming: null,
+    is_primary: true,
   });
   if (invitee3Error) {
     errors.push(`Error inserting invitee 3: ${invitee3Error.message}`);
@@ -170,6 +173,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'Michael',
       last_name: 'Johnson',
       coming: null,
+      is_primary: true,
     },
     {
       id: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
@@ -177,6 +181,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'Sarah',
       last_name: 'Johnson',
       coming: null,
+      is_primary: false,
     },
     {
       id: 'cccccccc-dddd-eeee-ffff-111111111111',
@@ -184,6 +189,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'Emma',
       last_name: 'Johnson',
       coming: null,
+      is_primary: false,
     },
   ]);
   if (invitees3Error) {
@@ -217,6 +223,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'James',
       last_name: 'Williams',
       coming: null,
+      is_primary: true,
     },
     {
       id: '11111111-2222-3333-4444-555555555555',
@@ -224,6 +231,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'Sarah',
       last_name: 'Williams',
       coming: null,
+      is_primary: false,
     },
     {
       id: '22222222-3333-4444-5555-666666666666',
@@ -231,6 +239,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'Tom',
       last_name: 'Williams',
       coming: null,
+      is_primary: false,
     },
     {
       id: '33333333-4444-5555-6666-777777777777',
@@ -238,6 +247,7 @@ export async function resetDatabase(): Promise<void> {
       first_name: 'Lucy',
       last_name: 'Williams',
       coming: null,
+      is_primary: false,
     },
   ]);
   if (invitees4Error) {
