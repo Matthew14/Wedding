@@ -116,36 +116,20 @@ describe('RSVP Flow', () => {
       // Header shows formatted guest names
       cy.contains('John & Jane Doe').should('be.visible');
 
-      // Click Yes to accept - invitee checkboxes only show when accepting
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-
-      // Individual invitee names appear in checkboxes when accepting
+      // Form defaults to "Yes" (accepting) - invitee cards should already be visible
+      // Individual invitee names appear in card-style checkboxes
       cy.contains('John Doe').should('be.visible');
       cy.contains('Jane Doe').should('be.visible');
     });
 
     it('should submit complete RSVP (accepting invitation)', () => {
-      // Accept invitation - find the "Are you joining us?" section and click Yes radio
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
+      // Form defaults to "Yes" (accepted=true) and all invitees checked
+      // Verify invitees are checked by default
+      cy.get('[role="checkbox"][aria-label="John Doe"]').should('have.attr', 'aria-checked', 'true');
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').should('have.attr', 'aria-checked', 'true');
 
-      // Select invitees (both coming)
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').check();
-
-      // Staying at villa - find the villa section and click Yes radio
-      cy.contains('Will you be staying with us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
+      // Staying at villa - click the "Yes" card
+      cy.contains("Yes, we're staying").click();
 
       // Fill optional fields
       cy.get('textarea[placeholder*="dietary"]').type('Vegetarian, no nuts');
@@ -198,12 +182,8 @@ describe('RSVP Flow', () => {
     });
 
     it('should submit RSVP declining invitation', () => {
-      // Decline invitation - find the "Are you joining us?" section and click No radio
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="no"]')
-        .click({ force: true });
+      // Decline invitation - click the "No" card
+      cy.contains("Sorry, we can't make it").click();
 
       // Fill message
       cy.get('textarea[placeholder*="Any other information"]').type("Unfortunately we can't make it. Wishing you all the best!");
@@ -234,57 +214,37 @@ describe('RSVP Flow', () => {
       // Wait for form to be fully loaded and verify default state (accepting)
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      // Wait for "Yes" radio to be selected by default (accepted=true)
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .should('be.checked');
-
+      // Form defaults to "Yes" (accepted=true)
       // Villa question should be visible when accepting (wait for render)
       cy.wait(1000); // Give conditional render time to complete
       cy.get('body').should('contain', 'Will you be staying with us?');
 
-      // Switch to declining
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="no"]')
-        .click({ force: true });
+      // Switch to declining - click the "No" card
+      cy.contains("Sorry, we can't make it").click();
 
       // Villa question should now be hidden (removed from DOM)
       cy.wait(500); // Wait for conditional render
       cy.get('body').should('not.contain', 'Will you be staying with us?');
 
       // Invitee selection section should also be hidden (removed from DOM)
-      // Note: Individual invitee names might still appear elsewhere (like in confirmation modal text)
-      // so we check that the checkbox inputs are gone
-      cy.get('input[type="checkbox"]').should('not.exist');
+      // Check that the role="checkbox" elements are gone
+      cy.get('[role="checkbox"]').should('not.exist');
 
-      // Switch back to accepting
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
+      // Switch back to accepting - click the "Yes" card
+      cy.contains("Yes, we're coming!").click();
 
       // Villa question should be visible again
       cy.wait(500); // Wait for conditional render
       cy.get('body').should('contain', 'Will you be staying with us?');
 
-      // Invitee checkboxes should be visible again
-      cy.get('input[type="checkbox"]').should('exist');
-      cy.get('input[type="checkbox"]').should('have.length', 2); // John and Jane
+      // Invitee card checkboxes should be visible again
+      cy.get('[role="checkbox"]').should('exist');
+      cy.get('[role="checkbox"]').should('have.length', 2); // John and Jane
     });
 
     it('should allow editing existing RSVP', () => {
-      // First submission - accept invitation
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      // First submission - form defaults to "Yes" with all invitees checked
+      // Submit the form
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
@@ -301,13 +261,6 @@ describe('RSVP Flow', () => {
 
       // Should show info that we're amending
       cy.contains("You're amending your RSVP", { timeout: 5000 }).should('be.visible');
-
-      // Form should be pre-populated - Yes radio should be checked
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .should('be.checked');
 
       // Make changes
       cy.get('textarea[placeholder*="dietary"]').clear().type('Gluten-free');
@@ -333,16 +286,9 @@ describe('RSVP Flow', () => {
     });
 
     it('should handle partial invitee attendance', () => {
-      // Accept invitation
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-
-      // Only John is coming
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').uncheck();
+      // Form defaults to "Yes" with all invitees checked
+      // Uncheck Jane - only John is coming
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').click();
 
       // Submit
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -378,16 +324,10 @@ describe('RSVP Flow', () => {
     });
 
     it('should prevent accepting invitation without selecting any invitees', () => {
-      // Accept invitation
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-
+      // Form defaults to "Yes" with all invitees checked
       // Uncheck all invitees - none are coming
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').uncheck();
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').uncheck();
+      cy.get('[role="checkbox"][aria-label="John Doe"]').click();
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').click();
 
       // Try to submit
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -403,7 +343,7 @@ describe('RSVP Flow', () => {
       cy.url().should('not.include', '/success');
 
       // Now select one invitee to fix the validation error
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      cy.get('[role="checkbox"][aria-label="John Doe"]').click();
 
       // Now submission should work - confirmation modal should appear
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -417,23 +357,9 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      // Accept invitation
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-
-      // Select invitees
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').check();
-
-      // Staying at villa
-      cy.contains('Will you be staying with us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
+      // Form defaults to "Yes" with all invitees checked
+      // Click villa "Yes" option
+      cy.contains("Yes, we're staying").click();
 
       // Fill dietary restrictions
       cy.get('textarea[placeholder*="dietary"]').type('Vegetarian');
@@ -464,12 +390,7 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      // Form defaults to "Yes" with all invitees checked
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -496,12 +417,7 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      // Form defaults to "Yes" with all invitees checked
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -513,12 +429,8 @@ describe('RSVP Flow', () => {
       // Button should be disabled initially
       cy.get('button[type="submit"]').should('be.disabled');
 
-      // Change to declining
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="no"]')
-        .click({ force: true });
+      // Change to declining - click the "No" card
+      cy.contains("Sorry, we can't make it").click();
 
       // Button should now be enabled
       cy.get('button[type="submit"]').should('not.be.disabled');
@@ -529,13 +441,7 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').check();
+      // Form defaults to "Yes" with all invitees checked
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -547,8 +453,8 @@ describe('RSVP Flow', () => {
       // Button should be disabled initially
       cy.get('button[type="submit"]').should('be.disabled');
 
-      // Change Jane's status - uncheck her
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').uncheck();
+      // Change Jane's status - click to toggle her off
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').click();
 
       // Button should now be enabled
       cy.get('button[type="submit"]').should('not.be.disabled');
@@ -559,17 +465,9 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-      cy.contains('Will you be staying with us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
+      // Form defaults to "Yes" with all invitees checked
+      // Click villa "Yes" option
+      cy.contains("Yes, we're staying").click();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -581,12 +479,8 @@ describe('RSVP Flow', () => {
       // Button should be disabled initially
       cy.get('button[type="submit"]').should('be.disabled');
 
-      // Change to not staying at villa
-      cy.contains('Will you be staying with us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="no"]')
-        .click({ force: true });
+      // Change to not staying at villa - click the "No" card
+      cy.contains("No, we'll arrange our own").click();
 
       // Button should now be enabled
       cy.get('button[type="submit"]').should('not.be.disabled');
@@ -597,13 +491,7 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-
+      // Form defaults to "Yes" with all invitees checked
       // Don't fill optional fields - they'll be stored as null
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
@@ -639,15 +527,13 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
+      // Form defaults to "Yes" with all invitees checked
+      // Uncheck Jane - only John is coming
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').click();
 
-      // Check John, but NOT Jane
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').should('not.be.checked');
+      // Verify John is checked, Jane is not
+      cy.get('[role="checkbox"][aria-label="John Doe"]').should('have.attr', 'aria-checked', 'true');
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').should('have.attr', 'aria-checked', 'false');
 
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
@@ -658,8 +544,8 @@ describe('RSVP Flow', () => {
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Jane should still be unchecked, John should still be checked
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').should('be.checked');
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').should('not.be.checked');
+      cy.get('[role="checkbox"][aria-label="John Doe"]').should('have.attr', 'aria-checked', 'true');
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').should('have.attr', 'aria-checked', 'false');
 
       // Button should be disabled (no changes made)
       cy.get('button[type="submit"]').should('be.disabled');
@@ -674,15 +560,7 @@ describe('RSVP Flow', () => {
       // Should NOT show amending message
       cy.contains("You're amending your RSVP").should('not.exist');
 
-      // Submit button should be enabled (new RSVP, not amendment)
-      // Note: It might be disabled due to validation, but not due to "no changes"
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
-
+      // Form defaults to "Yes" with all invitees checked
       // Button should be enabled for new submission
       cy.get('button[type="submit"]').should('not.be.disabled');
 
@@ -696,13 +574,7 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
-      // Quick submission - accept invitation
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      // Form defaults to "Yes" with all invitees checked
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
@@ -744,13 +616,7 @@ describe('RSVP Flow', () => {
     });
 
     it('should not show villa accommodation question when villa is not offered', () => {
-      // Accept invitation
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-
+      // Form defaults to "Yes" (accepted=true)
       // Note: Single-invitee invitations don't show checkboxes - the invitee is
       // automatically marked as coming when the invitation is accepted
 

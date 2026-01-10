@@ -140,6 +140,10 @@ export function RSVPFormFields({
                                         p="md"
                                         radius="md"
                                         withBorder
+                                        role="checkbox"
+                                        aria-checked={invitee.coming}
+                                        aria-label={invitee.name}
+                                        tabIndex={0}
                                         style={{
                                             cursor: 'pointer',
                                             borderColor: invitee.coming ? '#6d5a44' : '#dee2e6',
@@ -147,6 +151,12 @@ export function RSVPFormFields({
                                             transition: 'all 0.2s ease',
                                         }}
                                         onClick={() => onInviteeChange(invitee.id, !invitee.coming)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                onInviteeChange(invitee.id, !invitee.coming);
+                                            }
+                                        }}
                                     >
                                         <Group justify="space-between">
                                             <Text fw={500}>{invitee.name}</Text>
@@ -155,6 +165,7 @@ export function RSVPFormFields({
                                                 onChange={() => {}}
                                                 size="md"
                                                 color="#6d5a44"
+                                                tabIndex={-1}
                                                 styles={{ track: { cursor: 'pointer' } }}
                                             />
                                         </Group>
