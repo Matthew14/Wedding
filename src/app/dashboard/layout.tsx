@@ -18,6 +18,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             setActiveTab("faq-editor");
         } else if (pathname.includes("/dashboard/invitations")) {
             setActiveTab("invitations");
+        } else if (pathname.includes("/dashboard/rsvps")) {
+            setActiveTab("rsvps");
         } else {
             setActiveTab("overview");
         }
@@ -28,6 +30,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             router.push("/dashboard/faq-editor");
         } else if (value === "invitations") {
             router.push("/dashboard/invitations");
+        } else if (value === "rsvps") {
+            router.push("/dashboard/rsvps");
         } else if (value === "overview") {
             router.push("/dashboard");
         }
@@ -114,6 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <Tabs.Tab value="overview">Overview</Tabs.Tab>
                             <Tabs.Tab value="faq-editor">FAQ Editor</Tabs.Tab>
                             <Tabs.Tab value="invitations">Invitations</Tabs.Tab>
+                            <Tabs.Tab value="rsvps">RSVPs</Tabs.Tab>
                         </Tabs.List>
 
                         <Box mt="lg">{children}</Box>
