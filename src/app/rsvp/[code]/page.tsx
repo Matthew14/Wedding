@@ -33,6 +33,54 @@ import { Navigation } from "@/components/Navigation";
 import { RSVPFormData, Invitee, DatabaseRSVPResponse } from "@/types";
 import { useRSVPForm, useTracking, RSVPEvents, useFormAnalytics, useScrollDepth } from "@/hooks";
 
+/**
+ * Format guest names with smart surname grouping.
+ * Primary guests appear first, and guests with the same surname are grouped together.
+ * Examples:
+ * - Single guest: "John Doe"
+ * - Couple: "John & Jane Doe"
+ * - Mixed surnames: "David Wilson, Michael & Emily Carter"
+ */
+function formatGuestNames(invitees: Invitee[]): string {
+    if (!invitees || invitees.length === 0) return 'Unknown Guest';
+
+    // Sort so primary guests come first
+    const sorted = [...invitees].sort((a, b) => {
+        if (a.is_primary && !b.is_primary) return -1;
+        if (!a.is_primary && b.is_primary) return 1;
+        return 0;
+    });
+
+    // Group by surname, preserving order of first occurrence
+    const surnameGroups = new Map<string, string[]>();
+    const surnameOrder: string[] = [];
+
+    for (const inv of sorted) {
+        const surname = inv.last_name;
+        if (!surnameGroups.has(surname)) {
+            surnameGroups.set(surname, []);
+            surnameOrder.push(surname);
+        }
+        surnameGroups.get(surname)!.push(inv.first_name);
+    }
+
+    // Format each group: "John & Jane Doe"
+    const formattedGroups = surnameOrder.map(surname => {
+        const firstNames = surnameGroups.get(surname)!;
+        const joinedFirstNames = firstNames.length === 1
+            ? firstNames[0]
+            : firstNames.length === 2
+                ? firstNames.join(' & ')
+                : `${firstNames.slice(0, -1).join(', ')} & ${firstNames[firstNames.length - 1]}`;
+        return `${joinedFirstNames} ${surname}`;
+    });
+
+    // Join groups with commas and & for the last
+    if (formattedGroups.length === 1) return formattedGroups[0];
+    if (formattedGroups.length === 2) return formattedGroups.join(' & ');
+    return `${formattedGroups.slice(0, -1).join(', ')} & ${formattedGroups[formattedGroups.length - 1]}`;
+}
+
 export default function RSVPFormPage() {
     const params = useParams();
     const router = useRouter();
@@ -70,48 +118,6 @@ export default function RSVPFormPage() {
                     const data: DatabaseRSVPResponse = await response.json();
                     const isReturningUser = !!(data && data.updatedAt);
                     const inviteeCount = data.invitees?.length || 0;
-
-                    // Format guest names, grouping by surname
-                    // Primary guests appear first, e.g., "David Wilson, Michael & Emily Carter"
-                    const formatGuestNames = (invitees: Invitee[]): string => {
-                        if (!invitees || invitees.length === 0) return 'Unknown Guest';
-
-                        // Sort so primary guests come first
-                        const sorted = [...invitees].sort((a, b) => {
-                            if (a.is_primary && !b.is_primary) return -1;
-                            if (!a.is_primary && b.is_primary) return 1;
-                            return 0;
-                        });
-
-                        // Group by surname, preserving order of first occurrence
-                        const surnameGroups = new Map<string, string[]>();
-                        const surnameOrder: string[] = [];
-
-                        for (const inv of sorted) {
-                            const surname = inv.last_name;
-                            if (!surnameGroups.has(surname)) {
-                                surnameGroups.set(surname, []);
-                                surnameOrder.push(surname);
-                            }
-                            surnameGroups.get(surname)!.push(inv.first_name);
-                        }
-
-                        // Format each group: "John & Jane Doe"
-                        const formattedGroups = surnameOrder.map(surname => {
-                            const firstNames = surnameGroups.get(surname)!;
-                            const joinedFirstNames = firstNames.length === 1
-                                ? firstNames[0]
-                                : firstNames.length === 2
-                                    ? firstNames.join(' & ')
-                                    : `${firstNames.slice(0, -1).join(', ')} & ${firstNames[firstNames.length - 1]}`;
-                            return `${joinedFirstNames} ${surname}`;
-                        });
-
-                        // Join groups with commas and & for the last
-                        if (formattedGroups.length === 1) return formattedGroups[0];
-                        if (formattedGroups.length === 2) return formattedGroups.join(' & ');
-                        return `${formattedGroups.slice(0, -1).join(', ')} & ${formattedGroups[formattedGroups.length - 1]}`;
-                    };
 
                     const names = formatGuestNames(data.invitees || []);
 
