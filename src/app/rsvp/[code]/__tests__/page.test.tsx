@@ -413,14 +413,15 @@ describe("RSVPFormPage", () => {
                 expect(screen.getByText("John Doe")).toBeInTheDocument();
             });
 
-            // Check and uncheck to trigger validation
+            // Uncheck all invitees (they're checked by default)
             const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
-            await user.click(johnCheckbox); // Check
-            await user.click(johnCheckbox); // Uncheck
+            const janeCheckbox = screen.getByRole("checkbox", { name: "Jane Doe" });
+            await user.click(johnCheckbox); // Uncheck John
+            await user.click(janeCheckbox); // Uncheck Jane
 
             // Validation error should appear
             await waitFor(() => {
-                expect(screen.getByText("Please select at least one guest who will be attending")).toBeInTheDocument();
+                expect(screen.getByText("Please select at least one guest who will be attending or else select 'No' above.")).toBeInTheDocument();
             });
         });
 
@@ -457,17 +458,7 @@ describe("RSVPFormPage", () => {
             const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
             const janeCheckbox = screen.getByRole("checkbox", { name: "Jane Doe" });
 
-            // Initially unchecked
-            expect(johnCheckbox).not.toBeChecked();
-            expect(janeCheckbox).not.toBeChecked();
-
-            // Check John
-            await user.click(johnCheckbox);
-            expect(johnCheckbox).toBeChecked();
-            expect(janeCheckbox).not.toBeChecked();
-
-            // Check Jane
-            await user.click(janeCheckbox);
+            // Initially all checked (default when "Yes" is selected)
             expect(johnCheckbox).toBeChecked();
             expect(janeCheckbox).toBeChecked();
 
@@ -475,6 +466,16 @@ describe("RSVPFormPage", () => {
             await user.click(johnCheckbox);
             expect(johnCheckbox).not.toBeChecked();
             expect(janeCheckbox).toBeChecked();
+
+            // Uncheck Jane
+            await user.click(janeCheckbox);
+            expect(johnCheckbox).not.toBeChecked();
+            expect(janeCheckbox).not.toBeChecked();
+
+            // Check John again
+            await user.click(johnCheckbox);
+            expect(johnCheckbox).toBeChecked();
+            expect(janeCheckbox).not.toBeChecked();
         });
     });
 
@@ -812,15 +813,17 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Accept but don't select any invitee (should cause validation error)
-                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
-                await user.click(yesRadios[0]);
-
                 // Fill in message field
                 const messageTextarea = screen.getByPlaceholderText(/any other information/i);
                 await user.type(messageTextarea, "Test message");
 
-                // Try to submit without selecting invitee
+                // Uncheck all invitees (they're checked by default) to cause validation error
+                const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
+                const janeCheckbox = screen.getByRole("checkbox", { name: "Jane Doe" });
+                await user.click(johnCheckbox);
+                await user.click(janeCheckbox);
+
+                // Try to submit without any invitee selected
                 const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
                 await user.click(submitButton);
 

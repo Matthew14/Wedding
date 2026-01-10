@@ -75,10 +75,12 @@ export default function RSVPFormPage() {
         previousAcceptedRef.current = currentAccepted;
 
         if (!currentAccepted) {
+            // Uncheck all when "No" is selected
             form.setFieldValue("invitees",
                 form.values.invitees.map(inv => ({ ...inv, coming: false }))
             );
-        } else if (form.values.invitees.length === 1) {
+        } else {
+            // Check all when "Yes" is selected
             form.setFieldValue("invitees",
                 form.values.invitees.map(inv => ({ ...inv, coming: true }))
             );

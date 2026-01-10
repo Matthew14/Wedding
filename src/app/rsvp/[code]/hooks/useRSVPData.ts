@@ -149,7 +149,7 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
                             has_message: !!data.message,
                         });
                     } else {
-                        const isSingleInvitee = data.invitees?.length === 1;
+                        // New RSVP - default all invitees to coming since form defaults to accepted=true
                         const sortedInvitees = [...(data.invitees || [])].sort((a, b) => {
                             if (a.is_primary && !b.is_primary) return -1;
                             if (!a.is_primary && b.is_primary) return 1;
@@ -159,7 +159,7 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
                             sortedInvitees.map((inv: Invitee) => ({
                                 id: inv.id,
                                 name: `${inv.first_name} ${inv.last_name}`,
-                                coming: isSingleInvitee,
+                                coming: true,
                             }))
                         );
                         if (!data.villaOffered) {
