@@ -37,7 +37,7 @@ export default function LocationPage() {
                                 </Text>
                             </Box>
 
-                            {/* Google Maps Embed */}
+                            {/* Google Maps Embed - Responsive container */}
                             <Box
                                 className="elegant-card"
                                 style={{
@@ -45,13 +45,24 @@ export default function LocationPage() {
                                     overflow: "hidden",
                                     marginBottom: "2rem",
                                     border: "none",
+                                    position: "relative",
+                                    width: "100%",
+                                    // Responsive height: taller on mobile, shorter on desktop
+                                    aspectRatio: "16 / 10",
+                                    minHeight: "250px",
+                                    maxHeight: "500px",
                                 }}
                             >
                                 <iframe
                                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000.3689009476025!2d1.70777487686561!3d41.235521605400095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a387a9b003ec95%3A0xe02f2753aeaf6066!2sGran%20Villa%20Rosa!5e0!3m2!1sen!2sie!4v1755797562369!5m2!1sen!2sie"
-                                    width="100%"
-                                    height="400"
-                                    style={{ border: 0 }}
+                                    style={{
+                                        border: 0,
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                    }}
                                     allowFullScreen
                                     loading="lazy"
                                     referrerPolicy="no-referrer-when-downgrade"
