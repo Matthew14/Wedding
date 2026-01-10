@@ -12,7 +12,7 @@ export interface Invitee {
     id: string;
     first_name: string;
     last_name: string;
-    is_primary?: boolean;
+    is_primary: boolean;
 }
 
 export interface DatabaseRSVPResponse {
