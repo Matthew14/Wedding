@@ -23,7 +23,7 @@ export const useRSVPForm = () => {
                     }
                     const anyoneComing = value?.some(inv => inv.coming);
                     if (!anyoneComing) {
-                        return "Please select at least one guest who will be attending";
+                        return "Please select at least one guest who will be attending or else select 'No' above.";
                     }
                 }
                 return null;
