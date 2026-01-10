@@ -146,8 +146,8 @@ describe('RSVP Flow', () => {
       // Submit form
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
-      // Confirm in modal
-      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
+      // Confirm in modal - scroll into view first as filling all fields may have scrolled page
+      cy.contains('Confirm & Submit', { timeout: 5000 }).scrollIntoView().should('be.visible').click();
 
       // Should redirect to success page with correct query parameters
       cy.url({ timeout: 10000 })
