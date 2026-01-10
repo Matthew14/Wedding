@@ -11,7 +11,6 @@ const posthogUrls = isProduction ? " https://eu.i.posthog.com https://eu-assets.
 
 const nextConfig = {
     images: {
-        domains: [""],
         remotePatterns: [],
     },
     experimental: {

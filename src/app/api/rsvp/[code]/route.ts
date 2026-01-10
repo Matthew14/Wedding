@@ -34,20 +34,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "RSVP code not found" }, { status: 404 });
         }
 
-        // Extract villa_offered from joined invitation data with type guard
+        // Extract villa_offered from joined invitation data
+        // Supabase join can return object or array depending on relationship
         const invitation = rsvpData.invitation;
-        let villaOffered = true; // Default to true
-        if (
-            invitation !== null &&
-            typeof invitation === 'object' &&
-            !Array.isArray(invitation) &&
-            'villa_offered' in invitation
-        ) {
-            const offered = (invitation as { villa_offered: unknown }).villa_offered;
-            if (typeof offered === 'boolean') {
-                villaOffered = offered;
-            }
-        }
+        const villaOffered = invitation && typeof invitation === 'object' && !Array.isArray(invitation)
+            ? (invitation as { villa_offered: boolean }).villa_offered ?? true
+            : true;
 
         // Get invitees for this invitation
         const { data: invitees, error: inviteesError } = await supabase
@@ -98,10 +90,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         const supabase = await createClient();
 
-        // Get the RSVP record (include invitation_id for invitee validation)
+        // Get the RSVP record with invitation data for villa_offered validation
         const { data: rsvpData, error: rsvpError } = await supabase
             .from("RSVPs")
-            .select("id, invitation_id")
+            .select("id, invitation_id, invitation:invitation_id (villa_offered)")
             .eq("short_url", code.toUpperCase())
             .single();
 
@@ -109,12 +101,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             return NextResponse.json({ error: "RSVP code not found" }, { status: 404 });
         }
 
+        // Extract villa_offered from joined invitation data
+        // Supabase join can return object or array depending on relationship
+        const invitation = rsvpData.invitation;
+        const villaOffered = invitation && typeof invitation === 'object' && !Array.isArray(invitation)
+            ? (invitation as { villa_offered: boolean }).villa_offered ?? true
+            : true;
+
+        // SECURITY: Validate villa booking - prevent staying when not offered
+        if (body.staying_villa === "yes" && !villaOffered) {
+            return NextResponse.json(
+                { error: "Villa accommodation is not available for this invitation" },
+                { status: 400 }
+            );
+        }
+
         // Update the RSVP record with form data
         const { error: updateError } = await supabase
             .from("RSVPs")
             .update({
                 accepted: body.accepted,
-                staying_villa: body.staying_villa,
+                staying_villa: villaOffered ? body.staying_villa : "no",
                 dietary_restrictions: body.dietary_restrictions || null,
                 song_request: body.song_request || null,
                 travel_plans: body.travel_plans || null,

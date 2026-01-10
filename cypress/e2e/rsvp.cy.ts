@@ -735,4 +735,69 @@ describe('RSVP Flow', () => {
       cy.contains(/not found|invalid|error/i, { timeout: 5000 });
     });
   });
+
+  describe('Villa Accommodation Not Offered', () => {
+    // TEST06 is configured with villa_offered=false in seed.sql
+    beforeEach(() => {
+      cy.visit('/rsvp/TEST06');
+      cy.contains('Robert Green', { timeout: 5000 }).should('be.visible');
+    });
+
+    it('should not show villa accommodation question when villa is not offered', () => {
+      // Accept invitation
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+
+      // Note: Single-invitee invitations don't show checkboxes - the invitee is
+      // automatically marked as coming when the invitation is accepted
+
+      // Villa question should NOT be visible since villa_offered=false
+      cy.get('body').should('not.contain', 'Will you be staying with us?');
+
+      // Submit form
+      cy.get('button[type="submit"]').contains('Submit RSVP').click();
+
+      // Confirm in modal
+      cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
+
+      // Should redirect to success page
+      cy.url({ timeout: 10000 })
+        .should('include', '/rsvp/success')
+        .and('include', 'accepted=yes')
+        .and('include', 'code=TEST06');
+
+      // Verify data was saved with staying_villa as null or 'no'
+      cy.task('queryDatabase', { table: 'RSVPs', code: 'TEST06' }).then((result) => {
+        const rsvp = result as RsvpRecord | null;
+        if (!rsvp) {
+          throw new Error('RSVP not found');
+        }
+        expect(rsvp.accepted).to.equal(true);
+        // staying_villa should be null or false since villa was not offered
+        expect(rsvp.staying_villa).to.satisfy((val: boolean | null) => val === null || val === false);
+      });
+    });
+
+    it('should block server-side attempts to stay at villa when not offered', () => {
+      // This test verifies the server-side validation we added
+      // Attempt to submit directly to API with staying_villa=yes (bypassing UI)
+      cy.request({
+        method: 'POST',
+        url: '/api/rsvp/TEST06',
+        body: {
+          accepted: true,
+          staying_villa: 'yes', // Should be rejected
+          invitees: [{ id: '88888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa', coming: true }]
+        },
+        failOnStatusCode: false
+      }).then((response) => {
+        // Server should reject this request
+        expect(response.status).to.equal(400);
+        expect(response.body.error).to.include('Villa accommodation is not available');
+      });
+    });
+  });
 });

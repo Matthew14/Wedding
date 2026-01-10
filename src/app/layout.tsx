@@ -36,6 +36,7 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata: Metadata = {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://wedding.matthewoneill.com"),
     title: "Rebecca & Matthew's Wedding",
     description: "Join us for our special day! Find all the details about our wedding celebration.",
     keywords: ["wedding", "Rebecca", "Matthew", "celebration", "Vilanova i la Geltrú"],
