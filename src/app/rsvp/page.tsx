@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { IconMail, IconCheck, IconX, IconAlertCircle } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
 import { useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
+import { fetchWithTimeout, isAbortError, FETCH_TIMEOUTS } from "@/utils/fetchWithTimeout";
 
 type ValidationState = "idle" | "validating" | "valid" | "invalid";
 
@@ -17,6 +18,7 @@ export default function RSVPPage() {
     const [validationMessage, setValidationMessage] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
     const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
     const router = useRouter();
     const { trackEvent } = useTracking();
     useScrollDepth('rsvp_code_entry');
@@ -39,9 +41,13 @@ export default function RSVPPage() {
         setRsvpCode(cleaned);
         setError("");
 
-        // Clear previous validation timeout
+        // Clear previous validation timeout and abort in-flight request
         if (validationTimeoutRef.current) {
             clearTimeout(validationTimeoutRef.current);
+        }
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
         }
 
         // Reset validation state for empty input
@@ -68,10 +74,26 @@ export default function RSVPPage() {
         setValidationMessage("Checking code...");
 
         validationTimeoutRef.current = setTimeout(async () => {
+            // Create new AbortController for this request
+            const controller = new AbortController();
+            abortControllerRef.current = controller;
+
             const validationStartTime = performance.now();
             try {
-                const response = await fetch(`/api/rsvp/validate/${cleaned}`);
+                // Use Promise.race to implement timeout while respecting the AbortController
+                const timeoutPromise = new Promise<never>((_, reject) => {
+                    setTimeout(() => reject(new Error('Timeout')), FETCH_TIMEOUTS.VALIDATION);
+                });
+                const response = await Promise.race([
+                    fetch(`/api/rsvp/validate/${cleaned}`, { signal: controller.signal }),
+                    timeoutPromise,
+                ]);
                 const validationDuration = Math.round(performance.now() - validationStartTime);
+
+                // Check if request was aborted (user typed new code)
+                if (controller.signal.aborted) {
+                    return;
+                }
 
                 if (response.ok) {
                     setValidationState("valid");
@@ -94,13 +116,22 @@ export default function RSVPPage() {
                         validation_time_ms: validationDuration,
                     });
                 }
-            } catch {
+            } catch (err) {
+                // Ignore aborted requests (user typed new code)
+                if (err instanceof Error && err.name === 'AbortError') {
+                    return;
+                }
+
                 const validationDuration = Math.round(performance.now() - validationStartTime);
+                const isTimeout = err instanceof Error && err.message === 'Timeout';
                 setValidationState("invalid");
-                setValidationMessage("Unable to verify code. Please try again.");
+                setValidationMessage(isTimeout
+                    ? "Request timed out. Please try again."
+                    : "Unable to verify code. Please try again."
+                );
                 trackEvent(RSVPEvents.CODE_INVALID, {
                     code_length: cleaned.length,
-                    error_type: 'network_error',
+                    error_type: isTimeout ? 'timeout' : 'network_error',
                     validation_time_ms: validationDuration,
                 });
             }
@@ -114,11 +145,14 @@ export default function RSVPPage() {
         handleCodeChange(pastedText);
     };
 
-    // Cleanup timeout on unmount
+    // Cleanup timeout and abort controller on unmount
     useEffect(() => {
         return () => {
             if (validationTimeoutRef.current) {
                 clearTimeout(validationTimeoutRef.current);
+            }
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
             }
         };
     }, []);
@@ -151,7 +185,11 @@ export default function RSVPPage() {
 
         try {
             // Check if the invitation code exists
-            const response = await fetch(`/api/rsvp/validate/${rsvpCode.trim()}`);
+            const response = await fetchWithTimeout(
+                `/api/rsvp/validate/${rsvpCode.trim()}`,
+                {},
+                FETCH_TIMEOUTS.VALIDATION
+            );
 
             if (response.ok) {
                 // Redirect to the RSVP form page
@@ -162,10 +200,13 @@ export default function RSVPPage() {
                 setValidationState("invalid");
                 setValidationMessage(errorData.suggestion || "Code not found");
             }
-        } catch {
-            setError("Something went wrong. Please try again.");
+        } catch (err) {
+            const errorMessage = isAbortError(err)
+                ? "Request timed out. Please check your connection and try again."
+                : "Something went wrong. Please try again.";
+            setError(errorMessage);
             setValidationState("invalid");
-            setValidationMessage("Unable to verify code");
+            setValidationMessage(isAbortError(err) ? "Request timed out" : "Unable to verify code");
         } finally {
             setLoading(false);
         }

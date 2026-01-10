@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RSVPFormData } from "@/types";
 import { useTracking, RSVPEvents, useFormAnalytics } from "@/hooks";
+import { fetchWithTimeout, isAbortError, FETCH_TIMEOUTS } from "@/utils/fetchWithTimeout";
 
 interface UseRSVPSubmissionOptions {
     code: string;
@@ -48,13 +49,33 @@ export function useRSVPSubmission({ code }: UseRSVPSubmissionOptions): UseRSVPSu
         });
 
         try {
-            const response = await fetch(`/api/rsvp/${code}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+            const response = await fetchWithTimeout(
+                `/api/rsvp/${code}`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(values),
                 },
-                body: JSON.stringify(values),
-            });
+                FETCH_TIMEOUTS.STANDARD
+            );
+
+            // Handle 207 Multi-Status as partial failure - some invitee updates failed
+            if (response.status === 207) {
+                const data = await response.json();
+                const errorMessage = data.warning || "Some guest updates failed. Please try again.";
+                setError(errorMessage);
+                setSubmitting(false);
+                trackEvent(RSVPEvents.SUBMIT_ERROR, {
+                    code,
+                    error: errorMessage,
+                    partial_failure: true,
+                    failed_invitee_count: data.failedInviteeIds?.length || 0,
+                });
+                formAnalytics.trackFormSubmission(false, errorMessage);
+                return;
+            }
 
             if (response.ok) {
                 setSuccess(true);
@@ -100,14 +121,17 @@ export function useRSVPSubmission({ code }: UseRSVPSubmissionOptions): UseRSVPSu
                 formAnalytics.trackFormSubmission(false, errorMessage);
             }
         } catch (err) {
-            setError("Something went wrong. Please try again.");
+            const errorMessage = isAbortError(err)
+                ? "Request timed out. Please check your connection and try again."
+                : "Something went wrong. Please try again.";
+            setError(errorMessage);
             setSubmitting(false);
             trackEvent(RSVPEvents.SUBMIT_ERROR, {
                 code,
-                error: String(err),
+                error: isAbortError(err) ? 'timeout' : String(err),
             });
 
-            formAnalytics.trackFormSubmission(false, String(err));
+            formAnalytics.trackFormSubmission(false, isAbortError(err) ? 'timeout' : String(err));
         }
     };
 

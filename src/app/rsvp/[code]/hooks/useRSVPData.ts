@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { UseFormReturnType } from "@mantine/form";
 import { RSVPFormData, Invitee, DatabaseRSVPResponse } from "@/types";
 import { useTracking, RSVPEvents } from "@/hooks";
+import { fetchWithTimeout, isAbortError, FETCH_TIMEOUTS } from "@/utils/fetchWithTimeout";
 
 /**
  * Format guest names with smart surname grouping.
@@ -74,7 +75,11 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
     useEffect(() => {
         const fetchRSVPData = async () => {
             try {
-                const response = await fetch(`/api/rsvp/${code}`);
+                const response = await fetchWithTimeout(
+                    `/api/rsvp/${code}`,
+                    {},
+                    FETCH_TIMEOUTS.STANDARD
+                );
 
                 if (response.ok) {
                     const data: DatabaseRSVPResponse = await response.json();
@@ -176,10 +181,13 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
                     });
                 }
             } catch (err) {
-                setError("Something went wrong while loading the form");
+                const errorMessage = isAbortError(err)
+                    ? "Request timed out. Please check your connection and try again."
+                    : "Something went wrong while loading the form";
+                setError(errorMessage);
                 trackEvent(RSVPEvents.FORM_LOAD_ERROR, {
                     code,
-                    error: String(err),
+                    error: isAbortError(err) ? 'timeout' : String(err),
                 });
             } finally {
                 setLoading(false);
