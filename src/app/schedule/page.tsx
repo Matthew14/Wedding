@@ -1,17 +1,73 @@
-import { Container, Title, Text, Stack, Box, Card, ThemeIcon, Group } from "@mantine/core";
+import { Container, Title, Text, Stack, Box } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
 import {
     IconHeart,
-    IconClock,
-    IconCalendar,
     IconGlass,
     IconMusic,
     IconPool,
     IconMicrophone2,
     IconChefHat,
-    IconSun,
     IconToolsKitchen2,
+    IconDoor,
+    IconDoorEnter,
 } from "@tabler/icons-react";
+
+interface TimelineEvent {
+    time?: string;
+    title: string;
+    icon: React.ReactNode;
+}
+
+interface DaySchedule {
+    day: string;
+    date: string;
+    title: string;
+    bgColor: string;
+    accentColor: string;
+    events: TimelineEvent[];
+}
+
+const schedule: DaySchedule[] = [
+    {
+        day: "Day One",
+        date: "Friday",
+        title: "Welcome",
+        bgColor: "linear-gradient(135deg, #f9f7f2 0%, #f0ebe0 100%)",
+        accentColor: "var(--gold)",
+        events: [
+            { time: "14:00", title: "Check in for staying guests", icon: <IconDoorEnter size={20} /> },
+            { title: "Pool Bar & BBQ", icon: <IconPool size={20} /> },
+            { title: "Evening dinner", icon: <IconToolsKitchen2 size={20} /> },
+            { title: "Live entertainment", icon: <IconMusic size={20} /> },
+        ],
+    },
+    {
+        day: "Day Two",
+        date: "Saturday",
+        title: "The Wedding",
+        bgColor: "linear-gradient(135deg, #fdfcfa 0%, #f5f0e8 100%)",
+        accentColor: "var(--gold-dark)",
+        events: [
+            { title: "Breakfast", icon: <IconChefHat size={20} /> },
+            { title: "Pre-Ceremony appetisers", icon: <IconGlass size={20} /> },
+            { title: "Reception Dinner", icon: <IconToolsKitchen2 size={20} /> },
+            { title: "Live band at Laguna Stage", icon: <IconMicrophone2 size={20} /> },
+            { title: "DJ & dancing", icon: <IconMusic size={20} /> },
+        ],
+    },
+    {
+        day: "Day Three",
+        date: "Sunday",
+        title: "Farewell",
+        bgColor: "linear-gradient(135deg, #f9f7f2 0%, #f0ebe0 100%)",
+        accentColor: "var(--gold)",
+        events: [
+            { title: "Breakfast", icon: <IconChefHat size={20} /> },
+            { title: "Pool party & BBQ lunch", icon: <IconPool size={20} /> },
+            { time: "Afternoon", title: "Check out", icon: <IconDoor size={20} /> },
+        ],
+    },
+];
 
 export default function SchedulePage() {
     return (
@@ -19,314 +75,101 @@ export default function SchedulePage() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
-                    <Container size="lg" py="xl" className="fade-in">
-                        <Stack gap="xl">
-                            <Box style={{ textAlign: "center", marginBottom: "2rem" }}>
-                                <Title
-                                    order={1}
-                                    style={{
-                                        color: "var(--text-primary)",
-                                        marginBottom: "0",
-                                        fontFamily: "var(--font-playfair), serif",
-                                        fontSize: "clamp(2.5rem, 8vw, 3.5rem)",
-                                        fontWeight: 400,
-                                        letterSpacing: "0.02em",
-                                    }}
-                                >
-                                    Wedding Schedule
-                                </Title>
-                                <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
-                                <Text size="xl" style={{ color: "var(--text-secondary)", maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontSize: "1.125rem" }}>
-                                    Three unforgettable days of celebration in Vilanova i la Geltrú
-                                </Text>
-                            </Box>
+                    {/* Day Sections */}
+                    {schedule.map((day, index) => (
+                        <Box
+                            key={index}
+                            style={{
+                                background: day.bgColor,
+                                padding: "4rem 0",
+                                borderTop: index > 0 ? "1px solid rgba(139, 115, 85, 0.1)" : "none",
+                            }}
+                        >
+                            <Container size="md">
+                                <Box style={{ marginBottom: "2.5rem" }}>
+                                    <Text
+                                        style={{
+                                            fontSize: "0.85rem",
+                                            color: day.accentColor,
+                                            letterSpacing: "0.15em",
+                                            textTransform: "uppercase",
+                                            fontWeight: 600,
+                                            marginBottom: "0.5rem",
+                                        }}
+                                    >
+                                        {day.day} — {day.date}
+                                    </Text>
+                                    <Title
+                                        order={2}
+                                        style={{
+                                            color: "var(--text-primary)",
+                                            fontFamily: "var(--font-playfair), serif",
+                                            fontSize: "clamp(2rem, 6vw, 3rem)",
+                                            fontWeight: 400,
+                                        }}
+                                    >
+                                        {day.title}
+                                    </Title>
+                                </Box>
 
-                            {/* DAY 1 */}
-                            <Card className="elegant-card" radius="md" p="xl" style={{ backgroundColor: "rgba(250, 248, 245, 0.6)" }}>
-                                <Stack gap="lg">
-                                    <Group align="center" gap="md">
-                                        <ThemeIcon
-                                            size={50}
-                                            radius="xl"
-                                            style={{ backgroundColor: "var(--gold)", color: "#ffffff" }}
+                                <Stack gap="sm">
+                                    {day.events.map((event, eventIndex) => (
+                                        <Box
+                                            key={eventIndex}
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "1rem",
+                                                padding: "1rem 1.5rem",
+                                                backgroundColor: "rgba(255, 255, 255, 0.7)",
+                                                borderRadius: 12,
+                                                boxShadow: "0 2px 8px rgba(139, 115, 85, 0.08)",
+                                            }}
                                         >
-                                            <IconCalendar size={25} aria-hidden="true" />
-                                        </ThemeIcon>
-                                        <Title order={2} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400, fontSize: "1.75rem" }}>
-                                            Day 1 - Welcome & Rehearsal
-                                        </Title>
-                                    </Group>
-
-                                    <Stack gap="md" style={{ marginLeft: "4rem" }}>
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
+                                            {/* Icon */}
+                                            <Box
+                                                style={{
+                                                    width: 40,
+                                                    height: 40,
+                                                    borderRadius: "50%",
+                                                    backgroundColor: "rgba(139, 115, 85, 0.1)",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    color: day.accentColor,
+                                                    flexShrink: 0,
+                                                }}
                                             >
-                                                <IconClock size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    14:00 onwards
+                                                {event.icon}
+                                            </Box>
+                                            {/* Content */}
+                                            <Box style={{ flex: 1 }}>
+                                                <Text
+                                                    style={{
+                                                        color: "var(--text-primary)",
+                                                        fontSize: "1.05rem",
+                                                        fontWeight: 500,
+                                                    }}
+                                                >
+                                                    {event.time && (
+                                                        <span style={{ color: day.accentColor, marginRight: "0.5rem" }}>
+                                                            {event.time} —
+                                                        </span>
+                                                    )}
+                                                    {event.title}
                                                 </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    Check in for all staying guests
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconPool size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Pool Bar & BBQ
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    Welcome lunch with music by the pool
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconToolsKitchen2 size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Evening - Rehearsal Dinner
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    Tapas dinner with Spanish wines and beverages
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconMusic size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Entertainment
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    Live music and open premium bar
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-                                    </Stack>
+                                            </Box>
+                                        </Box>
+                                    ))}
                                 </Stack>
-                            </Card>
+                            </Container>
+                        </Box>
+                    ))}
 
-                            {/* DAY 2 */}
-                            <Card className="elegant-card" radius="md" p="xl">
-                                <Stack gap="lg">
-                                    <Group align="center" gap="md">
-                                        <ThemeIcon
-                                            size={50}
-                                            radius="xl"
-                                            style={{ backgroundColor: "var(--gold)", color: "#ffffff" }}
-                                        >
-                                            <IconHeart size={25} aria-hidden="true" />
-                                        </ThemeIcon>
-                                        <Title order={2} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400, fontSize: "1.75rem" }}>
-                                            Day 2 - Wedding Day
-                                        </Title>
-                                    </Group>
-
-                                    <Stack gap="md" style={{ marginLeft: "4rem" }}>
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconChefHat size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Morning
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>Breakfast</Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconGlass size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Pre-Ceremony
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    Cocktails and Cava with appetizers and snacks
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconToolsKitchen2 size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Reception Dinner
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    5-course dinner with Gran Villa Rosa Gran Reservas wine selection
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconMicrophone2 size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Laguna Stage & Bar
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    Live band with premium cocktails and drinks
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "rgba(250, 248, 245, 0.8)", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconMusic size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Private Night Club
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    DJ, dancing, night snacks from BBQ until 03:00+
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-                                    </Stack>
-                                </Stack>
-                            </Card>
-
-                            {/* DAY 3 */}
-                            <Card className="elegant-card" radius="md" p="xl" style={{ backgroundColor: "rgba(250, 248, 245, 0.6)" }}>
-                                <Stack gap="lg">
-                                    <Group align="center" gap="md">
-                                        <ThemeIcon
-                                            size={50}
-                                            radius="xl"
-                                            style={{ backgroundColor: "var(--gold)", color: "#ffffff" }}
-                                        >
-                                            <IconSun size={25} aria-hidden="true" />
-                                        </ThemeIcon>
-                                        <Title order={2} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400, fontSize: "1.75rem" }}>
-                                            Day 3 - Farewell Celebration
-                                        </Title>
-                                    </Group>
-
-                                    <Stack gap="md" style={{ marginLeft: "4rem" }}>
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconChefHat size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Morning
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>Breakfast</Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconGlass size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    10:00 onwards
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>Open premium bar</Text>
-                                            </Stack>
-                                        </Group>
-
-                                        <Group align="flex-start" gap="md">
-                                            <ThemeIcon
-                                                size={35}
-                                                radius="xl"
-                                                style={{ backgroundColor: "#ffffff", color: "var(--gold-dark)" }}
-                                            >
-                                                <IconPool size={18} aria-hidden="true" />
-                                            </ThemeIcon>
-                                            <Stack gap="xs" style={{ flex: 1 }}>
-                                                <Text fw={500} style={{ color: "var(--text-primary)", fontSize: "1.05rem" }}>
-                                                    Poolside Celebration
-                                                </Text>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                                                    Gran BBQ and salad buffet (including vegetarian and vegan options)
-                                                    with DJ poolside
-                                                </Text>
-                                            </Stack>
-                                        </Group>
-                                    </Stack>
-                                </Stack>
-                            </Card>
-
-                            <Box
-                                className="elegant-card"
-                                style={{
-                                    textAlign: "center",
-                                    marginTop: "3rem",
-                                    padding: "2.5rem",
-                                    borderRadius: 12,
-                                }}
-                            >
-                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
-                                    We can&apos;t wait to celebrate with you in Vilanova for three unforgettable days!
-                                </Text>
-                            </Box>
-                        </Stack>
-                    </Container>
+                    {/* Footer Heart */}
+                    <Box style={{ textAlign: "center", padding: "3rem 0" }}>
+                        <IconHeart size={32} color="var(--gold-dark)" />
+                    </Box>
                 </Box>
             </main>
         </>

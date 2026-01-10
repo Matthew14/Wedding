@@ -2,8 +2,7 @@
 
 import { Container, Title, Text, Stack, Box, Card, Group } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
-import { ExternalLink } from "@/components/ExternalLink";
-import { IconMapPin, IconPlane, IconCar } from "@tabler/icons-react";
+import { IconPlane } from "@tabler/icons-react";
 import { travelCopy } from "./strings";
 
 export default function LocationPage() {
@@ -34,7 +33,7 @@ export default function LocationPage() {
                                 </Title>
                                 <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
                                 <Text size="xl" style={{ color: "var(--text-secondary)", maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontSize: "1.125rem" }}>
-                                    Join us in Vilanova i la Geltrú, Spain for our special celebration
+                                    Join us in Vilanova i la Geltrú to celebrate
                                 </Text>
                             </Box>
 
@@ -61,28 +60,8 @@ export default function LocationPage() {
                                 />
                             </Box>
 
-                            {/* Venue Information */}
-                            <Card className="elegant-card" radius="md" p="xl" style={{ marginBottom: "2rem" }}>
-                                <Group align="flex-start" gap="lg">
-                                    <IconMapPin size={32} color="#6d5a44" aria-hidden="true" />
-                                    <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
-                                            Venue Details
-                                        </Title>
-                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
-                                            We&apos;ll be celebrating at{" "}
-                                            <ExternalLink href="https://www.granvillarosa.com/" label="Gran Villa Rosa Website">
-                                                Gran Villa Rosa
-                                            </ExternalLink>{" "}
-                                            in Vilanova i la Geltrú. See the map above for the exact location and use
-                                            the interactive features for directions.
-                                        </Text>
-                                    </Stack>
-                                </Group>
-                            </Card>
-
                             {/* Travel Information */}
-                            <Card className="elegant-card" radius="md" p="xl" style={{ marginBottom: "2rem" }}>
+                            <Card className="elegant-card" radius="md" p="xl">
                                 <Group align="flex-start" gap="lg">
                                     <IconPlane size={32} color="#6d5a44" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
@@ -94,33 +73,6 @@ export default function LocationPage() {
                                         </Text>
                                         <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
                                             {travelCopy}
-                                        </Text>
-                                    </Stack>
-                                </Group>
-                            </Card>
-
-                            {/* Parking Information */}
-                            <Card className="elegant-card" radius="md" p="xl">
-                                <Group align="flex-start" gap="lg">
-                                    <IconCar size={32} color="#6d5a44" aria-hidden="true" />
-                                    <Stack gap="sm" style={{ flex: 1 }}>
-                                        <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
-                                            Parking & Accessibility
-                                        </Title>
-                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
-                                            <strong>Ample parking is available on-site</strong> at Gran Villa Rosa,
-                                            making driving a convenient option for guests.
-                                        </Text>
-                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
-                                            <strong>For international guests:</strong> Consider renting a car for
-                                            flexibility in exploring the beautiful Catalonian coast. The venue is easily
-                                            accessible by car, and having your own transport allows you to enjoy nearby
-                                            Sitges and other coastal towns at your own pace.
-                                        </Text>
-                                        <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem", marginTop: "0.5rem" }}>
-                                            <strong>Alternative options:</strong> Taxis and ride-sharing services are
-                                            also available for those who prefer not to drive. We&apos;re committed to
-                                            ensuring all our guests can comfortably attend our celebration.
                                         </Text>
                                     </Stack>
                                 </Group>

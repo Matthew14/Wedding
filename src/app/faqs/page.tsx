@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Title, Text, Stack, Box, Accordion, Loader, Alert } from "@mantine/core";
+import { Container, Title, Text, Stack, Box, Loader, Alert } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
 import { useState, useEffect } from "react";
 import { IconAlertCircle } from "@tabler/icons-react";
@@ -61,9 +61,9 @@ export default function FAQsPage() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
-                    <Container size="lg" py="xl" className="fade-in">
+                    <Container size="md" py="xl" className="fade-in">
                         <Stack gap="xl">
-                            <Box style={{ textAlign: "center", marginBottom: "3rem" }}>
+                            <Box style={{ textAlign: "center", marginBottom: "2rem" }}>
                                 <Title
                                     order={1}
                                     style={{
@@ -75,12 +75,9 @@ export default function FAQsPage() {
                                         letterSpacing: "0.02em",
                                     }}
                                 >
-                                    Frequently Asked Questions
+                                    FAQs
                                 </Title>
                                 <div className="decorative-divider" style={{ margin: "1.5rem auto" }}></div>
-                                <Text size="xl" style={{ color: "var(--text-secondary)", maxWidth: 600, margin: "0 auto", lineHeight: 1.8, fontSize: "1.125rem" }}>
-                                    Find answers to common questions about our wedding day
-                                </Text>
                             </Box>
 
                             {error && (
@@ -101,66 +98,51 @@ export default function FAQsPage() {
                                     </Text>
                                 </Box>
                             ) : (
-                                <Accordion
-                                    variant="separated"
-                                    radius="md"
-                                    defaultValue={faqs.length > 0 ? faqs[0].id : undefined}
-                                    styles={{
-                                        item: {
-                                            backgroundColor: "rgba(255, 255, 255, 0.95)",
-                                            border: "1px solid rgba(139, 115, 85, 0.1)",
-                                            marginBottom: "1rem",
-                                            boxShadow: "0 4px 16px rgba(139, 115, 85, 0.08)",
-                                            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                                            "&:hover": {
-                                                boxShadow: "0 8px 24px rgba(139, 115, 85, 0.12)",
-                                                transform: "translateY(-2px)",
-                                            },
-                                        },
-                                        control: {
-                                            padding: "1.5rem",
-                                            "&:hover": {
-                                                backgroundColor: "rgba(139, 115, 85, 0.05)",
-                                            },
-                                        },
-                                        label: {
-                                            fontSize: "1.15rem",
-                                            fontWeight: 500,
-                                            color: "var(--text-primary)",
-                                            fontFamily: "var(--font-geist-sans), sans-serif",
-                                        },
-                                        content: {
-                                            padding: "1.5rem",
-                                            paddingTop: 0,
-                                        },
-                                    }}
-                                >
+                                <Stack gap="lg">
                                     {faqs.map(faq => (
-                                        <Accordion.Item key={faq.id} value={faq.id}>
-                                            <Accordion.Control>{faq.question}</Accordion.Control>
-                                            <Accordion.Panel>
-                                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>{faq.answer}</Text>
-                                            </Accordion.Panel>
-                                        </Accordion.Item>
+                                        <Box
+                                            key={faq.id}
+                                            style={{
+                                                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                                borderRadius: 12,
+                                                boxShadow: "0 2px 12px rgba(139, 115, 85, 0.08)",
+                                                padding: "1.5rem",
+                                                borderLeft: "4px solid var(--gold-dark)",
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    fontSize: "1.1rem",
+                                                    fontWeight: 500,
+                                                    color: "var(--text-primary)",
+                                                    lineHeight: 1.4,
+                                                    marginBottom: "0.75rem",
+                                                }}
+                                            >
+                                                {faq.question}
+                                            </Text>
+                                            <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1rem" }}>
+                                                {faq.answer}
+                                            </Text>
+                                        </Box>
                                     ))}
-                                </Accordion>
+                                </Stack>
                             )}
 
                             <Box
-                                className="elegant-card"
                                 style={{
                                     textAlign: "center",
-                                    marginTop: "3rem",
-                                    padding: "2.5rem",
+                                    marginTop: "2rem",
+                                    padding: "2rem",
+                                    backgroundColor: "rgba(139, 115, 85, 0.05)",
                                     borderRadius: 12,
                                 }}
                             >
-                                <Title order={3} style={{ color: "var(--text-primary)", marginBottom: "1rem", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
+                                <Title order={3} style={{ color: "var(--text-primary)", marginBottom: "0.5rem", fontFamily: "var(--font-playfair), serif", fontWeight: 400, fontSize: "1.25rem" }}>
                                     Still have questions?
                                 </Title>
-                                <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1.05rem" }}>
-                                    Don&apos;t hesitate to reach out to us directly. We&apos;re here to help make sure
-                                    you have everything you need for our special day!
+                                <Text style={{ color: "var(--text-secondary)", fontSize: "1rem" }}>
+                                    Send us a message!
                                 </Text>
                             </Box>
                         </Stack>
