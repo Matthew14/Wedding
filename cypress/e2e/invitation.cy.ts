@@ -59,22 +59,22 @@ describe('Invitation Page', () => {
     });
 
     it('should display personalized invitation for 3 guests', () => {
-      // TEST03 is linked to Emma Wilson, Oliver Brown, Sophie Taylor
-      cy.visit('/invitation/emma-oliver-sophie-TEST03');
+      // TEST03 is linked to Michael, Sarah, Emma Johnson
+      cy.visit('/invitation/michael-sarah-emma-TEST03');
 
       // Check page loads without error
       cy.contains('Rebecca & Matthew').should('be.visible');
 
       // Check personalized greeting for 3 guests (Oxford comma format)
       cy.contains('Wish to invite').should('be.visible');
-      cy.contains('Emma, Oliver & Sophie').should('be.visible');
+      cy.contains('Michael, Sarah & Emma').should('be.visible');
 
       // Check RSVP CTA button
       cy.contains('Please click here to RSVP').should('be.visible');
     });
 
     it('should display personalized invitation for 4 guests (family)', () => {
-      // TEST04 is linked to James, Sarah, Tom, Lucy Johnson
+      // TEST04 is linked to James, Sarah, Tom, Lucy Williams
       cy.visit('/invitation/james-sarah-tom-lucy-TEST04');
 
       // Check page loads without error
@@ -90,10 +90,10 @@ describe('Invitation Page', () => {
 
     it('should handle 3+ guest names in any order', () => {
       // Order of names shouldn't matter for 3+ guests
-      cy.visit('/invitation/sophie-emma-oliver-TEST03');
+      cy.visit('/invitation/emma-sarah-michael-TEST03');
 
       // Should still display in original order from database
-      cy.contains('Emma, Oliver & Sophie').should('be.visible');
+      cy.contains('Michael, Sarah & Emma').should('be.visible');
       cy.contains('Please click here to RSVP').should('be.visible');
     });
   });

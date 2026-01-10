@@ -284,9 +284,9 @@ describe("/api/invitation/[slug]", () => {
             };
 
             const mockInvitees = [
-                { id: "inv-1", first_name: "Emma", last_name: "Wilson" },
-                { id: "inv-2", first_name: "Oliver", last_name: "Brown" },
-                { id: "inv-3", first_name: "Sophie", last_name: "Taylor" },
+                { id: "inv-1", first_name: "Michael", last_name: "Johnson" },
+                { id: "inv-2", first_name: "Sarah", last_name: "Johnson" },
+                { id: "inv-3", first_name: "Emma", last_name: "Johnson" },
             ];
 
             const mockRSVPChain = {
@@ -314,18 +314,18 @@ describe("/api/invitation/[slug]", () => {
                 .mockReturnValueOnce(mockInviteesChain);
 
             const request = new NextRequest(
-                "http://localhost:3000/api/invitation/emma-oliver-sophie-TEST03"
+                "http://localhost:3000/api/invitation/michael-sarah-emma-TEST03"
             );
 
             const response = await GET(request, {
-                params: Promise.resolve({ slug: "emma-oliver-sophie-TEST03" }),
+                params: Promise.resolve({ slug: "michael-sarah-emma-TEST03" }),
             });
             const data = await response.json();
 
             expect(response.status).toBe(200);
             expect(data.valid).toBe(true);
             expect(data.code).toBe("TEST03");
-            expect(data.guestNames).toEqual(["Emma", "Oliver", "Sophie"]);
+            expect(data.guestNames).toEqual(["Michael", "Sarah", "Emma"]);
             expect(data.invitationId).toBe("inv-456");
         });
 
@@ -337,10 +337,10 @@ describe("/api/invitation/[slug]", () => {
             };
 
             const mockInvitees = [
-                { id: "inv-1", first_name: "James", last_name: "Johnson" },
-                { id: "inv-2", first_name: "Sarah", last_name: "Johnson" },
-                { id: "inv-3", first_name: "Tom", last_name: "Johnson" },
-                { id: "inv-4", first_name: "Lucy", last_name: "Johnson" },
+                { id: "inv-1", first_name: "James", last_name: "Williams" },
+                { id: "inv-2", first_name: "Sarah", last_name: "Williams" },
+                { id: "inv-3", first_name: "Tom", last_name: "Williams" },
+                { id: "inv-4", first_name: "Lucy", last_name: "Williams" },
             ];
 
             const mockRSVPChain = {
@@ -391,9 +391,9 @@ describe("/api/invitation/[slug]", () => {
 
             // 3 invitees but only 2 names provided in URL
             const mockInvitees = [
-                { id: "inv-1", first_name: "Emma", last_name: "Wilson" },
-                { id: "inv-2", first_name: "Oliver", last_name: "Brown" },
-                { id: "inv-3", first_name: "Sophie", last_name: "Taylor" },
+                { id: "inv-1", first_name: "Michael", last_name: "Johnson" },
+                { id: "inv-2", first_name: "Sarah", last_name: "Johnson" },
+                { id: "inv-3", first_name: "Emma", last_name: "Johnson" },
             ];
 
             const mockRSVPChain = {
@@ -421,11 +421,11 @@ describe("/api/invitation/[slug]", () => {
                 .mockReturnValueOnce(mockInviteesChain);
 
             const request = new NextRequest(
-                "http://localhost:3000/api/invitation/emma-oliver-TEST03"
+                "http://localhost:3000/api/invitation/michael-sarah-TEST03"
             );
 
             const response = await GET(request, {
-                params: Promise.resolve({ slug: "emma-oliver-TEST03" }),
+                params: Promise.resolve({ slug: "michael-sarah-TEST03" }),
             });
             const data = await response.json();
 
