@@ -3,9 +3,9 @@
 import { Title, Text, Stack, Paper, Button, Box, Container, TextInput, Alert } from "@mantine/core";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { IconMail, IconCheck, IconX, IconAlertCircle } from "@tabler/icons-react";
+import { IconMail, IconCheck, IconX, IconAlertCircle, IconCalendarOff } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
-import { useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
+import { useTracking, RSVPEvents, useScrollDepth, useFeatureFlag } from "@/hooks";
 import { fetchWithTimeout, isAbortError, FETCH_TIMEOUTS } from "@/utils/fetchWithTimeout";
 
 type ValidationState = "idle" | "validating" | "valid" | "invalid";
@@ -22,6 +22,9 @@ export default function RSVPPage() {
     const router = useRouter();
     const { trackEvent } = useTracking();
     useScrollDepth('rsvp_code_entry');
+
+    // Feature flag to disable RSVP editing after deadline
+    const isRSVPDisabled = useFeatureFlag('rsvp-disable-editing', false);
 
     // Track page view on mount
     useEffect(() => {
@@ -211,6 +214,61 @@ export default function RSVPPage() {
             setLoading(false);
         }
     };
+
+    // Show closed message if RSVP editing is disabled via feature flag
+    if (isRSVPDisabled) {
+        return (
+            <>
+                <Navigation />
+                <main id="main-content">
+                    <Box style={{ paddingTop: 56 }}>
+                        <Container size="sm" py="xl" className="fade-in">
+                            <Stack gap="xl" align="center">
+                                <Box style={{ textAlign: "center" }}>
+                                    <IconCalendarOff size={80} color="var(--gold-dark)" style={{ marginBottom: "1rem" }} />
+                                    <Title
+                                        order={1}
+                                        style={{
+                                            fontSize: "clamp(2rem, 5vw, 2.5rem)",
+                                            fontWeight: 400,
+                                            color: "var(--text-primary)",
+                                            fontFamily: "var(--font-playfair), serif",
+                                            marginBottom: "1rem",
+                                        }}
+                                    >
+                                        RSVPs Are Now Closed
+                                    </Title>
+                                    <Text
+                                        size="lg"
+                                        style={{
+                                            color: "var(--text-secondary)",
+                                            lineHeight: 1.8,
+                                            maxWidth: 450,
+                                            margin: "0 auto",
+                                        }}
+                                    >
+                                        The deadline for RSVPs has passed. If you need to make changes
+                                        to your response, please contact us directly.
+                                    </Text>
+                                </Box>
+                                <Button
+                                    onClick={() => router.push("/")}
+                                    variant="outline"
+                                    size="lg"
+                                    style={{
+                                        borderColor: "var(--gold-dark)",
+                                        color: "var(--gold-dark)",
+                                    }}
+                                >
+                                    Return Home
+                                </Button>
+                            </Stack>
+                        </Container>
+                    </Box>
+                </main>
+            </>
+        );
+    }
 
     return (
         <>

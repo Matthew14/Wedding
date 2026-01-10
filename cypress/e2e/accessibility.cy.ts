@@ -168,11 +168,11 @@ describe('Accessibility Tests', () => {
       // Verify invitee card checkboxes have proper ARIA attributes
       cy.get('[role="checkbox"][aria-label="John Doe"]')
         .should('have.attr', 'aria-checked')
-        .should('have.attr', 'tabindex', '0');
+        .and('have.attr', 'tabindex', '0');
 
       cy.get('[role="checkbox"][aria-label="Jane Doe"]')
         .should('have.attr', 'aria-checked')
-        .should('have.attr', 'tabindex', '0');
+        .and('have.attr', 'tabindex', '0');
 
       cy.injectAxe();
       cy.checkA11y(undefined, axeConfig, logViolations);
