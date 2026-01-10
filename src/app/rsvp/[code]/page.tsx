@@ -96,7 +96,6 @@ export default function RSVPFormPage() {
 
                     // If there's existing RSVP data and it was updated, pre-populate the form
                     if (isReturningUser && data.updatedAt) {
-                        console.log('data', data);
                         const formattedDate = new Date(data.updatedAt).toLocaleDateString('en-GB', {
                             weekday: 'long',
                             year: 'numeric',
@@ -183,7 +182,6 @@ export default function RSVPFormPage() {
     const handleSubmit = async (values: RSVPFormData) => {
         setSubmitting(true);
         setError("");
-        console.log(values);
 
         // Track submission attempt
         const attendingCount = values.invitees.filter(inv => inv.coming).length;
