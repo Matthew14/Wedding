@@ -296,69 +296,132 @@ export default function InvitationPage() {
                                         to join them to celebrate their marriage
                                     </Text>
 
-                                    {/* Venue and Date - Side by Side */}
-                                    <Group
-                                        justify="center"
-                                        align="center"
-                                        gap="xl"
-                                        style={{ marginTop: "1.5rem", marginBottom: "1rem" }}
-                                        wrap="wrap"
-                                    >
-                                        {/* Venue Address */}
-                                        <Box style={{ textAlign: "left" }}>
-                                            <Text
-                                                style={{
-                                                    fontSize: "1rem",
-                                                    color: "var(--gold-dark)",
-                                                    fontFamily: "var(--font-cormorant), serif",
-                                                    letterSpacing: "0.05em",
-                                                    lineHeight: 1.6,
-                                                }}
-                                            >
-                                                Gran Villa Rosa
-                                            </Text>
-                                            <Text
-                                                style={{
-                                                    fontSize: "1rem",
-                                                    color: "var(--gold-dark)",
-                                                    fontFamily: "var(--font-cormorant), serif",
-                                                    letterSpacing: "0.05em",
-                                                    lineHeight: 1.6,
-                                                }}
-                                            >
-                                                Vilanova i la Geltrú
-                                            </Text>
-                                            <Text
-                                                style={{
-                                                    fontSize: "1rem",
-                                                    color: "var(--gold-dark)",
-                                                    fontFamily: "var(--font-cormorant), serif",
-                                                    letterSpacing: "0.05em",
-                                                    lineHeight: 1.6,
-                                                }}
-                                            >
-                                                08800 Barcelona
-                                            </Text>
-                                        </Box>
+                                    {/* Venue and Date */}
+                                    <Box style={{ marginTop: "1.5rem", marginBottom: "1rem" }}>
+                                        {/* Desktop: Side by Side */}
+                                        <Group
+                                            justify="center"
+                                            align="center"
+                                            gap="xl"
+                                            visibleFrom="xs"
+                                        >
+                                            {/* Venue Address */}
+                                            <Box style={{ textAlign: "left" }}>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    Gran Villa Rosa
+                                                </Text>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    Vilanova i la Geltrú
+                                                </Text>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    08800 Barcelona
+                                                </Text>
+                                            </Box>
 
-                                        {/* Divider */}
-                                        <div className="decorative-divider" style={{ margin: "0 1rem", transform: "rotate(90deg)", width: 60 }} />
+                                            {/* Vertical Divider */}
+                                            <div
+                                                className="decorative-divider"
+                                                style={{ margin: "0 1rem", transform: "rotate(90deg)", width: 60 }}
+                                            />
 
-                                        {/* Date */}
-                                        <Box style={{ textAlign: "center" }}>
-                                            <Text
-                                                style={{
-                                                    fontSize: "1rem",
-                                                    color: "var(--gold-dark)",
-                                                    fontFamily: "var(--font-cormorant), serif",
-                                                    letterSpacing: "0.05em",
-                                                    lineHeight: 1.6,
-                                                }}
-                                            >
-                                                Saturday, 23<sup>rd</sup> May 2026
-                                            </Text>
-                                        </Box>
-                                    </Group>
+                                            {/* Date */}
+                                            <Box style={{ textAlign: "center" }}>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    Saturday, 23<sup>rd</sup> May 2026
+                                                </Text>
+                                            </Box>
+                                        </Group>
+
+                                        {/* Mobile: Stacked */}
+                                        <Stack align="center" gap="md" hiddenFrom="xs">
+                                            {/* Venue Address */}
+                                            <Box style={{ textAlign: "center" }}>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    Gran Villa Rosa
+                                                </Text>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    Vilanova i la Geltrú
+                                                </Text>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    08800 Barcelona
+                                                </Text>
+                                            </Box>
+
+                                            {/* Horizontal Divider */}
+                                            <div className="decorative-divider" style={{ width: 60 }} />
+
+                                            {/* Date */}
+                                            <Box style={{ textAlign: "center" }}>
+                                                <Text
+                                                    style={{
+                                                        fontSize: "1rem",
+                                                        color: "var(--gold-dark)",
+                                                        fontFamily: "var(--font-cormorant), serif",
+                                                        letterSpacing: "0.05em",
+                                                        lineHeight: 1.6,
+                                                    }}
+                                                >
+                                                    Saturday, 23<sup>rd</sup> May 2026
+                                                </Text>
+                                            </Box>
+                                        </Stack>
+                                    </Box>
 
                                     {/* RSVP CTA Button */}
                                     <Button
