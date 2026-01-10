@@ -166,13 +166,15 @@ describe('Accessibility Tests', () => {
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
       // Verify invitee card checkboxes have proper ARIA attributes
-      cy.get('[role="checkbox"][aria-label="John Doe"]')
-        .should('have.attr', 'aria-checked')
-        .and('have.attr', 'tabindex', '0');
+      cy.get('[role="checkbox"][aria-label="John Doe"]').should(($el) => {
+        expect($el).to.have.attr('aria-checked');
+        expect($el).to.have.attr('tabindex', '0');
+      });
 
-      cy.get('[role="checkbox"][aria-label="Jane Doe"]')
-        .should('have.attr', 'aria-checked')
-        .and('have.attr', 'tabindex', '0');
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]').should(($el) => {
+        expect($el).to.have.attr('aria-checked');
+        expect($el).to.have.attr('tabindex', '0');
+      });
 
       cy.injectAxe();
       cy.checkA11y(undefined, axeConfig, logViolations);
