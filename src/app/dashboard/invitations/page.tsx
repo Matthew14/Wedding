@@ -17,7 +17,7 @@ import {
     MultiSelect,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconPlus, IconUser } from "@tabler/icons-react";
+import { IconPlus, IconUser, IconExternalLink } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -25,6 +25,13 @@ interface Invitation {
     id: string;
     created_at: string;
     isMatthewSide: boolean;
+    sent: boolean;
+}
+
+interface RSVP {
+    id: string;
+    invitation_id: string;
+    short_url: string;
 }
 
 interface Invitee {
@@ -38,6 +45,7 @@ interface Invitee {
 export default function InvitationsPage() {
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [invitees, setInvitees] = useState<Invitee[]>([]);
+    const [rsvps, setRsvps] = useState<RSVP[]>([]);
     const [loading, setLoading] = useState(true);
     const [opened, { open, close }] = useDisclosure(false);
     const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -90,8 +98,16 @@ export default function InvitationsPage() {
 
             if (inviteesError) throw inviteesError;
 
+            // Fetch RSVPs
+            const { data: rsvpsData, error: rsvpsError } = await supabase
+                .from("RSVPs")
+                .select("id, invitation_id, short_url");
+
+            if (rsvpsError) throw rsvpsError;
+
             setInvitations(invitationsData || []);
             setInvitees(inviteesData || []);
+            setRsvps(rsvpsData || []);
         } catch (error) {
             console.error("Error fetching data:", error);
             showAlert("error", "Failed to fetch data");
@@ -151,6 +167,41 @@ export default function InvitationsPage() {
 
     const getUnassignedInvitees = () => {
         return invitees.filter(invitee => invitee.invitation_id === null);
+    };
+
+    const getRsvpForInvitation = (invitationId: string) => {
+        return rsvps.find(rsvp => rsvp.invitation_id === invitationId);
+    };
+
+    const getInvitationLink = (invitationId: string) => {
+        const associatedInvitees = getInviteesForInvitation(invitationId);
+        const rsvp = getRsvpForInvitation(invitationId);
+
+        if (!rsvp || associatedInvitees.length === 0) {
+            return null;
+        }
+
+        const names = associatedInvitees.map(i => i.first_name.toLowerCase()).join("-");
+        return `/invitation/${names}-${rsvp.short_url}`;
+    };
+
+    const handleSentToggle = async (invitationId: string, currentValue: boolean) => {
+        try {
+            const { error } = await supabase
+                .from("invitation")
+                .update({ sent: !currentValue })
+                .eq("id", invitationId);
+
+            if (error) throw error;
+
+            // Update local state
+            setInvitations(prev =>
+                prev.map(inv => (inv.id === invitationId ? { ...inv, sent: !currentValue } : inv))
+            );
+        } catch (error) {
+            console.error("Error updating sent status:", error);
+            showAlert("error", "Failed to update sent status");
+        }
     };
 
     return (
@@ -256,6 +307,16 @@ export default function InvitationsPage() {
                             <th
                                 style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
                             >
+                                Link
+                            </th>
+                            <th
+                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
+                            >
+                                Sent
+                            </th>
+                            <th
+                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
+                            >
                                 RSVP
                             </th>
                         </tr>
@@ -317,6 +378,37 @@ export default function InvitationsPage() {
                                                 No invitees assigned
                                             </Text>
                                         )}
+                                    </td>
+                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
+                                        {(() => {
+                                            const link = getInvitationLink(invitation.id);
+                                            return link ? (
+                                                <Button
+                                                    component="a"
+                                                    href={link}
+                                                    target="_blank"
+                                                    variant="subtle"
+                                                    color="#8b7355"
+                                                    size="sm"
+                                                    leftSection={<IconExternalLink size={14} />}
+                                                >
+                                                    View
+                                                </Button>
+                                            ) : (
+                                                <Text size="sm" c="dimmed" style={{ fontStyle: "italic" }}>
+                                                    No RSVP
+                                                </Text>
+                                            );
+                                        })()}
+                                    </td>
+                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
+                                        <Checkbox
+                                            checked={invitation.sent}
+                                            onChange={() => handleSentToggle(invitation.id, invitation.sent)}
+                                            color="#8b7355"
+                                            size="md"
+                                            style={{ display: "flex", justifyContent: "center" }}
+                                        />
                                     </td>
                                     <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
                                         <Button
