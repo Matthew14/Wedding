@@ -10,6 +10,7 @@ import {
     Table,
     Badge,
     LoadingOverlay,
+    Anchor,
 } from "@mantine/core";
 import { IconCheck, IconX, IconQuestionMark } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
@@ -115,6 +116,12 @@ export default function RSVPsPage() {
         return invitees.map(g => g.first_name).join(" & ");
     };
 
+    const getInvitationLink = (rsvp: RSVPWithInvitees) => {
+        if (rsvp.invitees.length === 0) return null;
+        const names = rsvp.invitees.map(i => i.first_name.toLowerCase()).join("-");
+        return `/invitation/${names}-${rsvp.short_url}`;
+    };
+
     const isRsvpReceived = (rsvp: RSVPWithInvitees) => {
         return rsvp.accepted !== null;
     };
@@ -212,9 +219,6 @@ export default function RSVPsPage() {
                                     Who&apos;s Coming
                                 </th>
                                 <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center" }}>
-                                    Code
-                                </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center" }}>
                                     Received
                                 </th>
                                 <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center" }}>
@@ -246,7 +250,17 @@ export default function RSVPsPage() {
                                         style={{ backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8f9fa" }}
                                     >
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                                            <Text fw={500}>{getGuestNames(rsvp.invitees)}</Text>
+                                            {(() => {
+                                                const link = getInvitationLink(rsvp);
+                                                const names = getGuestNames(rsvp.invitees);
+                                                return link ? (
+                                                    <Anchor href={link} target="_blank" fw={500}>
+                                                        {names}
+                                                    </Anchor>
+                                                ) : (
+                                                    <Text fw={500}>{names}</Text>
+                                                );
+                                            })()}
                                         </td>
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
                                             <Stack gap={4}>
@@ -259,11 +273,6 @@ export default function RSVPsPage() {
                                                     </Group>
                                                 ))}
                                             </Stack>
-                                        </td>
-                                        <td style={{ padding: "16px 12px", verticalAlign: "middle", textAlign: "center" }}>
-                                            <Badge variant="light" color="gray" size="sm">
-                                                {rsvp.short_url}
-                                            </Badge>
                                         </td>
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle", textAlign: "center" }}>
                                             <Badge

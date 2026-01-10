@@ -15,6 +15,7 @@ import {
     Alert,
     LoadingOverlay,
     MultiSelect,
+    Anchor,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus, IconUser, IconCopy, IconCheck } from "@tabler/icons-react";
@@ -206,7 +207,7 @@ export default function InvitationsPage() {
     };
 
     const handleCopyLink = async (invitationId: string, link: string) => {
-        const fullUrl = `https://oneill.wedding${link}`;
+        const fullUrl = `${window.location.origin}${link}`;
         try {
             await navigator.clipboard.writeText(fullUrl);
             setCopiedLink(invitationId);
@@ -417,17 +418,18 @@ export default function InvitationsPage() {
                                             const isCopied = copiedLink === invitation.id;
                                             return link ? (
                                                 <Group gap="xs" justify="center" wrap="nowrap">
-                                                    <Text
+                                                    <Anchor
+                                                        href={link}
+                                                        target="_blank"
                                                         size="xs"
                                                         style={{
                                                             fontFamily: "monospace",
-                                                            color: "#6c757d",
                                                             wordBreak: "break-all",
                                                             maxWidth: 200,
                                                         }}
                                                     >
                                                         {link}
-                                                    </Text>
+                                                    </Anchor>
                                                     <Button
                                                         variant="subtle"
                                                         color={isCopied ? "green" : "#8b7355"}
