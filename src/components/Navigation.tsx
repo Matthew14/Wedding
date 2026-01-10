@@ -1,8 +1,9 @@
 "use client";
 
 import { Container, Group, Burger, Paper, Transition, Anchor, Button } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useFocusTrap } from "@mantine/hooks";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracking, SiteEvents } from "@/hooks";
@@ -21,13 +22,38 @@ export function Navigation() {
     const { user } = useAuth();
     const { trackEvent } = useTracking();
 
+    // Ref to burger button for returning focus on close
+    const burgerRef = useRef<HTMLButtonElement>(null);
+
+    // Focus trap for mobile menu - traps focus within menu while open
+    const focusTrapRef = useFocusTrap(opened);
+
+    // Close menu and return focus to burger button
+    const closeMenu = useCallback(() => {
+        close();
+        // Return focus to burger button after menu closes
+        setTimeout(() => burgerRef.current?.focus(), 0);
+    }, [close]);
+
+    // Handle escape key to close menu
+    useEffect(() => {
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && opened) {
+                closeMenu();
+            }
+        };
+
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, [opened, closeMenu]);
+
     const handleNavClick = (label: string, link: string) => {
         trackEvent(SiteEvents.NAV_CLICK, {
             label,
             link,
             from_page: pathname,
         });
-        close();
+        closeMenu();
     };
 
     const items = links.map(link => (
@@ -94,6 +120,7 @@ export function Navigation() {
                 </nav>
 
                 <Burger
+                    ref={burgerRef}
                     opened={opened}
                     onClick={toggle}
                     hiddenFrom="xs"
@@ -106,6 +133,7 @@ export function Navigation() {
                 <Transition transition="pop-top-right" duration={200} mounted={opened}>
                     {styles => (
                         <Paper
+                            ref={focusTrapRef}
                             className={classes.dropdown}
                             withBorder
                             style={styles}
