@@ -3,19 +3,22 @@
 import {
     Box,
     Text,
-    Checkbox,
     Textarea,
     Button,
     Stack,
     Divider,
-    Radio,
     Group,
     TextInput,
+    Switch,
+    SimpleGrid,
+    Paper,
 } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import {
     IconUsers,
     IconBed,
+    IconCheck,
+    IconX,
     IconChefHat,
     IconMusic,
     IconPlane,
@@ -59,29 +62,60 @@ export function RSVPFormFields({
                         *
                     </Text>
                 </Group>
-                <Radio.Group
-                    value={form.values.accepted ? "yes" : "no"}
-                    onChange={(value) => {
-                        const isAccepted = value === "yes";
-                        form.setFieldValue("accepted", isAccepted);
-                        if (isAccepted) {
+                <SimpleGrid cols={2} spacing="sm">
+                    <Paper
+                        p="lg"
+                        radius="md"
+                        withBorder
+                        style={{
+                            cursor: 'pointer',
+                            borderColor: form.values.accepted ? '#22c55e' : '#dee2e6',
+                            backgroundColor: form.values.accepted ? 'rgba(34, 197, 94, 0.08)' : '#fff',
+                            transition: 'all 0.2s ease',
+                        }}
+                        onClick={() => {
+                            form.setFieldValue("accepted", true);
                             form.validateField("invitees");
-                        } else {
+                            trackEvent(RSVPEvents.ACCEPTANCE_CHANGED, {
+                                code,
+                                accepted: true,
+                            });
+                        }}
+                    >
+                        <Group justify="center" gap="xs">
+                            <IconCheck size={20} color={form.values.accepted ? '#22c55e' : '#9ca3af'} />
+                            <Text fw={500} style={{ color: form.values.accepted ? '#22c55e' : '#6c757d' }}>
+                                {form.values.invitees.length > 1 ? "Yes, we're coming!" : "Yes, I'm coming!"}
+                            </Text>
+                        </Group>
+                    </Paper>
+                    <Paper
+                        p="lg"
+                        radius="md"
+                        withBorder
+                        style={{
+                            cursor: 'pointer',
+                            borderColor: !form.values.accepted ? '#ef4444' : '#dee2e6',
+                            backgroundColor: !form.values.accepted ? 'rgba(239, 68, 68, 0.08)' : '#fff',
+                            transition: 'all 0.2s ease',
+                        }}
+                        onClick={() => {
+                            form.setFieldValue("accepted", false);
                             form.clearFieldError("invitees");
-                        }
-
-                        trackEvent(RSVPEvents.ACCEPTANCE_CHANGED, {
-                            code,
-                            accepted: isAccepted,
-                        });
-                    }}
-                    required
-                >
-                    <Group gap="lg">
-                        <Radio value="yes" label="Yes" size="md" data-ph-capture-attribute="true" />
-                        <Radio value="no" label="No" size="md" data-ph-capture-attribute="true" />
-                    </Group>
-                </Radio.Group>
+                            trackEvent(RSVPEvents.ACCEPTANCE_CHANGED, {
+                                code,
+                                accepted: false,
+                            });
+                        }}
+                    >
+                        <Group justify="center" gap="xs">
+                            <IconX size={20} color={!form.values.accepted ? '#ef4444' : '#9ca3af'} />
+                            <Text fw={500} style={{ color: !form.values.accepted ? '#ef4444' : '#6c757d' }}>
+                                {form.values.invitees.length > 1 ? "Sorry, we can't make it" : "Sorry, I can't make it"}
+                            </Text>
+                        </Group>
+                    </Paper>
+                </SimpleGrid>
             </Box>
 
             {/* Form fields - Only visible when 'coming' is Yes */}
@@ -99,22 +133,34 @@ export function RSVPFormFields({
                                     *
                                 </Text>
                             </Group>
-                            <Stack gap="sm">
+                            <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
                                 {form.values.invitees.map(invitee => (
-                                    <Checkbox
+                                    <Paper
                                         key={invitee.id}
-                                        label={invitee.name}
-                                        checked={invitee.coming}
-                                        onChange={(event) => {
-                                            onInviteeChange(
-                                                invitee.id,
-                                                event.currentTarget.checked
-                                            );
+                                        p="md"
+                                        radius="md"
+                                        withBorder
+                                        style={{
+                                            cursor: 'pointer',
+                                            borderColor: invitee.coming ? '#6d5a44' : '#dee2e6',
+                                            backgroundColor: invitee.coming ? 'rgba(109, 90, 68, 0.05)' : '#fff',
+                                            transition: 'all 0.2s ease',
                                         }}
-                                        size="md"
-                                    />
+                                        onClick={() => onInviteeChange(invitee.id, !invitee.coming)}
+                                    >
+                                        <Group justify="space-between">
+                                            <Text fw={500}>{invitee.name}</Text>
+                                            <Switch
+                                                checked={invitee.coming}
+                                                onChange={() => {}}
+                                                size="md"
+                                                color="#6d5a44"
+                                                styles={{ track: { cursor: 'pointer' } }}
+                                            />
+                                        </Group>
+                                    </Paper>
                                 ))}
-                            </Stack>
+                            </SimpleGrid>
                         </Box>
                     )}
 
@@ -146,32 +192,58 @@ export function RSVPFormFields({
                                 prefer to arrange your own accommodation, please
                                 let us know.
                             </Text>
-                            <Radio.Group
-                                {...form.getInputProps("staying_villa")}
-                                onChange={(value) => {
-                                    form.setFieldValue("staying_villa", value);
-                                    trackEvent(RSVPEvents.VILLA_CHANGED, {
-                                        code,
-                                        staying: value === "yes",
-                                    });
-                                }}
-                                required
-                            >
-                                <Group gap="lg">
-                                    <Radio
-                                        value="yes"
-                                        label={form.values.invitees.length > 1 ? "Yes, we are staying" : "Yes, I am staying"}
-                                        size="md"
-                                        data-ph-capture-attribute="true"
-                                    />
-                                    <Radio
-                                        value="no"
-                                        label={form.values.invitees.length > 1 ? "No, we will not be staying" : "No, I will not be staying"}
-                                        size="md"
-                                        data-ph-capture-attribute="true"
-                                    />
-                                </Group>
-                            </Radio.Group>
+                            <SimpleGrid cols={2} spacing="sm">
+                                <Paper
+                                    p="lg"
+                                    radius="md"
+                                    withBorder
+                                    style={{
+                                        cursor: 'pointer',
+                                        borderColor: form.values.staying_villa === "yes" ? '#6d5a44' : '#dee2e6',
+                                        backgroundColor: form.values.staying_villa === "yes" ? 'rgba(109, 90, 68, 0.08)' : '#fff',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                    onClick={() => {
+                                        form.setFieldValue("staying_villa", "yes");
+                                        trackEvent(RSVPEvents.VILLA_CHANGED, {
+                                            code,
+                                            staying: true,
+                                        });
+                                    }}
+                                >
+                                    <Group justify="center" gap="xs">
+                                        <IconCheck size={20} color={form.values.staying_villa === "yes" ? '#6d5a44' : '#9ca3af'} />
+                                        <Text fw={500} style={{ color: form.values.staying_villa === "yes" ? '#6d5a44' : '#6c757d' }}>
+                                            {form.values.invitees.length > 1 ? "Yes, we're staying" : "Yes, I'm staying"}
+                                        </Text>
+                                    </Group>
+                                </Paper>
+                                <Paper
+                                    p="lg"
+                                    radius="md"
+                                    withBorder
+                                    style={{
+                                        cursor: 'pointer',
+                                        borderColor: form.values.staying_villa === "no" ? '#6c757d' : '#dee2e6',
+                                        backgroundColor: form.values.staying_villa === "no" ? 'rgba(108, 117, 125, 0.08)' : '#fff',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                    onClick={() => {
+                                        form.setFieldValue("staying_villa", "no");
+                                        trackEvent(RSVPEvents.VILLA_CHANGED, {
+                                            code,
+                                            staying: false,
+                                        });
+                                    }}
+                                >
+                                    <Group justify="center" gap="xs">
+                                        <IconX size={20} color={form.values.staying_villa === "no" ? '#6c757d' : '#9ca3af'} />
+                                        <Text fw={500} style={{ color: form.values.staying_villa === "no" ? '#6c757d' : '#6c757d' }}>
+                                            {form.values.invitees.length > 1 ? "No, we'll arrange our own" : "No, I'll arrange my own"}
+                                        </Text>
+                                    </Group>
+                                </Paper>
+                            </SimpleGrid>
                         </Box>
                     )}
 
@@ -194,7 +266,9 @@ export function RSVPFormFields({
                                     });
                                 }
                             }}
-                            minRows={3}
+                            minRows={4}
+                            maxRows={8}
+                            autosize
                             size="md"
                         />
                     </Box>
@@ -241,7 +315,9 @@ export function RSVPFormFields({
                                     });
                                 }
                             }}
-                            minRows={3}
+                            minRows={4}
+                            maxRows={8}
+                            autosize
                             size="md"
                         />
                     </Box>
@@ -267,7 +343,9 @@ export function RSVPFormFields({
                             });
                         }
                     }}
-                    minRows={4}
+                    minRows={5}
+                    maxRows={12}
+                    autosize
                     size="md"
                 />
             </Box>
