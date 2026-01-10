@@ -1,6 +1,7 @@
 "use client";
 
-import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress } from "@mantine/core";
+import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress, Button } from "@mantine/core";
+import { IconExternalLink } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -117,13 +118,27 @@ export default function DashboardPage() {
                         fontSize: "clamp(2rem, 6vw, 3rem)",
                         fontWeight: 300,
                         color: "#495057",
-                        marginBottom: "1.5rem",
+                        marginBottom: "1rem",
                         fontFamily: "serif",
                         textAlign: "center",
                     }}
                 >
                     At a Glance
                 </Title>
+
+                <Group justify="center" mb="lg">
+                    <Button
+                        component="a"
+                        href="https://docs.google.com/spreadsheets/d/1A9ML-7W_IiJPQraJMnF0HARA3qQBp1MGriPlm1GMUMU/edit"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="light"
+                        color="#8b7355"
+                        rightSection={<IconExternalLink size={16} />}
+                    >
+                        Planning Sheet
+                    </Button>
+                </Group>
 
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
                     {/* Invitations Summary */}
