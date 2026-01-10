@@ -17,7 +17,7 @@ import {
     MultiSelect,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconPlus, IconUser, IconExternalLink } from "@tabler/icons-react";
+import { IconPlus, IconUser, IconCopy, IconCheck } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -49,6 +49,7 @@ export default function InvitationsPage() {
     const [loading, setLoading] = useState(true);
     const [opened, { open, close }] = useDisclosure(false);
     const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
+    const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
     const supabase = createClient();
 
@@ -183,6 +184,18 @@ export default function InvitationsPage() {
 
         const names = associatedInvitees.map(i => i.first_name.toLowerCase()).join("-");
         return `/invitation/${names}-${rsvp.short_url}`;
+    };
+
+    const handleCopyLink = async (invitationId: string, link: string) => {
+        const fullUrl = `https://oneill.wedding${link}`;
+        try {
+            await navigator.clipboard.writeText(fullUrl);
+            setCopiedLink(invitationId);
+            setTimeout(() => setCopiedLink(null), 2000);
+        } catch (error) {
+            console.error("Failed to copy link:", error);
+            showAlert("error", "Failed to copy link to clipboard");
+        }
     };
 
     const handleSentToggle = async (invitationId: string, currentValue: boolean) => {
@@ -382,18 +395,34 @@ export default function InvitationsPage() {
                                     <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
                                         {(() => {
                                             const link = getInvitationLink(invitation.id);
+                                            const isCopied = copiedLink === invitation.id;
                                             return link ? (
-                                                <Button
-                                                    component="a"
-                                                    href={link}
-                                                    target="_blank"
-                                                    variant="subtle"
-                                                    color="#8b7355"
-                                                    size="sm"
-                                                    leftSection={<IconExternalLink size={14} />}
-                                                >
-                                                    View
-                                                </Button>
+                                                <Group gap="xs" justify="center" wrap="nowrap">
+                                                    <Text
+                                                        size="xs"
+                                                        style={{
+                                                            fontFamily: "monospace",
+                                                            color: "#6c757d",
+                                                            wordBreak: "break-all",
+                                                            maxWidth: 200,
+                                                        }}
+                                                    >
+                                                        {link}
+                                                    </Text>
+                                                    <Button
+                                                        variant="subtle"
+                                                        color={isCopied ? "green" : "#8b7355"}
+                                                        size="xs"
+                                                        onClick={() => handleCopyLink(invitation.id, link)}
+                                                        style={{ padding: "4px 8px" }}
+                                                    >
+                                                        {isCopied ? (
+                                                            <IconCheck size={14} />
+                                                        ) : (
+                                                            <IconCopy size={14} />
+                                                        )}
+                                                    </Button>
+                                                </Group>
                                             ) : (
                                                 <Text size="sm" c="dimmed" style={{ fontStyle: "italic" }}>
                                                     No RSVP
