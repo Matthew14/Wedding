@@ -58,7 +58,7 @@ export default function HomePage() {
                                         fontWeight: 400,
                                         color: "var(--text-primary)",
                                         marginBottom: "0",
-                                        fontFamily: "var(--font-playfair), serif",
+                                        fontFamily: "var(--font-great-vibes), cursive",
                                         lineHeight: 1.2,
                                         letterSpacing: "0.02em",
                                     }}
@@ -75,10 +75,9 @@ export default function HomePage() {
                                         fontWeight: 300,
                                         color: "var(--gold-dark)",
                                         marginBottom: "0.5rem",
-                                        fontFamily: "var(--font-cormorant), serif",
-                                        letterSpacing: "0.15em",
+                                        fontFamily: "var(--font-great-vibes), cursive",
+                                        letterSpacing: "0.05em",
                                         lineHeight: 1.4,
-                                        textTransform: "uppercase",
                                     }}
                                 >
                                     May, 2026

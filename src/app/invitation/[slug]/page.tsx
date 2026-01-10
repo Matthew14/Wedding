@@ -239,9 +239,8 @@ export default function InvitationPage() {
                                             fontSize: "clamp(1rem, 3vw, 1.25rem)",
                                             fontWeight: 300,
                                             color: "var(--gold-dark)",
-                                            fontFamily: "var(--font-cormorant), serif",
-                                            letterSpacing: "0.15em",
-                                            textTransform: "uppercase",
+                                            fontFamily: "var(--font-great-vibes), cursive",
+                                            letterSpacing: "0.05em",
                                         }}
                                     >
                                         22 - 24 May 2026
@@ -267,7 +266,7 @@ export default function InvitationPage() {
                                                 fontSize: "clamp(1.5rem, 5vw, 2rem)",
                                                 fontWeight: 400,
                                                 color: "var(--gold-dark)",
-                                                fontFamily: "var(--font-cormorant), serif",
+                                                fontFamily: "var(--font-great-vibes), cursive",
                                                 letterSpacing: "0.02em",
                                             }}
                                         >
@@ -293,9 +292,9 @@ export default function InvitationPage() {
                                         <Text
                                             style={{
                                                 fontSize: "1.25rem",
-                                                fontWeight: 500,
+                                                fontWeight: 400,
                                                 color: "var(--text-primary)",
-                                                fontFamily: "var(--font-cormorant), serif",
+                                                fontFamily: "var(--font-great-vibes), cursive",
                                             }}
                                         >
                                             Gran Villa Rosa
