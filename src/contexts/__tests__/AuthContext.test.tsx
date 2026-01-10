@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { AuthProvider, useAuth } from "../AuthContext";
 import { MantineProvider } from "@mantine/core";
 
@@ -32,12 +32,19 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 describe("AuthContext", () => {
-    it("provides auth context", () => {
+    it("provides auth context", async () => {
         const { result } = renderHook(() => useAuth(), { wrapper: TestWrapper });
+
+        // Initially loading
+        expect(result.current.loading).toBe(true);
+
+        // Wait for async auth state to settle
+        await waitFor(() => {
+            expect(result.current.loading).toBe(false);
+        });
 
         expect(result.current.user).toBeNull();
         expect(result.current.session).toBeNull();
-        expect(result.current.loading).toBe(true); // Initially loading
         expect(typeof result.current.signIn).toBe("function");
         expect(typeof result.current.signOut).toBe("function");
     });

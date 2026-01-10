@@ -260,11 +260,15 @@ describe("/api/rsvp/[code]", () => {
 
         it("updates RSVP successfully without invitees", async () => {
             const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
+            const mockInvitation = { villa_offered: true };
 
             mockSupabaseClient.from.mockImplementation((table: string) => {
                 if (table === "RSVPs") {
                     const chain = createMockChain({ data: mockRsvp, error: null });
                     return chain;
+                }
+                if (table === "invitation") {
+                    return createMockChain({ data: mockInvitation, error: null });
                 }
                 return createMockChain();
             });
@@ -273,7 +277,7 @@ describe("/api/rsvp/[code]", () => {
                 method: "POST",
                 body: JSON.stringify({
                     accepted: true,
-                    staying_villa: true,
+                    staying_villa: "yes",
                     dietary_restrictions: "None",
                 }),
             });
