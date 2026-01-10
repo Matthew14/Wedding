@@ -114,3 +114,48 @@ INSERT INTO public."RSVPs" (
 
 INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming) VALUES
     ('77777777-7777-7777-7777-777777777777', '55555555-5555-5555-5555-555555555555', 'Alice', 'Smith', NULL);
+
+-- Third test invitation with 3 invitees
+INSERT INTO public.invitation (id, "isMatthewSide") VALUES
+    ('88888888-8888-8888-8888-888888888888', true);
+
+INSERT INTO public."RSVPs" (
+    id,
+    invitation_id,
+    short_url,
+    accepted,
+    staying_villa
+) VALUES (
+    '99999999-9999-9999-9999-999999999999',
+    '88888888-8888-8888-8888-888888888888',
+    'TEST03',
+    NULL,
+    NULL
+);
+
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming) VALUES
+    ('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', '88888888-8888-8888-8888-888888888888', 'Michael', 'Johnson', NULL),
+    ('bbbbbbbb-cccc-dddd-eeee-ffffffffffff', '88888888-8888-8888-8888-888888888888', 'Sarah', 'Johnson', NULL),
+    ('cccccccc-dddd-eeee-ffff-111111111111', '88888888-8888-8888-8888-888888888888', 'Emma', 'Johnson', NULL);
+
+-- Fourth test invitation with 2 invitees
+INSERT INTO public.invitation (id, "isMatthewSide") VALUES
+    ('dddddddd-eeee-ffff-1111-222222222222', false);
+
+INSERT INTO public."RSVPs" (
+    id,
+    invitation_id,
+    short_url,
+    accepted,
+    staying_villa
+) VALUES (
+    'eeeeeeee-ffff-1111-2222-333333333333',
+    'dddddddd-eeee-ffff-1111-222222222222',
+    'TEST04',
+    NULL,
+    NULL
+);
+
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming) VALUES
+    ('ffffffff-1111-2222-3333-444444444444', 'dddddddd-eeee-ffff-1111-222222222222', 'David', 'Williams', NULL),
+    ('11111111-2222-3333-4444-555555555555', 'dddddddd-eeee-ffff-1111-222222222222', 'Laura', 'Williams', NULL);
