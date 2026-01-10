@@ -90,10 +90,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         const supabase = await createClient();
 
-        // Get the RSVP record with invitation data for villa_offered validation
+        // Get the RSVP record
         const { data: rsvpData, error: rsvpError } = await supabase
             .from("RSVPs")
-            .select("id, invitation_id, invitation:invitation_id (villa_offered)")
+            .select("id, invitation_id")
             .eq("short_url", code.toUpperCase())
             .single();
 
@@ -101,12 +101,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             return NextResponse.json({ error: "RSVP code not found" }, { status: 404 });
         }
 
-        // Extract villa_offered from joined invitation data
-        // Supabase join can return object or array depending on relationship
-        const invitation = rsvpData.invitation;
-        const villaOffered = invitation && typeof invitation === 'object' && !Array.isArray(invitation)
-            ? (invitation as { villa_offered: boolean }).villa_offered ?? true
-            : true;
+        // Fetch invitation data separately for more reliable villa_offered check
+        // This avoids PostgREST join behavior differences between environments
+        const { data: invitationData } = await supabase
+            .from("invitation")
+            .select("villa_offered")
+            .eq("id", rsvpData.invitation_id)
+            .single();
+
+        const villaOffered = invitationData?.villa_offered ?? true;
 
         // SECURITY: Validate villa booking - prevent staying when not offered
         if (body.staying_villa === "yes" && !villaOffered) {
