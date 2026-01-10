@@ -137,8 +137,8 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Select invitees (both coming)
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').check();
 
       // Staying at villa - find the villa section and click Yes radio
       cy.contains('Will you be staying with us?')
@@ -284,7 +284,7 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
@@ -341,8 +341,8 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Only John is coming
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').uncheck();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').uncheck();
 
       // Submit
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -386,8 +386,8 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Uncheck all invitees - none are coming
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').uncheck();
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').uncheck();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').uncheck();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').uncheck();
 
       // Try to submit
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -403,7 +403,7 @@ describe('RSVP Flow', () => {
       cy.url().should('not.include', '/success');
 
       // Now select one invitee to fix the validation error
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
 
       // Now submission should work - confirmation modal should appear
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -425,8 +425,8 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Select invitees
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').check();
 
       // Staying at villa
       cy.contains('Will you be staying with us?')
@@ -469,7 +469,7 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -501,7 +501,7 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -534,8 +534,8 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
       cy.url({ timeout: 10000 }).should('include', '/rsvp/success');
@@ -548,7 +548,7 @@ describe('RSVP Flow', () => {
       cy.get('button[type="submit"]').should('be.disabled');
 
       // Change Jane's status - uncheck her
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').uncheck();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').uncheck();
 
       // Button should now be enabled
       cy.get('button[type="submit"]').should('not.be.disabled');
@@ -564,7 +564,7 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
       cy.contains('Will you be staying with us?')
         .parent()
         .parent()
@@ -602,7 +602,7 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
 
       // Don't fill optional fields - they'll be stored as null
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
@@ -646,8 +646,8 @@ describe('RSVP Flow', () => {
         .click({ force: true });
 
       // Check John, but NOT Jane
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').should('not.be.checked');
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').should('not.be.checked');
 
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
       cy.contains('Confirm & Submit', { timeout: 5000 }).should('be.visible').click();
@@ -658,8 +658,8 @@ describe('RSVP Flow', () => {
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Jane should still be unchecked, John should still be checked
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').should('be.checked');
-      cy.contains('Jane Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').should('not.be.checked');
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').should('be.checked');
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("Jane Doe")').find('input[type="checkbox"]').should('not.be.checked');
 
       // Button should be disabled (no changes made)
       cy.get('button[type="submit"]').should('be.disabled');
@@ -681,7 +681,7 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
 
       // Button should be enabled for new submission
       cy.get('button[type="submit"]').should('not.be.disabled');
@@ -702,7 +702,7 @@ describe('RSVP Flow', () => {
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
-      cy.contains('John Doe').closest('[class*="Checkbox-root"]').find('input[type="checkbox"]').check();
+      cy.get('[class*="mantine-Checkbox-root"]').filter(':contains("John Doe")').find('input[type="checkbox"]').check();
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Confirm in modal
