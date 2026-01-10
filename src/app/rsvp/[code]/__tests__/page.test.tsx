@@ -498,8 +498,8 @@ describe("RSVPFormPage", () => {
             expect(screen.getByText(/Will you be staying with us\?/i)).toBeInTheDocument();
 
             // Decline the invitation
-            const noRadio = screen.getByRole("radio", { name: "No" });
-            await user.click(noRadio);
+            const declineCard = screen.getByText(/Sorry,.*can't make it/i);
+            await user.click(declineCard);
 
             // Villa question should be hidden
             await waitFor(() => {
@@ -525,8 +525,8 @@ describe("RSVPFormPage", () => {
             expect(screen.getByText(/Anything else you'd like us to know/i)).toBeInTheDocument();
 
             // Decline the invitation
-            const noRadio = screen.getByRole("radio", { name: "No" });
-            await user.click(noRadio);
+            const declineCard = screen.getByText(/Sorry,.*can't make it/i);
+            await user.click(declineCard);
 
             // Message field should still be visible
             await waitFor(() => {
@@ -619,17 +619,13 @@ describe("RSVPFormPage", () => {
                 });
 
                 await renderPage();
-                const user = userEvent.setup();
 
                 // Wait for loading to finish and data to appear
                 await waitFor(() => {
                     expect(screen.queryByText("Loading")).not.toBeInTheDocument();
                 });
 
-                // Find the acceptance radio group - get the first Yes radio (acceptance question)
-                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
-                await user.click(yesRadios[0]);
-
+                // Form defaults to "Yes" with single invitee auto-selected
                 // Should not show validation error for single invitee
                 await waitFor(() => {
                     expect(screen.queryByText(/select at least one guest/i)).not.toBeInTheDocument();
@@ -651,16 +647,11 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Accept invitation - get the first Yes radio (acceptance question)
-                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
-                await user.click(yesRadios[0]);
-
-                // Wait for invitee checkboxes to appear and select one
+                // Form defaults to "Yes" with invitees checked
+                // Wait for invitee checkboxes to appear (already checked)
                 await waitFor(() => {
                     expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
                 });
-                const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
-                await user.click(johnCheckbox);
 
                 // Enter special characters in dietary field
                 const dietaryTextarea = screen.getByPlaceholderText(/dietary requirements/i);
@@ -713,8 +704,8 @@ describe("RSVPFormPage", () => {
                 });
 
                 // Decline the invitation (simpler flow - no invitee selection needed)
-                const noRadios = screen.getAllByRole("radio", { name: /No/i });
-                await user.click(noRadios[0]);
+                const declineCard = screen.getByText(/Sorry,.*can't make it/i);
+                await user.click(declineCard);
 
                 // Submit form
                 const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
@@ -763,8 +754,8 @@ describe("RSVPFormPage", () => {
                 });
 
                 // Decline (simpler flow)
-                const noRadios = screen.getAllByRole("radio", { name: /No/i });
-                await user.click(noRadios[0]);
+                const declineCard = screen.getByText(/Sorry,.*can't make it/i);
+                await user.click(declineCard);
 
                 // Submit form
                 const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
@@ -847,18 +838,15 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Accept - get the first Yes radio
-                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
-                await user.click(yesRadios[0]);
-
+                // Accept - form defaults to accepted=true, so invitees should already be visible
                 // Invitee checkboxes should be visible when accepting
                 await waitFor(() => {
                     expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
                 });
 
-                // Switch to decline - get the first No radio
-                const noRadios = screen.getAllByRole("radio", { name: /No/i });
-                await user.click(noRadios[0]);
+                // Switch to decline
+                const declineCard = screen.getByText(/Sorry,.*can't make it/i);
+                await user.click(declineCard);
 
                 // Invitee checkboxes should no longer be visible when declining
                 await waitFor(() => {
@@ -881,16 +869,11 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Accept - get the first Yes radio
-                const yesRadios = screen.getAllByRole("radio", { name: /Yes/i });
-                await user.click(yesRadios[0]);
-
-                // Wait for and click invitee checkbox
+                // Form defaults to accepted=true, so invitees should already be visible and checked
+                // Wait for invitee checkboxes
                 await waitFor(() => {
                     expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
                 });
-                const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
-                await user.click(johnCheckbox);
 
                 // Try to enter very long text (should be handled by form validation)
                 // Use fireEvent.change instead of user.type for performance (typing 600 chars is slow)

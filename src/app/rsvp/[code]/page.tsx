@@ -58,13 +58,15 @@ export default function RSVPFormPage() {
         });
     };
 
-    // Auto-update invitees when acceptance changes
+    // Auto-update invitees when acceptance changes (user-initiated only)
     useEffect(() => {
         if (isInitialLoad || form.values.invitees.length === 0) return;
 
         const currentAccepted = form.values.accepted;
         const previousAccepted = previousAcceptedRef.current;
 
+        // First run after load - just record the state, don't modify invitees
+        // This preserves amendment data where some guests may not be coming
         if (previousAccepted === null) {
             previousAcceptedRef.current = currentAccepted;
             return;
@@ -79,8 +81,8 @@ export default function RSVPFormPage() {
             form.setFieldValue("invitees",
                 form.values.invitees.map(inv => ({ ...inv, coming: false }))
             );
-        } else {
-            // Check all when "Yes" is selected
+        } else if (!originalValues) {
+            // Only check all when "Yes" is selected for NEW RSVPs (not amendments)
             form.setFieldValue("invitees",
                 form.values.invitees.map(inv => ({ ...inv, coming: true }))
             );
