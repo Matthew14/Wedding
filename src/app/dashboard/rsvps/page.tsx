@@ -15,7 +15,14 @@ import { IconCheck, IconX, IconQuestionMark } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-interface RSVP {
+interface Invitee {
+    id: string;
+    first_name: string;
+    last_name: string;
+    coming: boolean | null;
+}
+
+interface RSVPWithInvitees {
     id: string;
     invitation_id: string;
     short_url: string;
@@ -26,19 +33,11 @@ interface RSVP {
     travel_plans: string | null;
     message: string | null;
     updated_at: string | null;
-}
-
-interface Invitee {
-    id: string;
-    first_name: string;
-    last_name: string;
-    invitation_id: string | null;
-    coming: boolean | null;
+    invitees: Invitee[];
 }
 
 export default function RSVPsPage() {
-    const [rsvps, setRsvps] = useState<RSVP[]>([]);
-    const [invitees, setInvitees] = useState<Invitee[]>([]);
+    const [rsvps, setRsvps] = useState<RSVPWithInvitees[]>([]);
     const [loading, setLoading] = useState(true);
 
     const supabase = createClient();
@@ -47,23 +46,59 @@ export default function RSVPsPage() {
         try {
             setLoading(true);
 
-            // Fetch RSVPs
+            // Fetch RSVPs with invitees in a single query using Supabase join
             const { data: rsvpsData, error: rsvpsError } = await supabase
                 .from("RSVPs")
-                .select("*")
+                .select(`
+                    id,
+                    invitation_id,
+                    short_url,
+                    accepted,
+                    staying_villa,
+                    dietary_restrictions,
+                    song_request,
+                    travel_plans,
+                    message,
+                    updated_at,
+                    invitation:invitation_id (
+                        invitees (
+                            id,
+                            first_name,
+                            last_name,
+                            coming
+                        )
+                    )
+                `)
                 .order("updated_at", { ascending: false, nullsFirst: false });
 
             if (rsvpsError) throw rsvpsError;
 
-            // Fetch invitees
-            const { data: inviteesData, error: inviteesError } = await supabase
-                .from("invitees")
-                .select("*");
+            // Transform data to flatten invitees from nested structure
+            const transformedData: RSVPWithInvitees[] = (rsvpsData || []).map(rsvp => {
+                const invitation = rsvp.invitation;
+                let invitees: Invitee[] = [];
 
-            if (inviteesError) throw inviteesError;
+                if (invitation && typeof invitation === 'object' && !Array.isArray(invitation)) {
+                    const inv = invitation as { invitees?: Invitee[] };
+                    invitees = Array.isArray(inv.invitees) ? inv.invitees : [];
+                }
 
-            setRsvps(rsvpsData || []);
-            setInvitees(inviteesData || []);
+                return {
+                    id: rsvp.id,
+                    invitation_id: rsvp.invitation_id,
+                    short_url: rsvp.short_url,
+                    accepted: rsvp.accepted,
+                    staying_villa: rsvp.staying_villa,
+                    dietary_restrictions: rsvp.dietary_restrictions,
+                    song_request: rsvp.song_request,
+                    travel_plans: rsvp.travel_plans,
+                    message: rsvp.message,
+                    updated_at: rsvp.updated_at,
+                    invitees,
+                };
+            });
+
+            setRsvps(transformedData);
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
@@ -75,17 +110,12 @@ export default function RSVPsPage() {
         fetchData();
     }, [fetchData]);
 
-    const getInviteesForRsvp = (invitationId: string) => {
-        return invitees.filter(invitee => invitee.invitation_id === invitationId);
+    const getGuestNames = (invitees: Invitee[]) => {
+        if (invitees.length === 0) return "No guests";
+        return invitees.map(g => g.first_name).join(" & ");
     };
 
-    const getGuestNames = (invitationId: string) => {
-        const guests = getInviteesForRsvp(invitationId);
-        if (guests.length === 0) return "No guests";
-        return guests.map(g => g.first_name).join(" & ");
-    };
-
-    const isRsvpReceived = (rsvp: RSVP) => {
+    const isRsvpReceived = (rsvp: RSVPWithInvitees) => {
         return rsvp.accepted !== null;
     };
 
@@ -216,11 +246,11 @@ export default function RSVPsPage() {
                                         style={{ backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8f9fa" }}
                                     >
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                                            <Text fw={500}>{getGuestNames(rsvp.invitation_id)}</Text>
+                                            <Text fw={500}>{getGuestNames(rsvp.invitees)}</Text>
                                         </td>
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
                                             <Stack gap={4}>
-                                                {getInviteesForRsvp(rsvp.invitation_id).map(guest => (
+                                                {rsvp.invitees.map(guest => (
                                                     <Group key={guest.id} gap="xs">
                                                         <StatusIcon value={guest.coming} />
                                                         <Text size="sm" c={guest.coming === null ? "dimmed" : undefined}>

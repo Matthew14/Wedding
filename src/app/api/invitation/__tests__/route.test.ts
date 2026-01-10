@@ -276,6 +276,163 @@ describe("/api/invitation/[slug]", () => {
             expect(data.valid).toBe(true);
         });
 
+        it("returns invitation data for 3 guests", async () => {
+            const mockRSVP = {
+                id: "rsvp-123",
+                invitation_id: "inv-456",
+                short_url: "TEST03",
+            };
+
+            const mockInvitees = [
+                { id: "inv-1", first_name: "Emma", last_name: "Wilson" },
+                { id: "inv-2", first_name: "Oliver", last_name: "Brown" },
+                { id: "inv-3", first_name: "Sophie", last_name: "Taylor" },
+            ];
+
+            const mockRSVPChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({
+                    data: mockRSVP,
+                    error: null,
+                }),
+            };
+
+            const mockInviteesChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockResolvedValue({
+                    data: mockInvitees,
+                    error: null,
+                }),
+                single: vi.fn().mockReturnThis(),
+            };
+
+            mockSupabaseClient.from
+                .mockReturnValueOnce(mockRSVPChain)
+                .mockReturnValueOnce(mockInviteesChain);
+
+            const request = new NextRequest(
+                "http://localhost:3000/api/invitation/emma-oliver-sophie-TEST03"
+            );
+
+            const response = await GET(request, {
+                params: Promise.resolve({ slug: "emma-oliver-sophie-TEST03" }),
+            });
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.valid).toBe(true);
+            expect(data.code).toBe("TEST03");
+            expect(data.guestNames).toEqual(["Emma", "Oliver", "Sophie"]);
+            expect(data.invitationId).toBe("inv-456");
+        });
+
+        it("returns invitation data for 4 guests (family)", async () => {
+            const mockRSVP = {
+                id: "rsvp-123",
+                invitation_id: "inv-789",
+                short_url: "TEST04",
+            };
+
+            const mockInvitees = [
+                { id: "inv-1", first_name: "James", last_name: "Johnson" },
+                { id: "inv-2", first_name: "Sarah", last_name: "Johnson" },
+                { id: "inv-3", first_name: "Tom", last_name: "Johnson" },
+                { id: "inv-4", first_name: "Lucy", last_name: "Johnson" },
+            ];
+
+            const mockRSVPChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({
+                    data: mockRSVP,
+                    error: null,
+                }),
+            };
+
+            const mockInviteesChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockResolvedValue({
+                    data: mockInvitees,
+                    error: null,
+                }),
+                single: vi.fn().mockReturnThis(),
+            };
+
+            mockSupabaseClient.from
+                .mockReturnValueOnce(mockRSVPChain)
+                .mockReturnValueOnce(mockInviteesChain);
+
+            const request = new NextRequest(
+                "http://localhost:3000/api/invitation/james-sarah-tom-lucy-TEST04"
+            );
+
+            const response = await GET(request, {
+                params: Promise.resolve({ slug: "james-sarah-tom-lucy-TEST04" }),
+            });
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.valid).toBe(true);
+            expect(data.code).toBe("TEST04");
+            expect(data.guestNames).toEqual(["James", "Sarah", "Tom", "Lucy"]);
+        });
+
+        it("returns 404 when name count doesn't match invitee count", async () => {
+            const mockRSVP = {
+                id: "rsvp-123",
+                invitation_id: "inv-456",
+                short_url: "TEST03",
+            };
+
+            // 3 invitees but only 2 names provided in URL
+            const mockInvitees = [
+                { id: "inv-1", first_name: "Emma", last_name: "Wilson" },
+                { id: "inv-2", first_name: "Oliver", last_name: "Brown" },
+                { id: "inv-3", first_name: "Sophie", last_name: "Taylor" },
+            ];
+
+            const mockRSVPChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockReturnThis(),
+                single: vi.fn().mockResolvedValue({
+                    data: mockRSVP,
+                    error: null,
+                }),
+            };
+
+            const mockInviteesChain = {
+                select: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+                order: vi.fn().mockResolvedValue({
+                    data: mockInvitees,
+                    error: null,
+                }),
+                single: vi.fn().mockReturnThis(),
+            };
+
+            mockSupabaseClient.from
+                .mockReturnValueOnce(mockRSVPChain)
+                .mockReturnValueOnce(mockInviteesChain);
+
+            const request = new NextRequest(
+                "http://localhost:3000/api/invitation/emma-oliver-TEST03"
+            );
+
+            const response = await GET(request, {
+                params: Promise.resolve({ slug: "emma-oliver-TEST03" }),
+            });
+            const data = await response.json();
+
+            expect(response.status).toBe(404);
+            expect(data.error).toBe("Invalid invitation link");
+        });
+
         it("uses generic error message for security (no info leakage)", async () => {
             // Test that we don't reveal whether the code exists or names are wrong
             const mockRSVPChain = {
