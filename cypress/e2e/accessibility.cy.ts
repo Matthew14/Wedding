@@ -119,15 +119,7 @@ describe('Accessibility Tests', () => {
       // Wait for page to load
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
-      // Fill form and open confirmation modal
-      cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-
-      cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
-
+      // Form defaults to "Yes" with all invitees checked, just submit
       cy.get('button[type="submit"]').contains('Submit RSVP').click();
 
       // Wait for modal to appear
@@ -169,24 +161,33 @@ describe('Accessibility Tests', () => {
       cy.checkA11y(undefined, axeConfig, logViolations);
     });
 
-    it('Radio buttons should have proper ARIA attributes', () => {
+    it('Card-based selections should have proper ARIA attributes', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.injectAxe();
+      // Verify invitee card checkboxes have proper ARIA attributes
+      cy.get('[role="checkbox"][aria-label="John Doe"]')
+        .should('have.attr', 'aria-checked')
+        .should('have.attr', 'tabindex', '0');
 
-      // Check specifically for radio button groups
-      cy.checkA11y('input[type="radio"]', axeConfig, logViolations);
+      cy.get('[role="checkbox"][aria-label="Jane Doe"]')
+        .should('have.attr', 'aria-checked')
+        .should('have.attr', 'tabindex', '0');
+
+      cy.injectAxe();
+      cy.checkA11y(undefined, axeConfig, logViolations);
     });
 
-    it('Checkboxes should have proper ARIA attributes', () => {
+    it('Text inputs and textareas should be accessible', () => {
       cy.visit('/rsvp/TEST01');
       cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
-      cy.injectAxe();
+      // Check that form text inputs exist and are accessible
+      cy.get('textarea[placeholder*="dietary"]').should('exist');
+      cy.get('input[placeholder*="song"]').should('exist');
 
-      // Check specifically for checkboxes
-      cy.checkA11y('input[type="checkbox"]', axeConfig, logViolations);
+      cy.injectAxe();
+      cy.checkA11y(undefined, axeConfig, logViolations);
     });
   });
 });

@@ -9,7 +9,6 @@ import {
     Divider,
     Group,
     TextInput,
-    Switch,
     SimpleGrid,
     Paper,
 } from "@mantine/core";
@@ -160,14 +159,23 @@ export function RSVPFormFields({
                                     >
                                         <Group justify="space-between">
                                             <Text fw={500}>{invitee.name}</Text>
-                                            <Switch
-                                                checked={invitee.coming}
-                                                onChange={() => {}}
-                                                size="md"
-                                                color="#6d5a44"
-                                                tabIndex={-1}
-                                                styles={{ track: { cursor: 'pointer' } }}
-                                            />
+                                            <Box
+                                                aria-hidden="true"
+                                                style={{
+                                                    width: 24,
+                                                    height: 24,
+                                                    borderRadius: '50%',
+                                                    backgroundColor: invitee.coming ? '#6d5a44' : '#e9ecef',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.2s ease',
+                                                }}
+                                            >
+                                                {invitee.coming && (
+                                                    <IconCheck size={14} color="#fff" stroke={3} />
+                                                )}
+                                            </Box>
                                         </Group>
                                     </Paper>
                                 ))}
