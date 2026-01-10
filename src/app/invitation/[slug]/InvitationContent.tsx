@@ -39,6 +39,12 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
         const abortController = new AbortController();
 
         const fetchInvitation = async () => {
+            // Reset state at the start of fetch to avoid race conditions
+            // This ensures state resets are tied to this specific request
+            setLoading(true);
+            setError(false);
+            setInvitationData(null);
+
             try {
                 if (!slug) {
                     setError(true);
@@ -89,17 +95,13 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
             }
         };
 
-        // Reset state when slug changes
-        setLoading(true);
-        setError(false);
-        setInvitationData(null);
-
         fetchInvitation();
 
         // Cleanup: abort in-flight request when slug changes or component unmounts
         return () => {
             abortController.abort();
         };
+    // trackEvent is stable (from useTracking hook) and doesn't need to be in deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [slug]);
 
