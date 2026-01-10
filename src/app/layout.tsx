@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Cormorant } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Great_Vibes } from "next/font/google";
 import "./globals.css";
 import { MantineProvider, ColorSchemeScript, createTheme } from "@mantine/core";
 import "@mantine/core/styles.css";
@@ -28,10 +28,10 @@ const playfair = Playfair_Display({
     display: "swap",
 });
 
-const cormorant = Cormorant({
+const greatVibes = Great_Vibes({
     subsets: ["latin"],
-    weight: ["300", "400", "500", "600"],
-    variable: "--font-cormorant",
+    weight: "400",
+    variable: "--font-great-vibes",
     display: "swap",
 });
 
@@ -91,7 +91,7 @@ export default function RootLayout({
                 <ColorSchemeScript forceColorScheme="light" />
                 <meta name="color-scheme" content="light only" />
             </head>
-            <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${cormorant.variable} antialiased`} style={{ colorScheme: 'light', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${greatVibes.variable} antialiased`} style={{ colorScheme: 'light', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 <PostHogProvider>
                     <ErrorBoundary>
                         <Suspense fallback={null}>

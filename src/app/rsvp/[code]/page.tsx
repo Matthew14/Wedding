@@ -401,7 +401,7 @@ export default function RSVPFormPage() {
                                         fontWeight: 400,
                                         color: "#2d2d2d",
                                         marginBottom: "0",
-                                        fontFamily: "var(--font-cormorant), serif",
+                                        fontFamily: "var(--font-great-vibes), cursive",
                                         letterSpacing: "0.02em",
                                     }}
                                 >
