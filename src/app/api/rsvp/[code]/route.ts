@@ -34,8 +34,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "RSVP code not found" }, { status: 404 });
         }
 
-        // Extract villa_offered from joined invitation data
-        const villaOffered = (rsvpData.invitation as { villa_offered?: boolean } | null)?.villa_offered ?? true;
+        // Extract villa_offered from joined invitation data with type guard
+        const invitation = rsvpData.invitation;
+        const villaOffered = invitation !== null &&
+            typeof invitation === 'object' &&
+            'villa_offered' in invitation &&
+            typeof invitation.villa_offered === 'boolean'
+                ? invitation.villa_offered
+                : true;
 
         // Get invitees for this invitation
         const { data: invitees, error: inviteesError } = await supabase

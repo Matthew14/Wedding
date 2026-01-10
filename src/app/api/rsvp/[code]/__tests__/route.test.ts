@@ -90,10 +90,11 @@ describe("/api/rsvp/[code]", () => {
                 travel_plans: "Arriving Friday",
                 message: "Excited!",
                 accepted: true,
+                invitation: { villa_offered: true },
             };
             const mockInvitees = [
-                { id: "invitee-1", first_name: "John", last_name: "Doe", coming: true },
-                { id: "invitee-2", first_name: "Jane", last_name: "Doe", coming: true },
+                { id: "invitee-1", first_name: "John", last_name: "Doe", coming: true, is_primary: true },
+                { id: "invitee-2", first_name: "Jane", last_name: "Doe", coming: true, is_primary: false },
             ];
 
             mockSupabaseClient.from.mockImplementation((table: string) => {
@@ -117,6 +118,115 @@ describe("/api/rsvp/[code]", () => {
             expect(data.invitationId).toBe("inv-456");
             expect(data.accepted).toBe(true);
             expect(data.invitees).toHaveLength(2);
+            expect(data.villaOffered).toBe(true);
+        });
+
+        it("returns villaOffered as false when villa not offered", async () => {
+            const mockRsvp = {
+                id: "rsvp-123",
+                invitation_id: "inv-456",
+                updated_at: null,
+                staying_villa: null,
+                dietary_restrictions: null,
+                song_request: null,
+                travel_plans: null,
+                message: null,
+                accepted: null,
+                invitation: { villa_offered: false },
+            };
+            const mockInvitees = [
+                { id: "invitee-1", first_name: "Bob", last_name: "Smith", coming: null, is_primary: true },
+            ];
+
+            mockSupabaseClient.from.mockImplementation((table: string) => {
+                if (table === "RSVPs") {
+                    return createMockChain({ data: mockRsvp, error: null });
+                }
+                if (table === "invitees") {
+                    return createMockChain({ data: mockInvitees, error: null });
+                }
+                return createMockChain();
+            });
+
+            const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF");
+            const response = await GET(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.villaOffered).toBe(false);
+        });
+
+        it("defaults villaOffered to true when invitation data is missing", async () => {
+            const mockRsvp = {
+                id: "rsvp-123",
+                invitation_id: "inv-456",
+                updated_at: null,
+                staying_villa: null,
+                dietary_restrictions: null,
+                song_request: null,
+                travel_plans: null,
+                message: null,
+                accepted: null,
+                invitation: null,
+            };
+            const mockInvitees = [
+                { id: "invitee-1", first_name: "Bob", last_name: "Smith", coming: null, is_primary: true },
+            ];
+
+            mockSupabaseClient.from.mockImplementation((table: string) => {
+                if (table === "RSVPs") {
+                    return createMockChain({ data: mockRsvp, error: null });
+                }
+                if (table === "invitees") {
+                    return createMockChain({ data: mockInvitees, error: null });
+                }
+                return createMockChain();
+            });
+
+            const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF");
+            const response = await GET(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.villaOffered).toBe(true);
+        });
+
+        it("returns is_primary field for invitees", async () => {
+            const mockRsvp = {
+                id: "rsvp-123",
+                invitation_id: "inv-456",
+                updated_at: null,
+                staying_villa: null,
+                dietary_restrictions: null,
+                song_request: null,
+                travel_plans: null,
+                message: null,
+                accepted: null,
+                invitation: { villa_offered: true },
+            };
+            const mockInvitees = [
+                { id: "invitee-1", first_name: "David", last_name: "Wilson", coming: null, is_primary: true },
+                { id: "invitee-2", first_name: "Emily", last_name: "Carter", coming: null, is_primary: false },
+            ];
+
+            mockSupabaseClient.from.mockImplementation((table: string) => {
+                if (table === "RSVPs") {
+                    return createMockChain({ data: mockRsvp, error: null });
+                }
+                if (table === "invitees") {
+                    return createMockChain({ data: mockInvitees, error: null });
+                }
+                return createMockChain();
+            });
+
+            const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF");
+            const response = await GET(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+            const data = await response.json();
+
+            expect(response.status).toBe(200);
+            expect(data.invitees).toHaveLength(2);
+            expect(data.invitees[0].is_primary).toBe(true);
+            expect(data.invitees[1].is_primary).toBe(false);
         });
     });
 

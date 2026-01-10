@@ -494,7 +494,7 @@ describe("RSVPFormPage", () => {
             });
 
             // Villa question should be visible when accepting
-            expect(screen.getByText(/Will you be staying with us at Gran Villa Rosa/i)).toBeInTheDocument();
+            expect(screen.getByText(/Will you be staying with us\?/i)).toBeInTheDocument();
 
             // Decline the invitation
             const noRadio = screen.getByRole("radio", { name: "No" });
@@ -502,7 +502,7 @@ describe("RSVPFormPage", () => {
 
             // Villa question should be hidden
             await waitFor(() => {
-                expect(screen.queryByText(/Will you be staying with us at Gran Villa Rosa/i)).not.toBeInTheDocument();
+                expect(screen.queryByText(/Will you be staying with us\?/i)).not.toBeInTheDocument();
             });
         });
 
