@@ -1,415 +1,102 @@
 "use client";
 
-import {
-    Container,
-    Title,
-    Text,
-    Paper,
-    Checkbox,
-    Textarea,
-    Button,
-    Stack,
-    Alert,
-    Box,
-    Divider,
-    Radio,
-    Group,
-    Modal,
-    TextInput,
-} from "@mantine/core";
+import { Container, Text, Paper, Stack, Alert, Box, Button } from "@mantine/core";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-    IconX,
-    IconUsers,
-    IconBed,
-    IconChefHat,
-    IconMusic,
-    IconPlane,
-    IconMessage,
-    IconBook,
-} from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
-import { RSVPFormData, Invitee, DatabaseRSVPResponse } from "@/types";
-import { useRSVPForm, useTracking, RSVPEvents, useFormAnalytics, useScrollDepth } from "@/hooks";
-
-/**
- * Format guest names with smart surname grouping.
- * Primary guests appear first, and guests with the same surname are grouped together.
- * Examples:
- * - Single guest: "John Doe"
- * - Couple: "John & Jane Doe"
- * - Mixed surnames: "David Wilson, Michael & Emily Carter"
- */
-function formatGuestNames(invitees: Invitee[]): string {
-    if (!invitees || invitees.length === 0) return 'Unknown Guest';
-
-    // Sort so primary guests come first
-    const sorted = [...invitees].sort((a, b) => {
-        if (a.is_primary && !b.is_primary) return -1;
-        if (!a.is_primary && b.is_primary) return 1;
-        return 0;
-    });
-
-    // Group by surname, preserving order of first occurrence
-    const surnameGroups = new Map<string, string[]>();
-    const surnameOrder: string[] = [];
-
-    for (const inv of sorted) {
-        const surname = inv.last_name;
-        if (!surnameGroups.has(surname)) {
-            surnameGroups.set(surname, []);
-            surnameOrder.push(surname);
-        }
-        surnameGroups.get(surname)!.push(inv.first_name);
-    }
-
-    // Format each group: "John & Jane Doe"
-    const formattedGroups = surnameOrder.map(surname => {
-        const firstNames = surnameGroups.get(surname)!;
-        const joinedFirstNames = firstNames.length === 1
-            ? firstNames[0]
-            : firstNames.length === 2
-                ? firstNames.join(' & ')
-                : `${firstNames.slice(0, -1).join(', ')} & ${firstNames[firstNames.length - 1]}`;
-        return `${joinedFirstNames} ${surname}`;
-    });
-
-    // Join groups with commas and & for the last
-    if (formattedGroups.length === 1) return formattedGroups[0];
-    if (formattedGroups.length === 2) return formattedGroups.join(' & ');
-    return `${formattedGroups.slice(0, -1).join(', ')} & ${formattedGroups[formattedGroups.length - 1]}`;
-}
+import { RSVPFormData } from "@/types";
+import { useRSVPForm, useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
+import { useRSVPData, useRSVPSubmission } from "./hooks";
+import { RSVPFormHeader, RSVPFormFields, RSVPConfirmationModal } from "./components";
 
 export default function RSVPFormPage() {
     const params = useParams();
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
-    const [infoText, setInfoText] = useState("");
+    const code = params.code as string;
+
     const [showConfirmation, setShowConfirmation] = useState(false);
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
-    const [originalValues, setOriginalValues] = useState<RSVPFormData | null>(null);
-    const [guestNames, setGuestNames] = useState<string>("");
-    const [villaOffered, setVillaOffered] = useState<boolean>(true);
     const previousAcceptedRef = useRef<boolean | null>(null);
 
     const form = useRSVPForm();
-    const { trackEvent, identifyUser, setUserProperties, setGroup } = useTracking();
-    // Field-level tracking disabled - we use more specific events (DIETARY_FILLED, etc.)
-    const formAnalytics = useFormAnalytics({
-        formName: 'rsvp_form',
-        trackFieldFocus: false,
-        trackFieldBlur: false,
-    });
+    const { trackEvent } = useTracking();
     useScrollDepth('rsvp_form');
 
-    useEffect(() => {
-        const fetchRSVPData = async () => {
-            try {
-                const code = params.code as string;
+    const {
+        loading,
+        error: loadError,
+        guestNames,
+        villaOffered,
+        infoText,
+        originalValues,
+        isInitialLoad,
+    } = useRSVPData({ code, form });
 
-                // Fetch RSVP data and invitees
-                const response = await fetch(`/api/rsvp/${code}`);
+    const {
+        submitting,
+        success,
+        error: submitError,
+        handleSubmit,
+    } = useRSVPSubmission({ code });
 
-                if (response.ok) {
-                    const data: DatabaseRSVPResponse = await response.json();
-                    const isReturningUser = !!(data && data.updatedAt);
-                    const inviteeCount = data.invitees?.length || 0;
+    const error = loadError || submitError;
 
-                    const names = formatGuestNames(data.invitees || []);
-
-                    setGuestNames(names);
-                    setVillaOffered(data.villaOffered ?? true);
-
-                    identifyUser(code, {
-                        rsvp_code: code,
-                        guest_names: names,
-                        invitee_count: inviteeCount,
-                        is_returning_user: isReturningUser,
-                    });
-
-                    // Set group for invitation-level analytics
-                    setGroup('invitation', data.invitationId.toString(), {
-                        invitee_count: inviteeCount,
-                        guest_names: names,
-                    });
-
-                    // Track form view (page view tracked by PageViewTracker component)
-                    trackEvent(RSVPEvents.FORM_VIEWED, {
-                        code,
-                        invitee_count: inviteeCount,
-                        is_amendment: isReturningUser,
-                    });
-
-                    // If there's existing RSVP data and it was updated, pre-populate the form
-                    if (isReturningUser && data.updatedAt) {
-                        const formattedDate = new Date(data.updatedAt).toLocaleDateString('en-GB', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        setInfoText("You're amending your RSVP, last updated on " + formattedDate);
-
-                        // Map invitees with their existing responses
-                        // For single invitees, auto-correct coming to true since the checkbox is hidden
-                        // and they're implicitly attending when accepted is true
-                        // Sort by is_primary so primary guests appear first
-                        const isSingleInvitee = data.invitees?.length === 1;
-                        const sortedInvitees = [...(data.invitees || [])].sort((a, b) => {
-                            if (a.is_primary && !b.is_primary) return -1;
-                            if (!a.is_primary && b.is_primary) return 1;
-                            return 0;
-                        });
-                        const inviteesWithResponses = sortedInvitees.map((inv: Invitee & { coming?: boolean }) => ({
-                            id: inv.id,
-                            name: `${inv.first_name} ${inv.last_name}`,
-                            coming: isSingleInvitee && data.accepted ? true : (inv.coming ?? false),
-                        }));
-
-                        const loadedValues = {
-                            accepted: data.accepted,
-                            invitees: inviteesWithResponses,
-                            // If villa not offered, default to "no" so validation passes
-                            staying_villa: !data.villaOffered ? "no" : (data.stayingVilla ? "yes" : "no"),
-                            dietary_restrictions: data.dietaryRestrictions ?? "",
-                            song_request: data.songRequest ?? "",
-                            travel_plans: data.travelPlans ?? "",
-                            message: data.message ?? "",
-                        };
-
-                        form.setValues(loadedValues);
-                        // Store original values for comparison
-                        setOriginalValues(loadedValues);
-
-                        // Track amendment details
-                        trackEvent(RSVPEvents.FORM_AMENDMENT, {
-                            code,
-                            previous_acceptance: data.accepted,
-                            has_dietary: !!data.dietaryRestrictions,
-                            has_song: !!data.songRequest,
-                            has_travel: !!data.travelPlans,
-                            has_message: !!data.message,
-                        });
-                    } else {
-                        // Set default invitees only if no existing data
-                        // For single-person invitations, auto-mark as coming since checkbox is hidden
-                        // For multiple invitees, initialize unchecked - users must manually select
-                        // Sort by is_primary so primary guests appear first
-                        const isSingleInvitee = data.invitees?.length === 1;
-                        const sortedInvitees = [...(data.invitees || [])].sort((a, b) => {
-                            if (a.is_primary && !b.is_primary) return -1;
-                            if (!a.is_primary && b.is_primary) return 1;
-                            return 0;
-                        });
-                        form.setFieldValue("invitees",
-                            sortedInvitees.map((inv: Invitee) => ({
-                                id: inv.id,
-                                name: `${inv.first_name} ${inv.last_name}`,
-                                coming: isSingleInvitee,
-                            }))
-                        );
-                        // If villa not offered, set to "no" so validation passes
-                        if (!data.villaOffered) {
-                            form.setFieldValue("staying_villa", "no");
-                        }
-                    }
-
-                    // Mark initial load as complete
-                    setIsInitialLoad(false);
-                } else {
-                    setError("Failed to load RSVP data");
-                    trackEvent(RSVPEvents.FORM_LOAD_ERROR, {
-                        code: params.code as string,
-                        error: 'Failed to load',
-                    });
-                }
-            } catch (err) {
-                setError("Something went wrong while loading the form");
-                trackEvent(RSVPEvents.FORM_LOAD_ERROR, {
-                    code: params.code as string,
-                    error: String(err),
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (params.code) {
-            fetchRSVPData();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [params.code]);
-
-    const handleSubmit = async (values: RSVPFormData) => {
-        setSubmitting(true);
-        setError("");
-
-        // Track submission attempt
-        const attendingCount = values.invitees.filter(inv => inv.coming).length;
-        trackEvent(RSVPEvents.SUBMIT_ATTEMPT, {
-            code: params.code as string,
-            accepted: values.accepted,
-            attending_count: attendingCount,
-            total_invitees: values.invitees.length,
-            staying_villa: values.staying_villa === "yes",
-            has_dietary: !!values.dietary_restrictions,
-            has_song: !!values.song_request,
-            has_travel: !!values.travel_plans,
-            has_message: !!values.message,
-        });
-
-        try {
-            const code = params.code as string;
-            const response = await fetch(`/api/rsvp/${code}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(values),
-            });
-
-            if (response.ok) {
-                setSuccess(true);
-
-                // Update user properties with RSVP choices
-                const attendingInvitees = values.invitees
-                    .filter(inv => inv.coming)
-                    .map(inv => inv.name)
-                    .join(', ');
-
-                setUserProperties({
-                    accepted: values.accepted,
-                    attending_count: attendingCount,
-                    staying_villa: values.staying_villa === "yes",
-                    has_dietary_restrictions: !!values.dietary_restrictions,
-                    has_song_request: !!values.song_request,
-                    has_travel_plans: !!values.travel_plans,
-                    has_message: !!values.message,
-                    attending_invitees: attendingInvitees || 'None',
-                    last_updated: new Date().toISOString(),
-                });
-
-                trackEvent(RSVPEvents.SUBMIT_SUCCESS, {
-                    code,
-                    accepted: values.accepted,
-                    attending_count: attendingCount,
-                });
-
-                // Track form submission completion
-                formAnalytics.trackFormSubmission(true);
-
-                setTimeout(() => {
-                    router.push(`/rsvp/success?accepted=${values.accepted ? 'yes' : 'no'}&code=${params.code}`);
-                }, 500);
-            } else {
-                const errorData = await response.json();
-                const errorMessage = errorData.error || "Failed to submit RSVP";
-                setError(errorMessage);
-                setSubmitting(false);
-                trackEvent(RSVPEvents.SUBMIT_ERROR, {
-                    code,
-                    error: errorMessage,
-                });
-
-                // Track form submission error
-                formAnalytics.trackFormSubmission(false, errorMessage);
-            }
-        } catch (err) {
-            setError("Something went wrong. Please try again.");
-            setSubmitting(false);
-            trackEvent(RSVPEvents.SUBMIT_ERROR, {
-                code: params.code as string,
-                error: String(err),
-            });
-
-            // Track form submission error
-            formAnalytics.trackFormSubmission(false, String(err));
-        }
-    };
-
+    // Handle invitee checkbox changes
     const handleInviteeChange = (inviteeId: string, coming: boolean) => {
         const updatedInvitees = form.values.invitees.map(inv =>
             inv.id === inviteeId ? { ...inv, coming } : inv
         );
         form.setFieldValue("invitees", updatedInvitees);
-        // Validate immediately to show error message when no invitees are selected
         form.validateField("invitees");
 
-        // Track invitee toggle
         const attendingCount = updatedInvitees.filter(inv => inv.coming).length;
         trackEvent(RSVPEvents.INVITEE_TOGGLED, {
-            code: params.code as string,
+            code,
             invitee_id: inviteeId,
             coming,
             total_attending: attendingCount,
         });
     };
 
-    // Effect to automatically check/uncheck all invitees based on acceptance status
-    // This should only run when the user actively changes the acceptance radio button,
-    // not when we're loading initial/amendment data or when invitees are manually toggled
+    // Auto-update invitees when acceptance changes
     useEffect(() => {
-        // Skip if still loading initial data or no invitees
-        if (isInitialLoad || form.values.invitees.length === 0) {
-            return;
-        }
+        if (isInitialLoad || form.values.invitees.length === 0) return;
 
-        // Check if acceptance value actually changed from previous value
         const currentAccepted = form.values.accepted;
         const previousAccepted = previousAcceptedRef.current;
 
-        // If this is the first time setting the value after load, just store it without acting
         if (previousAccepted === null) {
             previousAcceptedRef.current = currentAccepted;
             return;
         }
 
-        // Only proceed if acceptance value actually changed
-        if (currentAccepted === previousAccepted) {
-            return;
-        }
+        if (currentAccepted === previousAccepted) return;
 
-        // Update the ref for next comparison
         previousAcceptedRef.current = currentAccepted;
 
-        // User actively toggled the acceptance radio button
         if (!currentAccepted) {
-            // Changed to declining - uncheck all invitees
             form.setFieldValue("invitees",
                 form.values.invitees.map(inv => ({ ...inv, coming: false }))
             );
         } else if (form.values.invitees.length === 1) {
-            // For single-person invitations, auto-mark them as coming when accepting
             form.setFieldValue("invitees",
                 form.values.invitees.map(inv => ({ ...inv, coming: true }))
             );
         }
-        // Note: When changing from "No" to "Yes" with multiple invitees, we DON'T auto-check
-        // Let the user manually select who's coming
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [form.values.accepted, isInitialLoad]);
 
     // Check if form has changes from original values
     const hasChanges = useMemo(() => {
-        if (!originalValues) return true; // If no original values, allow submission (new RSVP)
+        if (!originalValues) return true;
 
-        // Helper to normalize empty values (null, undefined, and "" are all treated as empty)
-        const normalizeEmpty = (value: string | null | undefined): string => {
-            return value || "";
-        };
+        const normalizeEmpty = (value: string | null | undefined): string => value || "";
 
-        // Compare invitees arrays for deep equality
-        const inviteesAreEqual = (a: typeof form.values.invitees, b: typeof form.values.invitees) => {
+        const inviteesAreEqual = (a: RSVPFormData['invitees'], b: RSVPFormData['invitees']) => {
             if (a.length !== b.length) return false;
             return a.every((invitee) => {
-                const otherInvitee = b.find(inv => inv.id === invitee.id);
-                return otherInvitee && invitee.coming === otherInvitee.coming;
+                const other = b.find(inv => inv.id === invitee.id);
+                return other && invitee.coming === other.coming;
             });
         };
 
@@ -422,7 +109,6 @@ export default function RSVPFormPage() {
             normalizeEmpty(form.values.travel_plans) !== normalizeEmpty(originalValues.travel_plans) ||
             normalizeEmpty(form.values.message) !== normalizeEmpty(originalValues.message)
         );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [form.values, originalValues]);
 
     if (loading) {
@@ -450,6 +136,19 @@ export default function RSVPFormPage() {
         );
     }
 
+    const handleFormSubmit = () => {
+        setShowConfirmation(true);
+        trackEvent(RSVPEvents.CONFIRMATION_OPENED, {
+            code,
+            accepted: form.values.accepted,
+        });
+    };
+
+    const handleConfirmSubmit = () => {
+        setShowConfirmation(false);
+        handleSubmit(form.values);
+    };
+
     return (
         <>
             <Navigation />
@@ -457,323 +156,26 @@ export default function RSVPFormPage() {
                 <Box style={{ paddingTop: 56 }}>
                     <Container size="md" py="xl" className="fade-in">
                         <Stack gap="xl">
-                            {/* Header */}
-                            <Box style={{ textAlign: "center", marginBottom: "1rem" }}>
-                                {guestNames && (
-                                    <Title
-                                        order={1}
-                                        style={{
-                                            fontSize: "clamp(2.5rem, 7vw, 4rem)",
-                                            fontWeight: 400,
-                                            color: "var(--gold-dark)",
-                                            marginBottom: "0.5rem",
-                                            fontFamily: "var(--font-great-vibes), cursive",
-                                            letterSpacing: "0.02em",
-                                        }}
-                                    >
-                                        {guestNames}
-                                    </Title>
-                                )}
-                                {infoText ? (
-                                    <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }} pb="md">
-                                        {infoText}
-                                    </Text>
-                                ) : (
-                                <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }}>
-                                    Let us know if you&apos;re coming to our wedding! Once you&apos;ve filled out this
-                                    form, you will still be able to amend your details here up until the 1st of
-                                    March. After that please get in touch if something changes.
-                                </Text>
-                                )}
-                            </Box>
+                            <RSVPFormHeader guestNames={guestNames} infoText={infoText} />
 
-                            {/* RSVP Form */}
                             <Paper className="elegant-card" radius="lg" p="xl">
-                                <form onSubmit={form.onSubmit(() => {
-                                    setShowConfirmation(true);
-                                    trackEvent(RSVPEvents.CONFIRMATION_OPENED, {
-                                        code: params.code as string,
-                                        accepted: form.values.accepted,
-                                    });
-                                })} onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && e.target !== e.currentTarget) {
-                                        e.preventDefault();
-                                    }
-                                }}>
-                                    <Stack gap="xl">
-                                        {/* Are you joining us? */}
-                                        <Box mb="xl">
-                                            <Group gap="sm" mb="md">
-                                                <IconBook size={20} color="#6d5a44" />
-                                                <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                    Are you joining us?
-                                                </Text>
-                                                <Text span style={{ color: "#e53e3e" }}>
-                                                    *
-                                                </Text>
-                                            </Group>
-                                            <Radio.Group
-                                                value={form.values.accepted ? "yes" : "no"}
-                                                onChange={(value) => {
-                                                    const isAccepted = value === "yes";
-                                                    form.setFieldValue("accepted", isAccepted);
-                                                    // Validate invitees when accepting to show error
-                                                    // if no guests are selected
-                                                    if (isAccepted) {
-                                                        form.validateField("invitees");
-                                                    } else {
-                                                        // Clear invitees error when declining
-                                                        form.clearFieldError("invitees");
-                                                    }
-
-                                                    // Track acceptance change
-                                                    trackEvent(RSVPEvents.ACCEPTANCE_CHANGED, {
-                                                        code: params.code as string,
-                                                        accepted: isAccepted,
-                                                    });
-                                                }}
-                                                required
-                                            >
-                                                <Group gap="lg">
-                                                    <Radio value="yes" label="Yes" size="md" data-ph-capture-attribute="true" />
-                                                    <Radio value="no" label="No" size="md" data-ph-capture-attribute="true" />
-                                                </Group>
-                                            </Radio.Group>
-                                        </Box>
-
-                                        {/* Form fields - Only visible when 'coming' is Yes */}
-                                        {form.values.accepted && (
-                                            <>
-                                                {/* 
-                                                    Is everyone coming? - Only visible when there are multiple invitees 
-                                                */}
-                                                {form.values.invitees.length > 1 && (
-                                                    <Box mb="xl">
-                                                        <Group gap="sm" mb="md">
-                                                            <IconUsers size={20} color="#6d5a44" />
-                                                            <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                                Is everyone coming?
-                                                            </Text>
-                                                            <Text span style={{ color: "#e53e3e" }}>
-                                                                *
-                                                            </Text>
-                                                        </Group>
-                                                        <Stack gap="sm">
-                                                            {form.values.invitees.map(invitee => (
-                                                                <Checkbox
-                                                                    key={invitee.id}
-                                                                    label={invitee.name}
-                                                                    checked={invitee.coming}
-                                                                    onChange={(event) => {
-                                                                        handleInviteeChange(
-                                                                            invitee.id,
-                                                                            event.currentTarget.checked
-                                                                        );
-                                                                    }}
-                                                                    size="md"
-                                                                />
-                                                            ))}
-                                                        </Stack>
-                                                    </Box>
-                                                )}
-
-                                                {/* Invitees validation error - shown regardless of invitee count */}
-                                                {form.errors.invitees && (
-                                                    <Text size="sm" style={{ color: "#e53e3e", marginBottom: "1rem" }}>
-                                                        {form.errors.invitees}
-                                                    </Text>
-                                                )}
-
-                                                {/* Will you be staying with us? */}
-                                                {villaOffered && (
-                                                    <Box mb="xl">
-                                                        <Group gap="sm" mb="md">
-                                                            <IconBed size={20} color="#6d5a44" />
-                                                            <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                                Will you be staying with us?
-                                                            </Text>
-                                                            <Text span style={{ color: "#e53e3e" }}>
-                                                                *
-                                                            </Text>
-                                                        </Group>
-                                                        <Text
-                                                            size="sm"
-                                                            style={{ color: "#5a5a5a", marginBottom: "1rem", lineHeight: 1.6 }}
-                                                        >
-                                                            We&apos;ve reserved a complimentary room in the venue
-                                                            for you for Friday and Saturday nights. If you&apos;d
-                                                            prefer to arrange your own accommodation, please
-                                                            let us know.
-                                                        </Text>
-                                                        <Radio.Group
-                                                            {...form.getInputProps("staying_villa")}
-                                                            onChange={(value) => {
-                                                                form.setFieldValue("staying_villa", value);
-                                                                trackEvent(RSVPEvents.VILLA_CHANGED, {
-                                                                    code: params.code as string,
-                                                                    staying: value === "yes",
-                                                                });
-                                                            }}
-                                                            required
-                                                        >
-                                                            <Group gap="lg">
-                                                                <Radio
-                                                                    value="yes"
-                                                                    label={form.values.invitees.length > 1 ? "Yes, we are staying" : "Yes, I am staying"}
-                                                                    size="md"
-                                                                    data-ph-capture-attribute="true"
-                                                                />
-                                                                <Radio
-                                                                    value="no"
-                                                                    label={form.values.invitees.length > 1 ? "No, we will not be staying" : "No, I will not be staying"}
-                                                                    size="md"
-                                                                    data-ph-capture-attribute="true"
-                                                                />
-                                                            </Group>
-                                                        </Radio.Group>
-                                                    </Box>
-                                                )}
-
-                                                {/* Dietary restrictions */}
-                                                <Box mb="xl">
-                                                    <Group gap="sm" mb="md">
-                                                        <IconChefHat size={20} color="#6d5a44" />
-                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                            Do you have any allergies or specific dietary requests?
-                                                        </Text>
-                                                    </Group>
-                                                    <Textarea
-                                                        placeholder="Please let us know about any dietary requirements..."
-                                                        {...form.getInputProps("dietary_restrictions")}
-                                                        onBlur={(e) => {
-                                                            if (e.target.value.trim()) {
-                                                                trackEvent(RSVPEvents.DIETARY_FILLED, {
-                                                                    code: params.code as string,
-                                                                    length: e.target.value.length,
-                                                                });
-                                                            }
-                                                        }}
-                                                        minRows={3}
-                                                        size="md"
-                                                    />
-                                                </Box>
-
-                                                {/* Song request */}
-                                                <Box mb="xl">
-                                                    <Group gap="sm" mb="md">
-                                                        <IconMusic size={20} color="#6d5a44" />
-                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                            Got a song request for the wedding playlist? Add it here!
-                                                        </Text>
-                                                    </Group>
-                                                    <TextInput
-                                                        placeholder="What song would you like to hear at our wedding?"
-                                                        {...form.getInputProps("song_request")}
-                                                        onBlur={(e) => {
-                                                            if (e.target.value.trim()) {
-                                                                trackEvent(RSVPEvents.SONG_FILLED, {
-                                                                    code: params.code as string,
-                                                                    length: e.target.value.length,
-                                                                });
-                                                            }
-                                                        }}
-                                                        size="md"
-                                                    />
-                                                </Box>
-
-                                                {/* Travel plans */}
-                                                <Box mb="xl">
-                                                    <Group gap="sm" mb="md">
-                                                        <IconPlane size={20} color="#6d5a44" />
-                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                            Please add any travel plans you have
-                                                        </Text>
-                                                    </Group>
-                                                    <Textarea
-                                                        placeholder="Flight number, day of travel etc."
-                                                        {...form.getInputProps("travel_plans")}
-                                                        onBlur={(e) => {
-                                                            if (e.target.value.trim()) {
-                                                                trackEvent(RSVPEvents.TRAVEL_FILLED, {
-                                                                    code: params.code as string,
-                                                                    length: e.target.value.length,
-                                                                });
-                                                            }
-                                                        }}
-                                                        minRows={3}
-                                                        size="md"
-                                                    />
-                                                </Box>
-                                            </>
-                                        )}
-
-                                        {/* Additional message */}
-                                        <Box mb="xl">
-                                            <Group gap="sm" mb="md">
-                                                <IconMessage size={20} color="#6d5a44" />
-                                                <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                    Anything else you&apos;d like us to know?
-                                                </Text>
-                                            </Group>
-                                            <Textarea
-                                                placeholder="Any other information you'd like to share..."
-                                                {...form.getInputProps("message")}
-                                                onBlur={(e) => {
-                                                    if (e.target.value.trim()) {
-                                                        trackEvent(RSVPEvents.MESSAGE_FILLED, {
-                                                            code: params.code as string,
-                                                            length: e.target.value.length,
-                                                        });
-                                                    }
-                                                }}
-                                                minRows={4}
-                                                size="md"
-                                            />
-                                        </Box>
-
-                                        <Divider style={{ borderColor: "rgba(139, 115, 85, 0.2)" }} />
-
-                                        {/* Submit Button */}
-                                        <Button
-                                            type="submit"
-                                            size="lg"
-                                            loading={submitting}
-                                            disabled={submitting || !hasChanges}
-                                            className="primary-cta-button"
-                                            style={{
-                                                backgroundColor: "#6d5a44",
-                                                color: "#ffffff",
-                                                borderRadius: "8px",
-                                                fontWeight: 500,
-                                                letterSpacing: "0.02em",
-                                            }}
-                                            styles={{
-                                                root: {
-                                                    '&:disabled': {
-                                                        backgroundColor: '#8b7355',
-                                                        color: '#ffffff',
-                                                        opacity: 0.6,
-                                                    },
-                                                },
-                                            }}
-                                            fullWidth
-                                        >
-                                            Submit RSVP
-                                        </Button>
-                                        {!hasChanges && originalValues && (
-                                            <Text
-                                                size="sm"
-                                                style={{
-                                                    color: "var(--text-secondary)",
-                                                    textAlign: "center",
-                                                    fontStyle: "italic",
-                                                    marginTop: "-0.5rem"
-                                                }}
-                                            >
-                                                No changes to submit
-                                            </Text>
-                                        )}
-                                    </Stack>
+                                <form
+                                    onSubmit={form.onSubmit(handleFormSubmit)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && e.target !== e.currentTarget) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                >
+                                    <RSVPFormFields
+                                        form={form}
+                                        code={code}
+                                        villaOffered={villaOffered}
+                                        hasChanges={hasChanges}
+                                        submitting={submitting}
+                                        originalValues={originalValues}
+                                        onInviteeChange={handleInviteeChange}
+                                    />
                                 </form>
                             </Paper>
                         </Stack>
@@ -781,234 +183,14 @@ export default function RSVPFormPage() {
                 </Box>
             </main>
 
-            {/* Confirmation Modal */}
-            <Modal
+            <RSVPConfirmationModal
                 opened={showConfirmation}
                 onClose={() => setShowConfirmation(false)}
-                title={
-                    <Box style={{ textAlign: "center", width: "100%" }}>
-                        <Text
-                            fw={400}
-                            size="xl"
-                            style={{
-                                color: "#2d2d2d",
-                                fontFamily: "var(--font-playfair), serif",
-                                fontSize: "1.75rem",
-                                letterSpacing: "0.02em"
-                            }}
-                        >
-                            Confirm Your RSVP
-                        </Text>
-                    </Box>
-                }
-                size="lg"
-                centered
-                radius="lg"
-                padding="xl"
-                closeButtonProps={{
-                    'aria-label': 'Close confirmation modal',
-                }}
-                styles={{
-                    content: {
-                        backgroundColor: "rgba(255, 255, 255, 0.98)",
-                        border: "1px solid rgba(139, 115, 85, 0.15)",
-                        boxShadow: "0 20px 60px rgba(139, 115, 85, 0.2)",
-                    },
-                    header: {
-                        backgroundColor: "transparent",
-                        borderBottom: "none",
-                        paddingBottom: 0,
-                        textAlign: "center",
-                    },
-                    title: {
-                        width: "100%",
-                        textAlign: "center",
-                    },
-                    body: {
-                        paddingTop: "1rem",
-                    },
-                }}
-            >
-                <Stack gap="lg">
-                    <div className="decorative-divider" style={{ margin: "0 auto 1rem" }}></div>
-
-                    <Text
-                        size="sm"
-                        style={{
-                            color: "#5a5a5a",
-                            textAlign: "center",
-                            lineHeight: 1.7
-                        }}
-                    >
-                        Please review your RSVP details before submitting:
-                    </Text>
-
-                    <Paper
-                        p="lg"
-                        radius="md"
-                        style={{
-                            backgroundColor: "rgba(250, 248, 245, 0.5)",
-                            border: "1px solid rgba(139, 115, 85, 0.1)"
-                        }}
-                    >
-                        <Stack gap="md">
-                            <Box>
-                                <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
-                                    Attendance
-                                </Text>
-                                <Text
-                                    fw={500}
-                                    c={form.values.accepted ? "green" : "red"}
-                                    style={{ fontSize: "0.95rem" }}
-                                >
-                                    {form.values.accepted ? "✓ Yes, I'm coming!" : "✗ No, I can't make it"}
-                                </Text>
-                            </Box>
-
-                        {form.values.accepted && (
-                            <>
-                                {form.values.invitees.length > 1 && (
-                                    <Box>
-                                        <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.5rem" }}>
-                                            Guest Attendance
-                                        </Text>
-                                        <Stack gap="xs">
-                                            {form.values.invitees.map((invitee) => (
-                                                <Text
-                                                    key={invitee.id}
-                                                    c={invitee.coming ? "green" : "red"}
-                                                    fw={500}
-                                                    style={{ fontSize: "0.9rem", paddingLeft: "0.5rem" }}
-                                                >
-                                                    {invitee.coming ? "✓" : "✗"} {invitee.name}
-                                                </Text>
-                                            ))}
-                                        </Stack>
-                                    </Box>
-                                )}
-
-                                <Box>
-                                    <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
-                                        Accommodation
-                                    </Text>
-                                    <Text style={{ color: "#5a5a5a", fontSize: "0.95rem" }}>
-                                        {form.values.staying_villa === "yes"
-                                            ? "✓ Staying at Gran Villa Rosa"
-                                            : "Arranging own accommodation"
-                                        }
-                                    </Text>
-                                </Box>
-
-                                {form.values.dietary_restrictions && (
-                                    <Box>
-                                        <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
-                                            Dietary Requirements
-                                        </Text>
-                                        <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                            {form.values.dietary_restrictions}
-                                        </Text>
-                                    </Box>
-                                )}
-
-                                {form.values.song_request && (
-                                    <Box>
-                                        <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
-                                            Song Request
-                                        </Text>
-                                        <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                            {form.values.song_request}
-                                        </Text>
-                                    </Box>
-                                )}
-
-                                {form.values.travel_plans && (
-                                    <Box>
-                                        <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
-                                            Travel Plans
-                                        </Text>
-                                        <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                            {form.values.travel_plans}
-                                        </Text>
-                                    </Box>
-                                )}
-                            </>
-                        )}
-
-                        {form.values.message && (
-                            <Box>
-                                <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
-                                    Additional Message
-                                </Text>
-                                <Text style={{ color: "#5a5a5a", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                    {form.values.message}
-                                </Text>
-                            </Box>
-                        )}
-                        </Stack>
-                    </Paper>
-
-                    <Group justify="space-between" mt="lg" gap="md">
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowConfirmation(false);
-                                trackEvent(RSVPEvents.CONFIRMATION_EDITED, {
-                                    code: params.code as string,
-                                });
-                            }}
-                            className="secondary-cta-button"
-                            size="md"
-                            style={{
-                                borderColor: "#6d5a44",
-                                color: "#6d5a44",
-                                fontWeight: 500,
-                                borderWidth: "2px",
-                                borderRadius: "8px",
-                                flex: 1,
-                            }}
-                            styles={{
-                                root: {
-                                    '&:disabled': {
-                                        borderColor: '#8b7355',
-                                        color: '#8b7355',
-                                        opacity: 0.6,
-                                    },
-                                },
-                            }}
-                        >
-                            Go Back & Edit
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                setShowConfirmation(false);
-                                handleSubmit(form.values);
-                            }}
-                            className="primary-cta-button"
-                            size="md"
-                            style={{
-                                backgroundColor: "#6d5a44",
-                                color: "#ffffff",
-                                fontWeight: 500,
-                                borderRadius: "8px",
-                                flex: 1,
-                            }}
-                            styles={{
-                                root: {
-                                    '&:disabled': {
-                                        backgroundColor: '#8b7355',
-                                        color: '#ffffff',
-                                        opacity: 0.6,
-                                    },
-                                },
-                            }}
-                            loading={submitting}
-                            disabled={submitting}
-                        >
-                            Confirm & Submit
-                        </Button>
-                    </Group>
-                </Stack>
-            </Modal>
+                onConfirm={handleConfirmSubmit}
+                values={form.values}
+                code={code}
+                submitting={submitting}
+            />
         </>
     );
 }
