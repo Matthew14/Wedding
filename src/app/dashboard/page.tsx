@@ -1,7 +1,15 @@
 "use client";
 
-import { Title, Text, Group, Stack, Paper, Box } from "@mantine/core";
-import { useState, useEffect } from "react";
+import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress } from "@mantine/core";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/utils/supabase/client";
+
+interface SummaryData {
+    invitations: { total: number; sent: number };
+    rsvps: { total: number; received: number; accepted: number; declined: number };
+    guests: { total: number; coming: number; notComing: number; undecided: number };
+    villa: { stayingYes: number; stayingNo: number; undecided: number };
+}
 
 export default function DashboardPage() {
     const [timeLeft, setTimeLeft] = useState({
@@ -10,6 +18,68 @@ export default function DashboardPage() {
         minutes: 0,
         seconds: 0,
     });
+
+    const [summary, setSummary] = useState<SummaryData>({
+        invitations: { total: 0, sent: 0 },
+        rsvps: { total: 0, received: 0, accepted: 0, declined: 0 },
+        guests: { total: 0, coming: 0, notComing: 0, undecided: 0 },
+        villa: { stayingYes: 0, stayingNo: 0, undecided: 0 },
+    });
+
+    const supabase = createClient();
+
+    const fetchSummary = useCallback(async () => {
+        try {
+            // Fetch invitations
+            const { data: invitations } = await supabase.from("invitation").select("*");
+
+            // Fetch RSVPs
+            const { data: rsvps } = await supabase.from("RSVPs").select("*");
+
+            // Fetch invitees
+            const { data: invitees } = await supabase.from("invitees").select("*");
+
+            const invitationsData = invitations || [];
+            const rsvpsData = rsvps || [];
+            const inviteesData = invitees || [];
+
+            setSummary({
+                invitations: {
+                    total: invitationsData.length,
+                    sent: invitationsData.filter((i: { sent?: boolean }) => i.sent).length,
+                },
+                rsvps: {
+                    total: rsvpsData.length,
+                    received: rsvpsData.filter((r: { accepted?: boolean | null }) => r.accepted !== null).length,
+                    accepted: rsvpsData.filter((r: { accepted?: boolean | null }) => r.accepted === true).length,
+                    declined: rsvpsData.filter((r: { accepted?: boolean | null }) => r.accepted === false).length,
+                },
+                guests: {
+                    total: inviteesData.length,
+                    coming: inviteesData.filter((g: { coming?: boolean | null }) => g.coming === true).length,
+                    notComing: inviteesData.filter((g: { coming?: boolean | null }) => g.coming === false).length,
+                    undecided: inviteesData.filter((g: { coming?: boolean | null }) => g.coming === null).length,
+                },
+                villa: {
+                    stayingYes: rsvpsData.filter(
+                        (r: { staying_villa?: boolean | null }) => r.staying_villa === true
+                    ).length,
+                    stayingNo: rsvpsData.filter(
+                        (r: { staying_villa?: boolean | null }) => r.staying_villa === false
+                    ).length,
+                    undecided: rsvpsData.filter(
+                        (r: { staying_villa?: boolean | null }) => r.staying_villa === null
+                    ).length,
+                },
+            });
+        } catch (error) {
+            console.error("Error fetching summary:", error);
+        }
+    }, [supabase]);
+
+    useEffect(() => {
+        fetchSummary();
+    }, [fetchSummary]);
 
     useEffect(() => {
         const weddingDate = new Date("2026-05-23T00:00:00");
@@ -39,23 +109,162 @@ export default function DashboardPage() {
 
     return (
         <Stack gap="xl" align="center">
-            {/* Main Countdown Title */}
-            <Box style={{ textAlign: "center", marginBottom: "2rem" }}>
+            {/* Data Summary Section */}
+            <Box style={{ width: "100%", maxWidth: "900px" }}>
                 <Title
                     order={1}
                     style={{
                         fontSize: "clamp(2rem, 6vw, 3rem)",
                         fontWeight: 300,
                         color: "#495057",
-                        marginBottom: "1rem",
+                        marginBottom: "1.5rem",
                         fontFamily: "serif",
+                        textAlign: "center",
                     }}
                 >
-                    Countdown to Our Wedding
+                    At a Glance
                 </Title>
-                <Text size="xl" style={{ color: "#8b7355", fontWeight: 500 }}>
-                    May 23rd, 2026
-                </Text>
+
+                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+                    {/* Invitations Summary */}
+                    <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
+                        <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
+                            Invitations
+                        </Text>
+                        <Group justify="space-between" mb="xs">
+                            <Text size="sm" c="dimmed">Sent</Text>
+                            <Text fw={500}>{summary.invitations.sent} / {summary.invitations.total}</Text>
+                        </Group>
+                        <Progress
+                            value={
+                                summary.invitations.total > 0
+                                    ? (summary.invitations.sent / summary.invitations.total) * 100
+                                    : 0
+                            }
+                            color="#8b7355"
+                            size="lg"
+                            radius="md"
+                        />
+                    </Paper>
+
+                    {/* RSVPs Summary */}
+                    <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
+                        <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
+                            RSVPs
+                        </Text>
+                        <Group justify="space-between" mb="xs">
+                            <Text size="sm" c="dimmed">Received</Text>
+                            <Text fw={500}>{summary.rsvps.received} / {summary.rsvps.total}</Text>
+                        </Group>
+                        <Progress
+                            value={
+                                summary.rsvps.total > 0
+                                    ? (summary.rsvps.received / summary.rsvps.total) * 100
+                                    : 0
+                            }
+                            color="#3b82f6"
+                            size="lg"
+                            radius="md"
+                            mb="md"
+                        />
+                        <Group gap="lg">
+                            <Box>
+                                <Text size="xs" c="dimmed">Accepted</Text>
+                                <Text fw={600} style={{ color: "#22c55e" }}>{summary.rsvps.accepted}</Text>
+                            </Box>
+                            <Box>
+                                <Text size="xs" c="dimmed">Declined</Text>
+                                <Text fw={600} style={{ color: "#ef4444" }}>{summary.rsvps.declined}</Text>
+                            </Box>
+                        </Group>
+                    </Paper>
+
+                    {/* Guests Summary */}
+                    <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
+                        <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
+                            Guests
+                        </Text>
+                        <Group justify="space-between" mb="xs">
+                            <Text size="sm" c="dimmed">Confirmed</Text>
+                            <Text fw={500}>{summary.guests.coming} / {summary.guests.total}</Text>
+                        </Group>
+                        <Progress.Root size="lg" radius="md">
+                            <Progress.Section
+                                value={
+                                    summary.guests.total > 0
+                                        ? (summary.guests.coming / summary.guests.total) * 100
+                                        : 0
+                                }
+                                color="#22c55e"
+                            />
+                            <Progress.Section
+                                value={
+                                    summary.guests.total > 0
+                                        ? (summary.guests.notComing / summary.guests.total) * 100
+                                        : 0
+                                }
+                                color="#ef4444"
+                            />
+                        </Progress.Root>
+                        <Group gap="lg" mt="md">
+                            <Box>
+                                <Text size="xs" c="dimmed">Coming</Text>
+                                <Text fw={600} style={{ color: "#22c55e" }}>{summary.guests.coming}</Text>
+                            </Box>
+                            <Box>
+                                <Text size="xs" c="dimmed">Not Coming</Text>
+                                <Text fw={600} style={{ color: "#ef4444" }}>{summary.guests.notComing}</Text>
+                            </Box>
+                            <Box>
+                                <Text size="xs" c="dimmed">Undecided</Text>
+                                <Text fw={600} style={{ color: "#9ca3af" }}>{summary.guests.undecided}</Text>
+                            </Box>
+                        </Group>
+                    </Paper>
+
+                    {/* Villa Summary */}
+                    <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
+                        <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
+                            Villa Accommodation
+                        </Text>
+                        <Group justify="space-between" mb="xs">
+                            <Text size="sm" c="dimmed">Staying at Villa</Text>
+                            <Text fw={500}>{summary.villa.stayingYes} parties</Text>
+                        </Group>
+                        <Progress.Root size="lg" radius="md">
+                            <Progress.Section
+                                value={
+                                    summary.rsvps.total > 0
+                                        ? (summary.villa.stayingYes / summary.rsvps.total) * 100
+                                        : 0
+                                }
+                                color="#8b7355"
+                            />
+                            <Progress.Section
+                                value={
+                                    summary.rsvps.total > 0
+                                        ? (summary.villa.stayingNo / summary.rsvps.total) * 100
+                                        : 0
+                                }
+                                color="#6c757d"
+                            />
+                        </Progress.Root>
+                        <Group gap="lg" mt="md">
+                            <Box>
+                                <Text size="xs" c="dimmed">Yes</Text>
+                                <Text fw={600} style={{ color: "#8b7355" }}>{summary.villa.stayingYes}</Text>
+                            </Box>
+                            <Box>
+                                <Text size="xs" c="dimmed">No</Text>
+                                <Text fw={600} style={{ color: "#6c757d" }}>{summary.villa.stayingNo}</Text>
+                            </Box>
+                            <Box>
+                                <Text size="xs" c="dimmed">Undecided</Text>
+                                <Text fw={600} style={{ color: "#9ca3af" }}>{summary.villa.undecided}</Text>
+                            </Box>
+                        </Group>
+                    </Paper>
+                </SimpleGrid>
             </Box>
 
             {/* Countdown Timer */}
@@ -161,67 +370,6 @@ export default function DashboardPage() {
                         </Box>
                     </Group>
                 </Stack>
-            </Paper>
-
-            {/* Wedding Details */}
-            <Paper
-                shadow="md"
-                radius="lg"
-                p="xl"
-                style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e9ecef",
-                    maxWidth: "600px",
-                }}
-            >
-                <Stack gap="md" align="center">
-                    <Title order={3} style={{ color: "#495057", fontFamily: "serif" }}>
-                        Wedding Details
-                    </Title>
-                    <Group gap="xl" justify="center" wrap="wrap">
-                        <Box style={{ textAlign: "center" }}>
-                            <Text size="sm" fw={500} color="#495057">
-                                Date
-                            </Text>
-                            <Text size="lg" color="#8b7355" fw={600}>
-                                May 23rd, 2026
-                            </Text>
-                        </Box>
-                        <Box style={{ textAlign: "center" }}>
-                            <Text size="sm" fw={500} color="#495057">
-                                Day of Week
-                            </Text>
-                            <Text size="lg" color="#8b7355" fw={600}>
-                                Friday
-                            </Text>
-                        </Box>
-                        <Box style={{ textAlign: "center" }}>
-                            <Text size="sm" fw={500} color="#495057">
-                                Season
-                            </Text>
-                            <Text size="lg" color="#8b7355" fw={600}>
-                                Spring
-                            </Text>
-                        </Box>
-                    </Group>
-                </Stack>
-            </Paper>
-
-            {/* Inspirational Message */}
-            <Paper
-                shadow="sm"
-                radius="lg"
-                p="lg"
-                style={{
-                    backgroundColor: "#f8f9fa",
-                    border: "1px solid #e9ecef",
-                    maxWidth: "500px",
-                    textAlign: "center",
-                }}
-            >
-                <Text size="lg" style={{ color: "#6c757d", fontStyle: "italic" }}>
-                    &quot;Every love story is beautiful, but ours is my favourite.&quot;
-                </Text>
             </Paper>
         </Stack>
     );
