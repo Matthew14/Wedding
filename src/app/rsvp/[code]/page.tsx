@@ -44,6 +44,8 @@ export default function RSVPFormPage() {
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [originalValues, setOriginalValues] = useState<RSVPFormData | null>(null);
+    const [guestNames, setGuestNames] = useState<string>("");
+    const [villaOffered, setVillaOffered] = useState<boolean>(true);
     const previousAcceptedRef = useRef<boolean | null>(null);
 
     const form = useRSVPForm();
@@ -69,14 +71,56 @@ export default function RSVPFormPage() {
                     const isReturningUser = !!(data && data.updatedAt);
                     const inviteeCount = data.invitees?.length || 0;
 
-                    // Identify user in PostHog
-                    const guestNames = data.invitees?.map((inv: Invitee) =>
-                        `${inv.first_name} ${inv.last_name}`
-                    ).join(', ') || 'Unknown Guest';
+                    // Format guest names, grouping by surname
+                    // Primary guests appear first, e.g., "David Wilson, Michael & Emily Carter"
+                    const formatGuestNames = (invitees: Invitee[]): string => {
+                        if (!invitees || invitees.length === 0) return 'Unknown Guest';
+
+                        // Sort so primary guests come first
+                        const sorted = [...invitees].sort((a, b) => {
+                            if (a.is_primary && !b.is_primary) return -1;
+                            if (!a.is_primary && b.is_primary) return 1;
+                            return 0;
+                        });
+
+                        // Group by surname, preserving order of first occurrence
+                        const surnameGroups = new Map<string, string[]>();
+                        const surnameOrder: string[] = [];
+
+                        for (const inv of sorted) {
+                            const surname = inv.last_name;
+                            if (!surnameGroups.has(surname)) {
+                                surnameGroups.set(surname, []);
+                                surnameOrder.push(surname);
+                            }
+                            surnameGroups.get(surname)!.push(inv.first_name);
+                        }
+
+                        // Format each group: "John & Jane Doe"
+                        const formattedGroups = surnameOrder.map(surname => {
+                            const firstNames = surnameGroups.get(surname)!;
+                            const joinedFirstNames = firstNames.length === 1
+                                ? firstNames[0]
+                                : firstNames.length === 2
+                                    ? firstNames.join(' & ')
+                                    : `${firstNames.slice(0, -1).join(', ')} & ${firstNames[firstNames.length - 1]}`;
+                            return `${joinedFirstNames} ${surname}`;
+                        });
+
+                        // Join groups with commas and & for the last
+                        if (formattedGroups.length === 1) return formattedGroups[0];
+                        if (formattedGroups.length === 2) return formattedGroups.join(' & ');
+                        return `${formattedGroups.slice(0, -1).join(', ')} & ${formattedGroups[formattedGroups.length - 1]}`;
+                    };
+
+                    const names = formatGuestNames(data.invitees || []);
+
+                    setGuestNames(names);
+                    setVillaOffered(data.villaOffered ?? true);
 
                     identifyUser(code, {
                         rsvp_code: code,
-                        guest_names: guestNames,
+                        guest_names: names,
                         invitee_count: inviteeCount,
                         is_returning_user: isReturningUser,
                     });
@@ -84,7 +128,7 @@ export default function RSVPFormPage() {
                     // Set group for invitation-level analytics
                     setGroup('invitation', data.invitationId.toString(), {
                         invitee_count: inviteeCount,
-                        guest_names: guestNames,
+                        guest_names: names,
                     });
 
                     // Track form view (page view tracked by PageViewTracker component)
@@ -109,17 +153,24 @@ export default function RSVPFormPage() {
                         // Map invitees with their existing responses
                         // For single invitees, auto-correct coming to true since the checkbox is hidden
                         // and they're implicitly attending when accepted is true
+                        // Sort by is_primary so primary guests appear first
                         const isSingleInvitee = data.invitees?.length === 1;
-                        const inviteesWithResponses = data.invitees?.map((inv: Invitee & { coming?: boolean }) => ({
+                        const sortedInvitees = [...(data.invitees || [])].sort((a, b) => {
+                            if (a.is_primary && !b.is_primary) return -1;
+                            if (!a.is_primary && b.is_primary) return 1;
+                            return 0;
+                        });
+                        const inviteesWithResponses = sortedInvitees.map((inv: Invitee & { coming?: boolean }) => ({
                             id: inv.id,
                             name: `${inv.first_name} ${inv.last_name}`,
                             coming: isSingleInvitee && data.accepted ? true : (inv.coming ?? false),
-                        })) || [];
+                        }));
 
                         const loadedValues = {
                             accepted: data.accepted,
                             invitees: inviteesWithResponses,
-                            staying_villa: data.stayingVilla ? "yes" : "no",
+                            // If villa not offered, default to "no" so validation passes
+                            staying_villa: !data.villaOffered ? "no" : (data.stayingVilla ? "yes" : "no"),
                             dietary_restrictions: data.dietaryRestrictions ?? "",
                             song_request: data.songRequest ?? "",
                             travel_plans: data.travelPlans ?? "",
@@ -143,14 +194,24 @@ export default function RSVPFormPage() {
                         // Set default invitees only if no existing data
                         // For single-person invitations, auto-mark as coming since checkbox is hidden
                         // For multiple invitees, initialize unchecked - users must manually select
+                        // Sort by is_primary so primary guests appear first
                         const isSingleInvitee = data.invitees?.length === 1;
+                        const sortedInvitees = [...(data.invitees || [])].sort((a, b) => {
+                            if (a.is_primary && !b.is_primary) return -1;
+                            if (!a.is_primary && b.is_primary) return 1;
+                            return 0;
+                        });
                         form.setFieldValue("invitees",
-                            data.invitees?.map((inv: Invitee) => ({
+                            sortedInvitees.map((inv: Invitee) => ({
                                 id: inv.id,
                                 name: `${inv.first_name} ${inv.last_name}`,
                                 coming: isSingleInvitee,
-                            })) || []
+                            }))
                         );
+                        // If villa not offered, set to "no" so validation passes
+                        if (!data.villaOffered) {
+                            form.setFieldValue("staying_villa", "no");
+                        }
                     }
 
                     // Mark initial load as complete
@@ -392,10 +453,25 @@ export default function RSVPFormPage() {
                         <Stack gap="xl">
                             {/* Header */}
                             <Box style={{ textAlign: "center", marginBottom: "1rem" }}>
+                                {guestNames && (
+                                    <Title
+                                        order={1}
+                                        style={{
+                                            fontSize: "clamp(2.5rem, 7vw, 4rem)",
+                                            fontWeight: 400,
+                                            color: "var(--gold-dark)",
+                                            marginBottom: "0.5rem",
+                                            fontFamily: "var(--font-great-vibes), cursive",
+                                            letterSpacing: "0.02em",
+                                        }}
+                                    >
+                                        {guestNames}
+                                    </Title>
+                                )}
                                 <Title
-                                    order={1}
+                                    order={2}
                                     style={{
-                                        fontSize: "clamp(2.5rem, 6vw, 3.5rem)",
+                                        fontSize: "clamp(1.5rem, 4vw, 2rem)",
                                         fontWeight: 400,
                                         color: "#2d2d2d",
                                         marginBottom: "0",
@@ -414,7 +490,7 @@ export default function RSVPFormPage() {
                                 <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }}>
                                     Let us know if you&apos;re coming to our wedding! Once you&apos;ve filled out this
                                     form, you will still be able to amend your details here up until the 1st of
-                                    April. After that please get in touch if something changes.
+                                    March. After that please get in touch if something changes.
                                 </Text>
                                 )}
                             </Box>
@@ -516,52 +592,55 @@ export default function RSVPFormPage() {
                                                     </Text>
                                                 )}
 
-                                                {/* Will you be staying with us at Gran Villa Rosa? */}
-                                                <Box mb="xl">
-                                                    <Group gap="sm" mb="md">
-                                                        <IconBed size={20} color="#6d5a44" />
-                                                        <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
-                                                            Will you be staying with us at Gran Villa Rosa?
-                                                        </Text>
-                                                        <Text span style={{ color: "#e53e3e" }}>
-                                                            *
-                                                        </Text>
-                                                    </Group>
-                                                    <Text
-                                                        size="sm"
-                                                        style={{ color: "#5a5a5a", marginBottom: "1rem", lineHeight: 1.6 }}
-                                                    >
-                                                        We&apos;ve reserved a complimentary room in the venue for you
-                                                        for both nights. If you&apos;d prefer to arrange your own
-                                                        accommodation, please let us know.
-                                                    </Text>
-                                                    <Radio.Group
-                                                        {...form.getInputProps("staying_villa")}
-                                                        onChange={(value) => {
-                                                            form.setFieldValue("staying_villa", value);
-                                                            trackEvent(RSVPEvents.VILLA_CHANGED, {
-                                                                code: params.code as string,
-                                                                staying: value === "yes",
-                                                            });
-                                                        }}
-                                                        required
-                                                    >
-                                                        <Group gap="lg">
-                                                            <Radio
-                                                                value="yes"
-                                                                label={form.values.invitees.length > 1 ? "Yes, we are staying" : "Yes, I am staying"}
-                                                                size="md"
-                                                                data-ph-capture-attribute="true"
-                                                            />
-                                                            <Radio
-                                                                value="no"
-                                                                label={form.values.invitees.length > 1 ? "No, we will not be staying" : "No, I will not be staying"}
-                                                                size="md"
-                                                                data-ph-capture-attribute="true"
-                                                            />
+                                                {/* Will you be staying with us? */}
+                                                {villaOffered && (
+                                                    <Box mb="xl">
+                                                        <Group gap="sm" mb="md">
+                                                            <IconBed size={20} color="#6d5a44" />
+                                                            <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                                                                Will you be staying with us?
+                                                            </Text>
+                                                            <Text span style={{ color: "#e53e3e" }}>
+                                                                *
+                                                            </Text>
                                                         </Group>
-                                                    </Radio.Group>
-                                                </Box>
+                                                        <Text
+                                                            size="sm"
+                                                            style={{ color: "#5a5a5a", marginBottom: "1rem", lineHeight: 1.6 }}
+                                                        >
+                                                            We&apos;ve reserved a complimentary room in the venue
+                                                            for you for Friday and Saturday nights. If you&apos;d
+                                                            prefer to arrange your own accommodation, please
+                                                            let us know.
+                                                        </Text>
+                                                        <Radio.Group
+                                                            {...form.getInputProps("staying_villa")}
+                                                            onChange={(value) => {
+                                                                form.setFieldValue("staying_villa", value);
+                                                                trackEvent(RSVPEvents.VILLA_CHANGED, {
+                                                                    code: params.code as string,
+                                                                    staying: value === "yes",
+                                                                });
+                                                            }}
+                                                            required
+                                                        >
+                                                            <Group gap="lg">
+                                                                <Radio
+                                                                    value="yes"
+                                                                    label={form.values.invitees.length > 1 ? "Yes, we are staying" : "Yes, I am staying"}
+                                                                    size="md"
+                                                                    data-ph-capture-attribute="true"
+                                                                />
+                                                                <Radio
+                                                                    value="no"
+                                                                    label={form.values.invitees.length > 1 ? "No, we will not be staying" : "No, I will not be staying"}
+                                                                    size="md"
+                                                                    data-ph-capture-attribute="true"
+                                                                />
+                                                            </Group>
+                                                        </Radio.Group>
+                                                    </Box>
+                                                )}
 
                                                 {/* Dietary restrictions */}
                                                 <Box mb="xl">

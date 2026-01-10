@@ -19,6 +19,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus, IconUser, IconCopy, IconCheck } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 interface Invitation {
@@ -26,6 +27,7 @@ interface Invitation {
     created_at: string;
     isMatthewSide: boolean;
     sent: boolean;
+    rsvp_code?: string;
 }
 
 interface RSVP {
@@ -51,6 +53,7 @@ export default function InvitationsPage() {
     const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
+    const router = useRouter();
     const supabase = createClient();
 
     const showAlert = (type: "success" | "error", message: string) => {
@@ -83,13 +86,24 @@ export default function InvitationsPage() {
         try {
             setLoading(true);
 
-            // Fetch invitations
+            // Fetch invitations with RSVP codes
             const { data: invitationsData, error: invitationsError } = await supabase
                 .from("invitation")
-                .select("*")
+                .select(`
+                    *,
+                    RSVPs (short_url)
+                `)
                 .order("created_at", { ascending: false });
 
             if (invitationsError) throw invitationsError;
+
+            // Transform data to flatten RSVP code
+            // RSVPs is an array, so we access the first element
+            const transformedInvitations = (invitationsData || []).map(inv => ({
+                ...inv,
+                rsvp_code: inv.RSVPs?.[0]?.short_url,
+                RSVPs: undefined,
+            }));
 
             // Fetch invitees
             const { data: inviteesData, error: inviteesError } = await supabase
@@ -106,7 +120,7 @@ export default function InvitationsPage() {
 
             if (rsvpsError) throw rsvpsError;
 
-            setInvitations(invitationsData || []);
+            setInvitations(transformedInvitations);
             setInvitees(inviteesData || []);
             setRsvps(rsvpsData || []);
         } catch (error) {
@@ -445,9 +459,11 @@ export default function InvitationsPage() {
                                             color="#8b7355"
                                             size="sm"
                                             onClick={() => {
-                                                // TODO: Implement RSVP drill-down functionality
-                                                console.log(`Drill down to RSVP for invitation #${invitation.id}`);
+                                                if (invitation.rsvp_code) {
+                                                    router.push(`/rsvp/${invitation.rsvp_code}`);
+                                                }
                                             }}
+                                            disabled={!invitation.rsvp_code}
                                             style={{ minWidth: "80px" }}
                                         >
                                             View RSVP
