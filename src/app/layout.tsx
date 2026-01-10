@@ -49,6 +49,20 @@ export const metadata: Metadata = {
         title: "Rebecca & Matthew's Wedding",
         description: "Join us for our special day! Find all the details about our wedding celebration.",
         type: "website",
+        images: [
+            {
+                url: "/og-invitation.png",
+                width: 1200,
+                height: 630,
+                alt: "Rebecca & Matthew's Wedding",
+            },
+        ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Rebecca & Matthew's Wedding",
+        description: "Join us for our special day! Find all the details about our wedding celebration.",
+        images: ["/og-invitation.png"],
     },
     other: {
         "color-scheme": "light",
