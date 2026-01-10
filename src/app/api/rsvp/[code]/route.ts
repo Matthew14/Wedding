@@ -110,22 +110,47 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         // Update individual invitee attendance if provided
         // Security: Only update invitees that belong to this invitation
+        // Performance: Use Promise.all to update all invitees in parallel
         if (body.invitees && body.invitees.length > 0) {
-            for (const invitee of body.invitees) {
-                // Update only if invitee belongs to this invitation (prevents cross-invitation updates)
-                const { error: inviteeError } = await supabase
-                    .from("invitees")
-                    .update({
-                        coming: invitee.coming,
-                        updated_at: new Date().toISOString(),
-                    })
-                    .eq("id", invitee.id)
-                    .eq("invitation_id", rsvpData.invitation_id);
+            const updateTimestamp = new Date().toISOString();
+            const updateResults = await Promise.all(
+                body.invitees.map(async (invitee: { id: string; coming: boolean }) => {
+                    const { error } = await supabase
+                        .from("invitees")
+                        .update({
+                            coming: invitee.coming,
+                            updated_at: updateTimestamp,
+                        })
+                        .eq("id", invitee.id)
+                        .eq("invitation_id", rsvpData.invitation_id);
 
-                if (inviteeError) {
-                    console.error("Error updating invitee:", inviteeError);
-                    return NextResponse.json({ error: "Failed to update invitee attendance" }, { status: 500 });
+                    return { inviteeId: invitee.id, error };
+                })
+            );
+
+            // Collect any failures
+            const failures = updateResults.filter(result => result.error);
+
+            if (failures.length > 0) {
+                // Log all failures for debugging
+                failures.forEach(f => console.error("Error updating invitee:", f.inviteeId, f.error));
+
+                if (failures.length === body.invitees.length) {
+                    // All updates failed - return 500
+                    return NextResponse.json(
+                        { error: "Failed to update invitee attendance" },
+                        { status: 500 }
+                    );
                 }
+
+                // Partial failure - return 207 Multi-Status
+                const response = NextResponse.json({
+                    success: true,
+                    message: "RSVP submitted with some errors",
+                    warning: `${failures.length} invitee update(s) failed`,
+                    failedInviteeIds: failures.map(f => f.inviteeId),
+                }, { status: 207 });
+                return addRateLimitHeaders(response, rateLimit);
             }
         }
 
