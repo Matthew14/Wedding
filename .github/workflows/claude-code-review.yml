@@ -1,22 +1,20 @@
 name: Claude Code Review
 
 on:
-  pull_request:
-    types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+  # Run after CI workflow completes successfully
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - '**'
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Only run if CI passed and it's a PR (not a push to main/develop)
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
 
     runs-on: ubuntu-latest
     permissions:
@@ -26,19 +24,34 @@ jobs:
       id-token: write
 
     steps:
+      - name: Get PR number
+        id: pr
+        run: |
+          # Get PR number from workflow_run event
+          PR_NUMBER=$(echo '${{ toJson(github.event.workflow_run.pull_requests) }}' | jq -r '.[0].number // empty')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No PR number found, skipping review"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout repository
+        if: steps.pr.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - name: Run Claude Code Review
+        if: steps.pr.outputs.skip != 'true'
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR NUMBER: ${{ steps.pr.outputs.pr_number }}
 
             Please review this pull request and provide feedback on:
             - Code quality and best practices
@@ -54,4 +67,3 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
           claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
-
