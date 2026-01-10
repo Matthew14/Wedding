@@ -5,24 +5,48 @@ import { IconCheck, IconHeart, IconHeartBroken } from "@tabler/icons-react";
 import Link from "next/link";
 import { Navigation } from "@/components/Navigation";
 import { AddToCalendarButton } from "@/components/AddToCalendarButton";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useTracking, RSVPEvents } from "@/hooks";
 
 function RSVPSuccessContent() {
     const searchParams = useSearchParams();
-    const isComing = searchParams.get("accepted") === "yes";
+    const router = useRouter();
+    const acceptedParam = searchParams.get("accepted");
     const rsvpCode = searchParams.get("code");
+    const isComing = acceptedParam === "yes";
     const { trackEvent } = useTracking();
 
+    // Redirect to RSVP page if required params are missing
     useEffect(() => {
+        if (!rsvpCode || !acceptedParam) {
+            router.replace("/rsvp");
+            return;
+        }
+    }, [rsvpCode, acceptedParam, router]);
+
+    useEffect(() => {
+        // Only track if we have valid params
+        if (!rsvpCode || !acceptedParam) return;
+
         // Page view tracked by PageViewTracker component
         // This event confirms the complete RSVP journey
         trackEvent(RSVPEvents.SUCCESS_PAGE_VIEWED, {
             code: rsvpCode,
             accepted: isComing,
         });
-    }, [trackEvent, rsvpCode, isComing]);
+    }, [trackEvent, rsvpCode, acceptedParam, isComing]);
+
+    // Don't render content while redirecting
+    if (!rsvpCode || !acceptedParam) {
+        return (
+            <Container size="sm" py="xl">
+                <Stack gap="xl" align="center">
+                    <Text>Redirecting...</Text>
+                </Stack>
+            </Container>
+        );
+    }
 
     return (
         <>
