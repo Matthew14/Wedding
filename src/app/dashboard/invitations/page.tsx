@@ -86,11 +86,14 @@ export default function InvitationsPage() {
         try {
             setLoading(true);
 
-            // Fetch invitations with RSVP codes
+            // Fetch invitations with RSVP codes - use explicit fields instead of *
             const { data: invitationsData, error: invitationsError } = await supabase
                 .from("invitation")
                 .select(`
-                    *,
+                    id,
+                    created_at,
+                    isMatthewSide,
+                    sent,
                     RSVPs (short_url)
                 `)
                 .order("created_at", { ascending: false });
@@ -98,17 +101,19 @@ export default function InvitationsPage() {
             if (invitationsError) throw invitationsError;
 
             // Transform data to flatten RSVP code
-            // RSVPs is an array, so we access the first element
+            // Validate RSVPs is an array before accessing
             const transformedInvitations = (invitationsData || []).map(inv => ({
                 ...inv,
-                rsvp_code: inv.RSVPs?.[0]?.short_url,
+                rsvp_code: Array.isArray(inv.RSVPs) && inv.RSVPs.length > 0
+                    ? inv.RSVPs[0].short_url
+                    : undefined,
                 RSVPs: undefined,
             }));
 
-            // Fetch invitees
+            // Fetch invitees - use explicit fields instead of *
             const { data: inviteesData, error: inviteesError } = await supabase
                 .from("invitees")
-                .select("*")
+                .select("id, created_at, first_name, last_name, invitation_id")
                 .order("created_at", { ascending: false });
 
             if (inviteesError) throw inviteesError;

@@ -36,12 +36,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
         // Extract villa_offered from joined invitation data with type guard
         const invitation = rsvpData.invitation;
-        const villaOffered = invitation !== null &&
+        let villaOffered = true; // Default to true
+        if (
+            invitation !== null &&
             typeof invitation === 'object' &&
-            'villa_offered' in invitation &&
-            typeof invitation.villa_offered === 'boolean'
-                ? invitation.villa_offered
-                : true;
+            !Array.isArray(invitation) &&
+            'villa_offered' in invitation
+        ) {
+            const offered = (invitation as { villa_offered: unknown }).villa_offered;
+            if (typeof offered === 'boolean') {
+                villaOffered = offered;
+            }
+        }
 
         // Get invitees for this invitation
         const { data: invitees, error: inviteesError } = await supabase
