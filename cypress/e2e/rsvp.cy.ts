@@ -108,12 +108,22 @@ describe('RSVP Flow', () => {
     beforeEach(() => {
       // Navigate directly to form page with valid code
       cy.visit('/rsvp/TEST01');
-      // Wait for page to load
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      // Wait for page to load - look for formatted guest names header
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
     });
 
     it('should display RSVP form with invitee names', () => {
-      // Check that invitees are displayed
+      // Header shows formatted guest names
+      cy.contains('John & Jane Doe').should('be.visible');
+
+      // Click Yes to accept - invitee checkboxes only show when accepting
+      cy.contains('Are you joining us?')
+        .parent()
+        .parent()
+        .find('input[type="radio"][value="yes"]')
+        .click({ force: true });
+
+      // Individual invitee names appear in checkboxes when accepting
       cy.contains('John Doe').should('be.visible');
       cy.contains('Jane Doe').should('be.visible');
     });
@@ -131,7 +141,7 @@ describe('RSVP Flow', () => {
       cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').check();
 
       // Staying at villa - find the villa section and click Yes radio
-      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+      cy.contains('Will you be staying with us?')
         .parent()
         .parent()
         .find('input[type="radio"][value="yes"]')
@@ -222,7 +232,7 @@ describe('RSVP Flow', () => {
 
     it('should hide villa question when declining invitation', () => {
       // Wait for form to be fully loaded and verify default state (accepting)
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Wait for "Yes" radio to be selected by default (accepted=true)
       cy.contains('Are you joining us?')
@@ -233,7 +243,7 @@ describe('RSVP Flow', () => {
 
       // Villa question should be visible when accepting (wait for render)
       cy.wait(1000); // Give conditional render time to complete
-      cy.get('body').should('contain', 'Will you be staying with us at Gran Villa Rosa?');
+      cy.get('body').should('contain', 'Will you be staying with us?');
 
       // Switch to declining
       cy.contains('Are you joining us?')
@@ -244,7 +254,7 @@ describe('RSVP Flow', () => {
 
       // Villa question should now be hidden (removed from DOM)
       cy.wait(500); // Wait for conditional render
-      cy.get('body').should('not.contain', 'Will you be staying with us at Gran Villa Rosa?');
+      cy.get('body').should('not.contain', 'Will you be staying with us?');
 
       // Invitee selection section should also be hidden (removed from DOM)
       // Note: Individual invitee names might still appear elsewhere (like in confirmation modal text)
@@ -260,7 +270,7 @@ describe('RSVP Flow', () => {
 
       // Villa question should be visible again
       cy.wait(500); // Wait for conditional render
-      cy.get('body').should('contain', 'Will you be staying with us at Gran Villa Rosa?');
+      cy.get('body').should('contain', 'Will you be staying with us?');
 
       // Invitee checkboxes should be visible again
       cy.get('input[type="checkbox"]').should('exist');
@@ -287,7 +297,7 @@ describe('RSVP Flow', () => {
 
       // Go back to form
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Should show info that we're amending
       cy.contains("You're amending your RSVP", { timeout: 5000 }).should('be.visible');
@@ -405,7 +415,7 @@ describe('RSVP Flow', () => {
     it('should disable submit button when amending RSVP with no changes', () => {
       // First submission - create initial RSVP
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Accept invitation
       cy.contains('Are you joining us?')
@@ -419,7 +429,7 @@ describe('RSVP Flow', () => {
       cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').check();
 
       // Staying at villa
-      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+      cy.contains('Will you be staying with us?')
         .parent()
         .parent()
         .find('input[type="radio"][value="yes"]')
@@ -437,7 +447,7 @@ describe('RSVP Flow', () => {
 
       // Return to form to amend
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Should show amending message
       cy.contains("You're amending your RSVP", { timeout: 5000 }).should('be.visible');
@@ -452,7 +462,7 @@ describe('RSVP Flow', () => {
     it('should enable submit button when changes are made during amendment', () => {
       // First submission - create initial RSVP
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       cy.contains('Are you joining us?')
         .parent()
@@ -466,7 +476,7 @@ describe('RSVP Flow', () => {
 
       // Return to form to amend
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should initially be disabled
       cy.get('button[type="submit"]').should('be.disabled');
@@ -484,7 +494,7 @@ describe('RSVP Flow', () => {
     it('should detect changes in acceptance status', () => {
       // First submission - accept
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       cy.contains('Are you joining us?')
         .parent()
@@ -498,7 +508,7 @@ describe('RSVP Flow', () => {
 
       // Return to form
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
       cy.get('button[type="submit"]').should('be.disabled');
@@ -517,7 +527,7 @@ describe('RSVP Flow', () => {
     it('should detect changes in invitee attendance', () => {
       // First submission - both invitees coming
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       cy.contains('Are you joining us?')
         .parent()
@@ -532,7 +542,7 @@ describe('RSVP Flow', () => {
 
       // Return to form
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
       cy.get('button[type="submit"]').should('be.disabled');
@@ -547,7 +557,7 @@ describe('RSVP Flow', () => {
     it('should detect changes in villa accommodation', () => {
       // First submission - staying at villa
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       cy.contains('Are you joining us?')
         .parent()
@@ -555,7 +565,7 @@ describe('RSVP Flow', () => {
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
       cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').check();
-      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+      cy.contains('Will you be staying with us?')
         .parent()
         .parent()
         .find('input[type="radio"][value="yes"]')
@@ -566,13 +576,13 @@ describe('RSVP Flow', () => {
 
       // Return to form
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
       cy.get('button[type="submit"]').should('be.disabled');
 
       // Change to not staying at villa
-      cy.contains('Will you be staying with us at Gran Villa Rosa?')
+      cy.contains('Will you be staying with us?')
         .parent()
         .parent()
         .find('input[type="radio"][value="no"]')
@@ -585,7 +595,7 @@ describe('RSVP Flow', () => {
     it('should not detect false changes when empty fields are focused/blurred', () => {
       // First submission - accept with no optional fields (stored as null in DB)
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       cy.contains('Are you joining us?')
         .parent()
@@ -601,7 +611,7 @@ describe('RSVP Flow', () => {
 
       // Return to form
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Button should be disabled initially
       cy.get('button[type="submit"]').should('be.disabled');
@@ -627,7 +637,7 @@ describe('RSVP Flow', () => {
     it('should preserve invitee attendance states when amending (some not coming)', () => {
       // First submission - Jane is NOT coming, but John is
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       cy.contains('Are you joining us?')
         .parent()
@@ -645,7 +655,7 @@ describe('RSVP Flow', () => {
 
       // Return to amend - invitee states should be preserved
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Jane should still be unchecked, John should still be checked
       cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').should('be.checked');
@@ -659,7 +669,7 @@ describe('RSVP Flow', () => {
     it('should allow new RSVP submission without amendment detection', () => {
       // First time visitor (no existing RSVP)
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Should NOT show amending message
       cy.contains("You're amending your RSVP").should('not.exist');
@@ -684,7 +694,7 @@ describe('RSVP Flow', () => {
   describe('RSVP Success Page', () => {
     it('should display success message after submission', () => {
       cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
 
       // Quick submission - accept invitation
       cy.contains('Are you joining us?')
@@ -713,7 +723,7 @@ describe('RSVP Flow', () => {
       cy.visit('/rsvp/TEST01');
 
       // Should load form without going through code entry
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
       cy.url().should('include', '/rsvp/TEST01');
     });
 
