@@ -112,7 +112,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             .eq("id", rsvpData.invitation_id)
             .single();
 
-        const villaOffered = invitationData?.villa_offered ?? true;
+        // Default to false for security - if we can't verify villa_offered, deny villa selection
+        const villaOffered = invitationData?.villa_offered ?? false;
 
         // SECURITY: Validate villa booking - prevent staying when not offered
         if (body.staying_villa === "yes" && !villaOffered) {

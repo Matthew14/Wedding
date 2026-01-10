@@ -378,19 +378,16 @@ export default function InvitationsPage() {
                                             {invitation.isMatthewSide ? "Matthew's Side" : "Rebecca's Side"}
                                         </Badge>
                                     </td>
-                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
+                                    <td style={{ padding: "20px 12px", verticalAlign: "middle" }}>
                                         {associatedInvitees.length > 0 ? (
                                             <Stack
-                                                gap="md"
-                                                align="center"
-                                                style={{ minHeight: "60px", justifyContent: "center" }}
+                                                gap="xs"
+                                                style={{ minHeight: "40px", justifyContent: "center" }}
                                             >
                                                 {associatedInvitees.map(invitee => (
                                                     <Group
                                                         key={invitee.id}
                                                         gap="sm"
-                                                        justify="center"
-                                                        style={{ width: "100%" }}
                                                     >
                                                         <IconUser
                                                             size={16}
@@ -406,7 +403,7 @@ export default function InvitationsPage() {
                                             <Text
                                                 size="sm"
                                                 c="dimmed"
-                                                style={{ fontStyle: "italic", padding: "20px 0" }}
+                                                style={{ fontStyle: "italic" }}
                                             >
                                                 No invitees assigned
                                             </Text>
