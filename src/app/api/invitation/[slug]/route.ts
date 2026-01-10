@@ -32,7 +32,7 @@ function parseSlug(slug: string): { names: string[]; code: string } | null {
 
     // Everything before the code is the names
     const names = parts.slice(0, -1).filter((name) => name.length > 0);
-    if (names.length === 0 || names.length > 2) {
+    if (names.length === 0) {
         return null;
     }
 
