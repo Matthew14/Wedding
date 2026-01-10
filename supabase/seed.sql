@@ -161,3 +161,49 @@ INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming, i
     ('11111111-2222-3333-4444-555555555555', 'dddddddd-eeee-ffff-1111-222222222222', 'Sarah', 'Williams', NULL, FALSE),
     ('22222222-3333-4444-5555-666666666666', 'dddddddd-eeee-ffff-1111-222222222222', 'Tom', 'Williams', NULL, FALSE),
     ('33333333-4444-5555-6666-777777777777', 'dddddddd-eeee-ffff-1111-222222222222', 'Lucy', 'Williams', NULL, FALSE);
+
+-- Fifth test invitation with mixed surnames (2 from one family + 1 from another)
+-- Expected display: "David, Michael & Emily" (David is primary)
+INSERT INTO public.invitation (id, "isMatthewSide") VALUES
+    ('11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', true);
+
+INSERT INTO public."RSVPs" (
+    id,
+    invitation_id,
+    short_url,
+    accepted,
+    staying_villa
+) VALUES (
+    '22222222-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'TEST05',
+    NULL,
+    NULL
+);
+
+-- David Wilson is the primary guest (our friend), with his partner's family
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming, is_primary) VALUES
+    ('33333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Michael', 'Carter', NULL, FALSE),
+    ('44444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Emily', 'Carter', NULL, FALSE),
+    ('55555555-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'David', 'Wilson', NULL, TRUE);
+
+-- Sixth test invitation with villa_offered = false (no room offered)
+INSERT INTO public.invitation (id, "isMatthewSide", villa_offered) VALUES
+    ('66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa', false, false);
+
+INSERT INTO public."RSVPs" (
+    id,
+    invitation_id,
+    short_url,
+    accepted,
+    staying_villa
+) VALUES (
+    '77777777-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'TEST06',
+    NULL,
+    NULL
+);
+
+INSERT INTO public.invitees (id, invitation_id, first_name, last_name, coming, is_primary) VALUES
+    ('88888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Robert', 'Green', NULL, TRUE);

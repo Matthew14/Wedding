@@ -14,7 +14,6 @@ export default function HomePage() {
                         className="fade-in"
                         style={{
                             minHeight: "100vh",
-                            backgroundColor: "#ffffff",
                             display: "flex",
                             alignItems: "center",
                             position: "relative",

@@ -19,10 +19,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
         const supabase = await createClient();
 
-        // Get the RSVP record
+        // Get the RSVP record with invitation data
         const { data: rsvpData, error: rsvpError } = await supabase
             .from("RSVPs")
-            .select("id, invitation_id, updated_at, staying_villa, dietary_restrictions, song_request, travel_plans, message, accepted")
+            .select(`
+                id, invitation_id, updated_at, staying_villa, dietary_restrictions,
+                song_request, travel_plans, message, accepted,
+                invitation:invitation_id (villa_offered)
+            `)
             .eq("short_url", code.toUpperCase())
             .single();
 
@@ -30,10 +34,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             return NextResponse.json({ error: "RSVP code not found" }, { status: 404 });
         }
 
+        // Extract villa_offered from joined invitation data
+        const villaOffered = (rsvpData.invitation as { villa_offered?: boolean } | null)?.villa_offered ?? true;
+
         // Get invitees for this invitation
         const { data: invitees, error: inviteesError } = await supabase
             .from("invitees")
-            .select("id, first_name, last_name, coming")
+            .select("id, first_name, last_name, coming, is_primary")
             .eq("invitation_id", rsvpData.invitation_id);
 
         if (inviteesError) {
@@ -52,6 +59,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             travelPlans: rsvpData.travel_plans,
             message: rsvpData.message,
             invitees: invitees || [],
+            villaOffered,
         });
         return addRateLimitHeaders(response, rateLimit);
     } catch (error) {
