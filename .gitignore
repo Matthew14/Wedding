@@ -55,3 +55,4 @@ cypress/downloads
 # MCP configuration (contains credentials)
 .mcp.json
 markdowns/.mcp.json
+staging-data.sql

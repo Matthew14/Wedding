@@ -34,7 +34,7 @@ interface RSVPFormFieldsProps {
     hasChanges: boolean;
     submitting: boolean;
     originalValues: RSVPFormData | null;
-    onInviteeChange: (inviteeId: string, coming: boolean) => void;
+    onInviteeChange: (inviteeId: number, coming: boolean) => void;
 }
 
 export function RSVPFormFields({

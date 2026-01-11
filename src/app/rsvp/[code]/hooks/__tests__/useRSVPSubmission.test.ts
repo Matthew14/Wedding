@@ -45,8 +45,8 @@ const mockFetchWithTimeout = vi.mocked(fetchWithTimeout);
 const createMockFormValues = (overrides?: Partial<RSVPFormData>): RSVPFormData => ({
     accepted: true,
     invitees: [
-        { id: '1', name: 'John Doe', coming: true },
-        { id: '2', name: 'Jane Doe', coming: true },
+        { id: 1, name: 'John Doe', coming: true },
+        { id: 2, name: 'Jane Doe', coming: true },
     ],
     staying_villa: 'yes',
     dietary_restrictions: 'Vegetarian',
