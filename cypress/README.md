@@ -225,7 +225,7 @@ These are configured in:
 ### Test Data
 
 The database is seeded with:
-- **Invitation**: ID `11111111-1111-1111-1111-111111111111`
+- **Invitation**: ID `1`
 - **RSVP Code**: `TEST01` (linked to above invitation)
 - **Invitees**: John Doe, Jane Doe
 - **Secondary RSVP**: Code `TEST02` for additional testing

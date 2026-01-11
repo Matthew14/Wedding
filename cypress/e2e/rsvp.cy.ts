@@ -168,7 +168,7 @@ describe('RSVP Flow', () => {
       cy.task('queryDatabaseMultiple', {
         table: 'invitees',
         column: 'invitation_id',
-        value: '11111111-1111-1111-1111-111111111111'
+        value: '1'
       }).then((invitees) => {
         if (!Array.isArray(invitees)) {
           throw new Error('Invitees not found');
@@ -305,7 +305,7 @@ describe('RSVP Flow', () => {
       cy.task('queryDatabaseMultiple', {
         table: 'invitees',
         column: 'invitation_id',
-        value: '11111111-1111-1111-1111-111111111111'
+        value: '1'
       }).then((invitees) => {
         if (!Array.isArray(invitees)) {
           throw new Error('Invitees not found');
@@ -659,7 +659,7 @@ describe('RSVP Flow', () => {
         body: {
           accepted: true,
           staying_villa: 'yes', // Should be rejected
-          invitees: [{ id: '88888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa', coming: true }]
+          invitees: [{ id: 14, coming: true }]
         },
         failOnStatusCode: false
       }).then((response) => {
