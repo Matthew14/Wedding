@@ -100,7 +100,7 @@ export function Navigation() {
                                 component={Link}
                                 href="/dashboard"
                                 variant="filled"
-                                color="#8b7355"
+                                color="gold"
                                 size="sm"
                                 style={{
                                     backgroundColor: "var(--gold)",
@@ -147,7 +147,7 @@ export function Navigation() {
                                     component={Link}
                                     href="/dashboard"
                                     variant="filled"
-                                    color="#8b7355"
+                                    color="gold"
                                     size="sm"
                                     fullWidth
                                     style={{

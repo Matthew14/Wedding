@@ -1,12 +1,13 @@
 "use client";
 
-import { Container, Tabs, Box, Anchor, Group, Title, Button } from "@mantine/core";
+import { Container, Tabs, Box, Anchor, Group, Title, Button, useMantineTheme } from "@mantine/core";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const theme = useMantineTheme();
     const pathname = usePathname();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<string | null>(null);
@@ -74,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 component={Link}
                                 href="/"
                                 style={{
-                                    color: "#8b7355",
+                                    color: theme.colors.gold[4],
                                     textDecoration: "none",
                                     fontSize: "16px",
                                     fontWeight: 500,
@@ -98,18 +99,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         styles={{
                             tab: {
                                 '&[dataActive="true"]': {
-                                    backgroundColor: "#8b7355",
+                                    backgroundColor: theme.colors.gold[4],
                                     color: "#ffffff",
-                                    borderColor: "#8b7355",
+                                    borderColor: theme.colors.gold[4],
                                 },
                                 "&:hover": {
                                     backgroundColor: "#f8f9fa",
-                                    borderColor: "#8b7355",
+                                    borderColor: theme.colors.gold[4],
                                 },
                                 '&:hover[dataActive="true"]': {
-                                    backgroundColor: "#8b7355",
+                                    backgroundColor: theme.colors.gold[4],
                                     color: "#ffffff",
-                                    borderColor: "#8b7355",
+                                    borderColor: theme.colors.gold[4],
                                 },
                             },
                         }}

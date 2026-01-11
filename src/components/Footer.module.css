@@ -11,5 +11,5 @@
 }
 
 .link:hover {
-    color: #8b7355 !important;
+    color: var(--gold) !important;
 }

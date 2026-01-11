@@ -74,7 +74,7 @@ export default function LocationPage() {
                             {/* Travel Information */}
                             <Card className="elegant-card" radius="md" p="xl">
                                 <Group align="flex-start" gap="lg">
-                                    <IconPlane size={32} color="#6d5a44" aria-hidden="true" />
+                                    <IconPlane size={32} color="var(--gold-dark)" aria-hidden="true" />
                                     <Stack gap="sm" style={{ flex: 1 }}>
                                         <Title order={3} style={{ color: "var(--text-primary)", fontFamily: "var(--font-playfair), serif", fontWeight: 400 }}>
                                             Getting There

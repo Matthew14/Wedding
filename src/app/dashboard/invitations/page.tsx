@@ -16,6 +16,7 @@ import {
     LoadingOverlay,
     MultiSelect,
     Anchor,
+    useMantineTheme,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus, IconUser, IconCopy, IconCheck } from "@tabler/icons-react";
@@ -47,6 +48,7 @@ interface Invitee {
 }
 
 export default function InvitationsPage() {
+    const theme = useMantineTheme();
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [invitees, setInvitees] = useState<Invitee[]>([]);
     const [rsvps, setRsvps] = useState<RSVP[]>([]);
@@ -296,7 +298,7 @@ export default function InvitationsPage() {
 
             {/* Action Buttons */}
             <Group justify="center" gap="lg">
-                <Button leftSection={<IconPlus size={16} />} onClick={open} variant="filled" color="#8b7355" size="lg">
+                <Button leftSection={<IconPlus size={16} />} onClick={open} variant="filled" color="gold" size="lg">
                     Create Invitation
                 </Button>
             </Group>
@@ -320,7 +322,7 @@ export default function InvitationsPage() {
                     </Text>
                 </Paper>
                 <Paper shadow="sm" radius="md" p="md" style={{ textAlign: "center", minWidth: 120 }}>
-                    <Text size="xl" fw={700} color="#8b7355">
+                    <Text size="xl" fw={700} c="gold">
                         {invitees.filter(i => i.invitation_id !== null).length}
                     </Text>
                     <Text size="sm" color="#6c757d">
@@ -421,7 +423,7 @@ export default function InvitationsPage() {
                                                     >
                                                         <IconUser
                                                             size={16}
-                                                            style={{ color: "#8b7355", flexShrink: 0 }}
+                                                            style={{ color: theme.colors.gold[4], flexShrink: 0 }}
                                                         />
                                                         <Text size="sm" c="dimmed" style={{ fontWeight: 500 }}>
                                                             {invitee.first_name} {invitee.last_name}
@@ -459,7 +461,7 @@ export default function InvitationsPage() {
                                                     </Anchor>
                                                     <Button
                                                         variant="subtle"
-                                                        color={isCopied ? "green" : "#8b7355"}
+                                                        color={isCopied ? "green" : "gold"}
                                                         size="xs"
                                                         onClick={() => handleCopyLink(invitation.id, link)}
                                                         style={{ padding: "4px 8px" }}
@@ -492,7 +494,7 @@ export default function InvitationsPage() {
                                         <Checkbox
                                             checked={invitation.sent}
                                             onChange={() => handleSentToggle(invitation.id, invitation.sent)}
-                                            color="#8b7355"
+                                            color="gold"
                                             size="md"
                                             style={{ display: "flex", justifyContent: "center" }}
                                         />
@@ -500,7 +502,7 @@ export default function InvitationsPage() {
                                     <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
                                         <Button
                                             variant="outline"
-                                            color="#8b7355"
+                                            color="gold"
                                             size="sm"
                                             onClick={() => {
                                                 if (invitation.rsvp_code) {
@@ -581,7 +583,7 @@ export default function InvitationsPage() {
                             <Button variant="outline" onClick={close}>
                                 Cancel
                             </Button>
-                            <Button type="submit" color="#8b7355">
+                            <Button type="submit" color="gold">
                                 Create Invitation
                             </Button>
                         </Group>

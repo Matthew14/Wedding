@@ -1,9 +1,10 @@
 "use client";
 
-import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress, Button } from "@mantine/core";
+import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress, Button, useMantineTheme } from "@mantine/core";
 import { IconExternalLink } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { WEDDING_DATE } from "@/constants";
 
 interface SummaryData {
     invitations: { total: number; sent: number };
@@ -13,6 +14,7 @@ interface SummaryData {
 }
 
 export default function DashboardPage() {
+    const theme = useMantineTheme();
     const [timeLeft, setTimeLeft] = useState({
         days: 0,
         hours: 0,
@@ -83,11 +85,9 @@ export default function DashboardPage() {
     }, [fetchSummary]);
 
     useEffect(() => {
-        const weddingDate = new Date("2026-05-23T00:00:00");
-
         const timer = setInterval(() => {
             const now = new Date();
-            const difference = weddingDate.getTime() - now.getTime();
+            const difference = WEDDING_DATE.getTime() - now.getTime();
 
             if (difference > 0) {
                 const days = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                                     ? (summary.invitations.sent / summary.invitations.total) * 100
                                     : 0
                             }
-                            color="#8b7355"
+                            color="gold"
                             size="lg"
                             radius="md"
                         />
@@ -253,7 +253,7 @@ export default function DashboardPage() {
                                         ? (summary.villa.stayingYes / summary.rsvps.total) * 100
                                         : 0
                                 }
-                                color="#8b7355"
+                                color="gold"
                             />
                             <Progress.Section
                                 value={
@@ -267,7 +267,7 @@ export default function DashboardPage() {
                         <Group gap="lg" mt="md">
                             <Box>
                                 <Text size="xs" c="dimmed">Yes</Text>
-                                <Text fw={600} style={{ color: "#8b7355" }}>{summary.villa.stayingYes}</Text>
+                                <Text fw={600} style={{ color: theme.colors.gold[4] }}>{summary.villa.stayingYes}</Text>
                             </Box>
                             <Box>
                                 <Text size="xs" c="dimmed">No</Text>
@@ -307,7 +307,7 @@ export default function DashboardPage() {
                                 radius="lg"
                                 p="xl"
                                 style={{
-                                    backgroundColor: "#8b7355",
+                                    backgroundColor: theme.colors.gold[4],
                                     color: "white",
                                     minWidth: "100px",
                                 }}
