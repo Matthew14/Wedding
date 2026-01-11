@@ -18,7 +18,7 @@ import {
     Anchor,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconPlus, IconUser, IconCopy, IconCheck } from "@tabler/icons-react";
+import { IconPlus, IconUser, IconCopy, IconCheck, IconChevronUp, IconChevronDown, IconSelector } from "@tabler/icons-react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
@@ -46,6 +46,9 @@ interface Invitee {
     invitation_id: number | null;
 }
 
+type SortField = "id" | "sent" | "villa_offered";
+type SortDirection = "asc" | "desc";
+
 export default function InvitationsPage() {
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [invitees, setInvitees] = useState<Invitee[]>([]);
@@ -54,6 +57,8 @@ export default function InvitationsPage() {
     const [opened, { open, close }] = useDisclosure(false);
     const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const [copiedLink, setCopiedLink] = useState<number | null>(null);
+    const [sortField, setSortField] = useState<SortField>("id");
+    const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
     const router = useRouter();
     const supabase = createClient();
@@ -262,6 +267,48 @@ export default function InvitationsPage() {
         }
     };
 
+    const handleSort = (field: SortField) => {
+        if (sortField === field) {
+            setSortDirection(prev => (prev === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(field);
+            setSortDirection("desc");
+        }
+    };
+
+    const getSortedInvitations = () => {
+        return [...invitations].sort((a, b) => {
+            let aVal: number | boolean;
+            let bVal: number | boolean;
+
+            switch (sortField) {
+                case "id":
+                    aVal = a.id;
+                    bVal = b.id;
+                    break;
+                case "sent":
+                    aVal = a.sent ? 1 : 0;
+                    bVal = b.sent ? 1 : 0;
+                    break;
+                case "villa_offered":
+                    aVal = a.villa_offered ? 1 : 0;
+                    bVal = b.villa_offered ? 1 : 0;
+                    break;
+            }
+
+            if (sortDirection === "asc") {
+                return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+            } else {
+                return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+            }
+        });
+    };
+
+    const SortIcon = ({ field }: { field: SortField }) => {
+        if (sortField !== field) return <IconSelector size={14} style={{ opacity: 0.5 }} />;
+        return sortDirection === "asc" ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />;
+    };
+
     return (
         <Stack gap="xl">
             <Box style={{ textAlign: "center" }}>
@@ -348,9 +395,13 @@ export default function InvitationsPage() {
                     <thead>
                         <tr>
                             <th
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
+                                onClick={() => handleSort("id")}
+                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057", cursor: "pointer", userSelect: "none" }}
                             >
-                                ID
+                                <Group gap={4} justify="center">
+                                    ID
+                                    <SortIcon field="id" />
+                                </Group>
                             </th>
                             <th
                                 style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
@@ -368,14 +419,22 @@ export default function InvitationsPage() {
                                 Link
                             </th>
                             <th
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
+                                onClick={() => handleSort("villa_offered")}
+                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057", cursor: "pointer", userSelect: "none" }}
                             >
-                                Villa
+                                <Group gap={4} justify="center">
+                                    Villa
+                                    <SortIcon field="villa_offered" />
+                                </Group>
                             </th>
                             <th
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
+                                onClick={() => handleSort("sent")}
+                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057", cursor: "pointer", userSelect: "none" }}
                             >
-                                Sent
+                                <Group gap={4} justify="center">
+                                    Sent
+                                    <SortIcon field="sent" />
+                                </Group>
                             </th>
                             <th
                                 style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
@@ -385,7 +444,7 @@ export default function InvitationsPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {invitations.map((invitation, index) => {
+                        {getSortedInvitations().map((invitation, index) => {
                             const associatedInvitees = getInviteesForInvitation(invitation.id);
 
                             return (
