@@ -5,6 +5,32 @@ import { Navigation } from "@/components/Navigation";
 import { useState, useEffect } from "react";
 import { IconAlertCircle } from "@tabler/icons-react";
 
+// Helper to make URLs clickable in text
+function Linkify({ children }: { children: string }) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = children.split(urlRegex);
+
+    return (
+        <>
+            {parts.map((part, i) =>
+                urlRegex.test(part) ? (
+                    <a
+                        key={i}
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "var(--gold-dark)", textDecoration: "underline" }}
+                    >
+                        {part}
+                    </a>
+                ) : (
+                    part
+                )
+            )}
+        </>
+    );
+}
+
 interface FAQ {
     id: string;
     question: string;
@@ -121,8 +147,8 @@ export default function FAQsPage() {
                                             >
                                                 {faq.question}
                                             </Text>
-                                            <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1rem" }}>
-                                                {faq.answer}
+                                            <Text style={{ color: "var(--text-secondary)", lineHeight: 1.8, fontSize: "1rem", whiteSpace: "pre-line" }}>
+                                                <Linkify>{faq.answer}</Linkify>
                                             </Text>
                                         </Box>
                                     ))}
