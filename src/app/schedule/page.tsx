@@ -50,6 +50,7 @@ const schedule: DaySchedule[] = [
         events: [
             { title: "Breakfast", icon: <IconChefHat size={20} /> },
             { title: "Pre-Ceremony appetisers", icon: <IconGlass size={20} /> },
+            { title: "The Ceremony", icon: <IconHeart size={20} /> },
             { title: "Reception Dinner", icon: <IconToolsKitchen2 size={20} /> },
             { title: "Live band at Laguna Stage", icon: <IconMicrophone2 size={20} /> },
             { title: "DJ & dancing", icon: <IconMusic size={20} /> },
