@@ -36,7 +36,7 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata: Metadata = {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://wedding.matthewoneill.com"),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://oneill.wedding"),
     title: "Rebecca & Matthew's Wedding - May 2026 in Barcelona, Spain",
     description: "You're invited to celebrate the wedding of Rebecca and Matthew on Saturday 23rd May 2026 at Gran Villa Rosa, Vilanova i la Geltrú, Barcelona, Spain.",
     keywords: ["wedding", "Rebecca", "Matthew", "celebration", "Vilanova i la Geltrú"],
