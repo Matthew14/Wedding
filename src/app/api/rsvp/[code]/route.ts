@@ -115,6 +115,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // Default to false for security - if we can't verify villa_offered, deny villa selection
         const villaOffered = invitationData?.villa_offered ?? false;
 
+        // Log when villa_offered is undefined - helps detect database/migration issues
+        if (invitationData?.villa_offered === undefined) {
+            console.error(
+                `[RSVP API] villa_offered undefined for invitation ${rsvpData.invitation_id}. ` +
+                `This may indicate a missing migration or database issue.`
+            );
+        }
+
         // SECURITY: Validate villa booking - prevent staying when not offered
         if (body.staying_villa === "yes" && !villaOffered) {
             return NextResponse.json(
