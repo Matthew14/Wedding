@@ -103,7 +103,7 @@ function RSVPSuccessContent() {
                                         <Text size="sm">
                                             {isComing
                                                 ? "We've received your RSVP and will be in touch with any additional details as the wedding approaches."
-                                                : "We've received your response and will update our guest list accordingly. We'll miss you on our special day!"
+                                                : "We've received your response and will update our guest list accordingly. We'll miss you on the day!"
                                             }
                                         </Text>
                                     </Alert>
