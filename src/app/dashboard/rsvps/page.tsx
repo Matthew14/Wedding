@@ -209,34 +209,34 @@ export default function RSVPsPage() {
                     All Responses
                 </Title>
                 <Box style={{ overflowX: "auto" }}>
-                    <Table striped highlightOnHover>
+                    <Table striped highlightOnHover style={{ tableLayout: "auto" }}>
                         <thead>
                             <tr>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", whiteSpace: "nowrap" }}>
                                     Invitation
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", whiteSpace: "nowrap" }}>
                                     Who&apos;s Coming
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center", whiteSpace: "nowrap" }}>
                                     Received
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center", whiteSpace: "nowrap" }}>
                                     Attending
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", textAlign: "center", whiteSpace: "nowrap" }}>
                                     Villa
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", whiteSpace: "nowrap" }}>
                                     Dietary
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", whiteSpace: "nowrap" }}>
                                     Song
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", whiteSpace: "nowrap" }}>
                                     Travel
                                 </th>
-                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057" }}>
+                                <th style={{ padding: "16px 12px", fontWeight: 600, color: "#495057", whiteSpace: "nowrap" }}>
                                     Message
                                 </th>
                             </tr>
@@ -289,22 +289,22 @@ export default function RSVPsPage() {
                                             <StatusIcon value={rsvp.staying_villa} />
                                         </td>
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                                            <Text size="sm" c="dimmed" lineClamp={2} style={{ maxWidth: 150 }}>
+                                            <Text size="sm" c="dimmed">
                                                 {rsvp.dietary_restrictions || "-"}
                                             </Text>
                                         </td>
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                                            <Text size="sm" c="dimmed" lineClamp={2} style={{ maxWidth: 150 }}>
+                                            <Text size="sm" c="dimmed">
                                                 {rsvp.song_request || "-"}
                                             </Text>
                                         </td>
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                                            <Text size="sm" c="dimmed" lineClamp={2} style={{ maxWidth: 150 }}>
+                                            <Text size="sm" c="dimmed">
                                                 {rsvp.travel_plans || "-"}
                                             </Text>
                                         </td>
                                         <td style={{ padding: "16px 12px", verticalAlign: "middle" }}>
-                                            <Text size="sm" c="dimmed" lineClamp={2} style={{ maxWidth: 150 }}>
+                                            <Text size="sm" c="dimmed">
                                                 {rsvp.message || "-"}
                                             </Text>
                                         </td>
