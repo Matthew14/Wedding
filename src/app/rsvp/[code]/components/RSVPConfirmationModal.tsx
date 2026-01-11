@@ -19,6 +19,7 @@ interface RSVPConfirmationModalProps {
     values: RSVPFormData;
     code: string;
     submitting: boolean;
+    villaOffered: boolean;
 }
 
 export function RSVPConfirmationModal({
@@ -28,6 +29,7 @@ export function RSVPConfirmationModal({
     values,
     code,
     submitting,
+    villaOffered,
 }: RSVPConfirmationModalProps) {
     const { trackEvent } = useTracking();
 
@@ -142,17 +144,19 @@ export function RSVPConfirmationModal({
                                     </Box>
                                 )}
 
-                                <Box>
-                                    <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
-                                        Accommodation
-                                    </Text>
-                                    <Text style={{ color: "#5a5a5a", fontSize: "0.95rem" }}>
-                                        {values.staying_villa === "yes"
-                                            ? "✓ Staying at Gran Villa Rosa"
-                                            : "Arranging own accommodation"
-                                        }
-                                    </Text>
-                                </Box>
+                                {villaOffered && (
+                                    <Box>
+                                        <Text fw={600} size="sm" style={{ color: "var(--gold-dark)", marginBottom: "0.25rem" }}>
+                                            Accommodation
+                                        </Text>
+                                        <Text style={{ color: "#5a5a5a", fontSize: "0.95rem" }}>
+                                            {values.staying_villa === "yes"
+                                                ? "✓ Staying at Gran Villa Rosa"
+                                                : "Arranging own accommodation"
+                                            }
+                                        </Text>
+                                    </Box>
+                                )}
 
                                 {values.dietary_restrictions && (
                                     <Box>

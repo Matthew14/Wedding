@@ -252,6 +252,7 @@ export default function RSVPFormPage() {
                 values={form.values}
                 code={code}
                 submitting={submitting}
+                villaOffered={villaOffered}
             />
         </>
     );
