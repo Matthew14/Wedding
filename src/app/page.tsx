@@ -97,7 +97,7 @@ export default function HomePage() {
                                     Join us for our special day! You can find all the details you need on this website.
                                 </Text>
 
-                                <Group gap="lg" justify="center" style={{ marginTop: "0.75rem", flexWrap: "wrap" }}>
+                                <Group gap="lg" justify="center" style={{ marginTop: "0.75rem", marginBottom: "2rem", flexWrap: "wrap" }}>
                                     <Button
                                         component={Link}
                                         href="/location"
