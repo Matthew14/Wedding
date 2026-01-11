@@ -9,6 +9,11 @@ on:
     branches:
       - '**'
 
+# Cancel in-progress runs for the same PR to avoid duplicate reviews
+concurrency:
+  group: claude-review-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
     # Only run if CI passed and it's a PR (not a push to main/develop)
