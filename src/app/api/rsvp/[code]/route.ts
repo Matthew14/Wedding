@@ -183,14 +183,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // Security: Only update invitees that belong to this invitation
         // Performance: Use Promise.all to update all invitees in parallel
         if (body.invitees && body.invitees.length > 0) {
-            const updateTimestamp = new Date().toISOString();
             const updateResults = await Promise.all(
                 body.invitees.map(async (invitee: { id: number; coming: boolean }) => {
                     const { error } = await supabase
                         .from("invitees")
                         .update({
                             coming: invitee.coming,
-                            updated_at: updateTimestamp,
                         })
                         .eq("id", invitee.id)
                         .eq("invitation_id", rsvpData.invitation_id);
