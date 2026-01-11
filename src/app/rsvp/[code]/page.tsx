@@ -45,7 +45,7 @@ export default function RSVPFormPage() {
     const error = loadError || submitError;
 
     // Handle invitee checkbox changes
-    const handleInviteeChange = (inviteeId: string, coming: boolean) => {
+    const handleInviteeChange = (inviteeId: number, coming: boolean) => {
         const updatedInvitees = form.values.invitees.map(inv =>
             inv.id === inviteeId ? { ...inv, coming } : inv
         );

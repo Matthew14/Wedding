@@ -185,7 +185,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         if (body.invitees && body.invitees.length > 0) {
             const updateTimestamp = new Date().toISOString();
             const updateResults = await Promise.all(
-                body.invitees.map(async (invitee: { id: string; coming: boolean }) => {
+                body.invitees.map(async (invitee: { id: number; coming: boolean }) => {
                     const { error } = await supabase
                         .from("invitees")
                         .update({

@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 interface Invitation {
-    id: string;
+    id: number;
     created_at: string;
     isMatthewSide: boolean;
     sent: boolean;
@@ -33,17 +33,17 @@ interface Invitation {
 }
 
 interface RSVP {
-    id: string;
-    invitation_id: string;
+    id: number;
+    invitation_id: number;
     short_url: string;
 }
 
 interface Invitee {
-    id: string;
+    id: number;
     created_at: string;
     first_name: string;
     last_name: string;
-    invitation_id: string | null;
+    invitation_id: number | null;
 }
 
 export default function InvitationsPage() {
@@ -53,7 +53,7 @@ export default function InvitationsPage() {
     const [loading, setLoading] = useState(true);
     const [opened, { open, close }] = useDisclosure(false);
     const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
-    const [copiedLink, setCopiedLink] = useState<string | null>(null);
+    const [copiedLink, setCopiedLink] = useState<number | null>(null);
 
     const router = useRouter();
     const supabase = createClient();
@@ -188,7 +188,7 @@ export default function InvitationsPage() {
         }
     };
 
-    const getInviteesForInvitation = (invitationId: string) => {
+    const getInviteesForInvitation = (invitationId: number) => {
         return invitees.filter(invitee => invitee.invitation_id === invitationId);
     };
 
@@ -196,11 +196,11 @@ export default function InvitationsPage() {
         return invitees.filter(invitee => invitee.invitation_id === null);
     };
 
-    const getRsvpForInvitation = (invitationId: string) => {
+    const getRsvpForInvitation = (invitationId: number) => {
         return rsvps.find(rsvp => rsvp.invitation_id === invitationId);
     };
 
-    const getInvitationLink = (invitationId: string) => {
+    const getInvitationLink = (invitationId: number) => {
         const associatedInvitees = getInviteesForInvitation(invitationId);
         const rsvp = getRsvpForInvitation(invitationId);
 
@@ -212,7 +212,7 @@ export default function InvitationsPage() {
         return `/invitation/${names}-${rsvp.short_url}`;
     };
 
-    const handleCopyLink = async (invitationId: string, link: string) => {
+    const handleCopyLink = async (invitationId: number, link: string) => {
         const fullUrl = `${window.location.origin}${link}`;
         try {
             await navigator.clipboard.writeText(fullUrl);
@@ -224,7 +224,7 @@ export default function InvitationsPage() {
         }
     };
 
-    const handleSentToggle = async (invitationId: string, currentValue: boolean) => {
+    const handleSentToggle = async (invitationId: number, currentValue: boolean) => {
         try {
             const { error } = await supabase
                 .from("invitation")
@@ -243,7 +243,7 @@ export default function InvitationsPage() {
         }
     };
 
-    const handleVillaToggle = async (invitationId: string, currentValue: boolean) => {
+    const handleVillaToggle = async (invitationId: number, currentValue: boolean) => {
         try {
             const { error } = await supabase
                 .from("invitation")
