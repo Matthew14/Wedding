@@ -18,17 +18,17 @@ export async function resetDatabase(): Promise<void> {
   const errors: string[] = [];
 
   // Delete data in reverse order of dependencies to avoid FK constraint violations
-  const { error: deleteInviteesError } = await supabase.from('invitees').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  const { error: deleteInviteesError } = await supabase.from('invitees').delete().gt('id', 0);
   if (deleteInviteesError) {
     errors.push(`Error deleting invitees: ${deleteInviteesError.message}`);
   }
 
-  const { error: deleteRsvpsError } = await supabase.from('RSVPs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  const { error: deleteRsvpsError } = await supabase.from('RSVPs').delete().gt('id', 0);
   if (deleteRsvpsError) {
     errors.push(`Error deleting RSVPs: ${deleteRsvpsError.message}`);
   }
 
-  const { error: deleteInvitationError } = await supabase.from('invitation').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  const { error: deleteInvitationError } = await supabase.from('invitation').delete().gt('id', 0);
   if (deleteInvitationError) {
     errors.push(`Error deleting invitations: ${deleteInvitationError.message}`);
   }
@@ -58,7 +58,7 @@ export async function resetDatabase(): Promise<void> {
   
   // Insert test invitation
   const { error: inv1Error } = await supabase.from('invitation').insert({
-    id: '11111111-1111-1111-1111-111111111111',
+    id: 1,
     "isMatthewSide": true,
   });
   if (inv1Error) {
@@ -67,8 +67,8 @@ export async function resetDatabase(): Promise<void> {
 
   // Insert test RSVP with code TEST01
   const { error: rsvp1Error } = await supabase.from('RSVPs').insert({
-    id: '22222222-2222-2222-2222-222222222222',
-    invitation_id: '11111111-1111-1111-1111-111111111111',
+    id: 1,
+    invitation_id: 1,
     short_url: 'TEST01',
     accepted: null,
     staying_villa: null,
@@ -84,16 +84,16 @@ export async function resetDatabase(): Promise<void> {
   // Insert test invitees
   const { error: inviteesError } = await supabase.from('invitees').insert([
     {
-      id: '33333333-3333-3333-3333-333333333333',
-      invitation_id: '11111111-1111-1111-1111-111111111111',
+      id: 1,
+      invitation_id: 1,
       first_name: 'John',
       last_name: 'Doe',
       coming: null,
       is_primary: true,
     },
     {
-      id: '44444444-4444-4444-4444-444444444444',
-      invitation_id: '11111111-1111-1111-1111-111111111111',
+      id: 2,
+      invitation_id: 1,
       first_name: 'Jane',
       last_name: 'Doe',
       coming: null,
@@ -116,7 +116,7 @@ export async function resetDatabase(): Promise<void> {
 
   // Insert second test invitation and RSVP
   const { error: inv2Error } = await supabase.from('invitation').insert({
-    id: '55555555-5555-5555-5555-555555555555',
+    id: 2,
     "isMatthewSide": false,
   });
   if (inv2Error) {
@@ -124,8 +124,8 @@ export async function resetDatabase(): Promise<void> {
   }
 
   const { error: rsvp2Error } = await supabase.from('RSVPs').insert({
-    id: '66666666-6666-6666-6666-666666666666',
-    invitation_id: '55555555-5555-5555-5555-555555555555',
+    id: 2,
+    invitation_id: 2,
     short_url: 'TEST02',
     accepted: null,
     staying_villa: null,
@@ -135,8 +135,8 @@ export async function resetDatabase(): Promise<void> {
   }
 
   const { error: invitee3Error } = await supabase.from('invitees').insert({
-    id: '77777777-7777-7777-7777-777777777777',
-    invitation_id: '55555555-5555-5555-5555-555555555555',
+    id: 3,
+    invitation_id: 2,
     first_name: 'Alice',
     last_name: 'Smith',
     coming: null,
@@ -148,7 +148,7 @@ export async function resetDatabase(): Promise<void> {
 
   // Third test invitation with 3 invitees (TEST03)
   const { error: inv3Error } = await supabase.from('invitation').insert({
-    id: '88888888-8888-8888-8888-888888888888',
+    id: 3,
     "isMatthewSide": true,
   });
   if (inv3Error) {
@@ -156,8 +156,8 @@ export async function resetDatabase(): Promise<void> {
   }
 
   const { error: rsvp3Error } = await supabase.from('RSVPs').insert({
-    id: '99999999-9999-9999-9999-999999999999',
-    invitation_id: '88888888-8888-8888-8888-888888888888',
+    id: 3,
+    invitation_id: 3,
     short_url: 'TEST03',
     accepted: null,
     staying_villa: null,
@@ -168,24 +168,24 @@ export async function resetDatabase(): Promise<void> {
 
   const { error: invitees3Error } = await supabase.from('invitees').insert([
     {
-      id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-      invitation_id: '88888888-8888-8888-8888-888888888888',
+      id: 4,
+      invitation_id: 3,
       first_name: 'Michael',
       last_name: 'Johnson',
       coming: null,
       is_primary: true,
     },
     {
-      id: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
-      invitation_id: '88888888-8888-8888-8888-888888888888',
+      id: 5,
+      invitation_id: 3,
       first_name: 'Sarah',
       last_name: 'Johnson',
       coming: null,
       is_primary: false,
     },
     {
-      id: 'cccccccc-dddd-eeee-ffff-111111111111',
-      invitation_id: '88888888-8888-8888-8888-888888888888',
+      id: 6,
+      invitation_id: 3,
       first_name: 'Emma',
       last_name: 'Johnson',
       coming: null,
@@ -198,7 +198,7 @@ export async function resetDatabase(): Promise<void> {
 
   // Fourth test invitation with 4 invitees (TEST04)
   const { error: inv4Error } = await supabase.from('invitation').insert({
-    id: 'dddddddd-eeee-ffff-1111-222222222222',
+    id: 4,
     "isMatthewSide": false,
   });
   if (inv4Error) {
@@ -206,8 +206,8 @@ export async function resetDatabase(): Promise<void> {
   }
 
   const { error: rsvp4Error } = await supabase.from('RSVPs').insert({
-    id: 'eeeeeeee-ffff-1111-2222-333333333333',
-    invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+    id: 4,
+    invitation_id: 4,
     short_url: 'TEST04',
     accepted: null,
     staying_villa: null,
@@ -218,32 +218,32 @@ export async function resetDatabase(): Promise<void> {
 
   const { error: invitees4Error } = await supabase.from('invitees').insert([
     {
-      id: 'ffffffff-1111-2222-3333-444444444444',
-      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      id: 7,
+      invitation_id: 4,
       first_name: 'James',
       last_name: 'Williams',
       coming: null,
       is_primary: true,
     },
     {
-      id: '11111111-2222-3333-4444-555555555555',
-      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      id: 8,
+      invitation_id: 4,
       first_name: 'Sarah',
       last_name: 'Williams',
       coming: null,
       is_primary: false,
     },
     {
-      id: '22222222-3333-4444-5555-666666666666',
-      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      id: 9,
+      invitation_id: 4,
       first_name: 'Tom',
       last_name: 'Williams',
       coming: null,
       is_primary: false,
     },
     {
-      id: '33333333-4444-5555-6666-777777777777',
-      invitation_id: 'dddddddd-eeee-ffff-1111-222222222222',
+      id: 10,
+      invitation_id: 4,
       first_name: 'Lucy',
       last_name: 'Williams',
       coming: null,
@@ -256,7 +256,7 @@ export async function resetDatabase(): Promise<void> {
 
   // Fifth test invitation with mixed surnames (TEST05)
   const { error: inv5Error } = await supabase.from('invitation').insert({
-    id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    id: 5,
     "isMatthewSide": true,
   });
   if (inv5Error) {
@@ -264,8 +264,8 @@ export async function resetDatabase(): Promise<void> {
   }
 
   const { error: rsvp5Error } = await supabase.from('RSVPs').insert({
-    id: '22222222-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-    invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    id: 5,
+    invitation_id: 5,
     short_url: 'TEST05',
     accepted: null,
     staying_villa: null,
@@ -276,24 +276,24 @@ export async function resetDatabase(): Promise<void> {
 
   const { error: invitees5Error } = await supabase.from('invitees').insert([
     {
-      id: '33333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-      invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      id: 11,
+      invitation_id: 5,
       first_name: 'Michael',
       last_name: 'Carter',
       coming: null,
       is_primary: false,
     },
     {
-      id: '44444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-      invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      id: 12,
+      invitation_id: 5,
       first_name: 'Emily',
       last_name: 'Carter',
       coming: null,
       is_primary: false,
     },
     {
-      id: '55555555-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-      invitation_id: '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      id: 13,
+      invitation_id: 5,
       first_name: 'David',
       last_name: 'Wilson',
       coming: null,
@@ -306,7 +306,7 @@ export async function resetDatabase(): Promise<void> {
 
   // Sixth test invitation with villa_offered=false (TEST06)
   const { error: inv6Error } = await supabase.from('invitation').insert({
-    id: '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    id: 6,
     "isMatthewSide": false,
     villa_offered: false,
   });
@@ -315,8 +315,8 @@ export async function resetDatabase(): Promise<void> {
   }
 
   const { error: rsvp6Error } = await supabase.from('RSVPs').insert({
-    id: '77777777-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-    invitation_id: '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    id: 6,
+    invitation_id: 6,
     short_url: 'TEST06',
     accepted: null,
     staying_villa: null,
@@ -326,8 +326,8 @@ export async function resetDatabase(): Promise<void> {
   }
 
   const { error: invitee6Error } = await supabase.from('invitees').insert({
-    id: '88888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-    invitation_id: '66666666-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    id: 14,
+    invitation_id: 6,
     first_name: 'Robert',
     last_name: 'Green',
     coming: null,
@@ -354,7 +354,7 @@ export async function resetDatabase(): Promise<void> {
 }
 
 interface DatabaseRecord {
-  id: string;
+  id: number | string;
   [key: string]: unknown;
 }
 
