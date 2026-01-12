@@ -233,7 +233,7 @@ export default function FAQEditorPage() {
     if (loading) {
         return (
             <Stack gap="xl" align="center" style={{ paddingTop: "2rem" }}>
-                <Loader size="lg" color="#8b7355" />
+                <Loader size="lg" color="gold" />
                 <Text size="lg" color="#6c757d">
                     Loading FAQs...
                 </Text>
@@ -279,10 +279,7 @@ export default function FAQEditorPage() {
                     size="lg"
                     leftSection={<IconPlus size={20} />}
                     onClick={handleAddNew}
-                    style={{
-                        backgroundColor: "#8b7355",
-                        borderColor: "#8b7355",
-                    }}
+                    color="gold"
                 >
                     Add New FAQ
                 </Button>
@@ -294,7 +291,7 @@ export default function FAQEditorPage() {
                     <Title order={3} style={{ color: "#495057", fontFamily: "serif" }}>
                         Existing FAQs
                     </Title>
-                    <Badge variant="light" color="#8b7355">
+                    <Badge variant="light" color="gold">
                         {faqs.length} FAQ{faqs.length !== 1 ? "s" : ""}
                     </Badge>
                 </Group>
@@ -384,7 +381,7 @@ export default function FAQEditorPage() {
                             </Box>
                             <ActionIcon
                                 variant="subtle"
-                                color="#8b7355"
+                                color="gold"
                                 onClick={handleRefreshId}
                                 disabled={!hasGeneratedId}
                                 loading={generatingId}
@@ -430,10 +427,7 @@ export default function FAQEditorPage() {
                                 leftSection={<IconPlus size={16} />}
                                 loading={submitting}
                                 disabled={submitting}
-                                style={{
-                                    backgroundColor: "#8b7355",
-                                    borderColor: "#8b7355",
-                                }}
+                                color="gold"
                             >
                                 {editingId ? "Update FAQ" : "Add FAQ"}
                             </Button>

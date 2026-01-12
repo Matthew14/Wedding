@@ -17,7 +17,7 @@
 }
 
 body {
-    color: #2d2d2d;
+    color: var(--text-primary);
     background: linear-gradient(to bottom, var(--ivory), var(--cream));
     background-attachment: fixed;
     overflow-x: hidden;
@@ -79,19 +79,19 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Text selection color */
 ::selection {
-    background-color: #8b7355;
+    background-color: var(--gold);
     color: #ffffff;
 }
 
 ::-moz-selection {
-    background-color: #8b7355;
+    background-color: var(--gold);
     color: #ffffff;
 }
 
 /* Focus indicators for all interactive elements */
 button:focus,
 [role="button"]:focus {
-    outline: 2px solid #8b7355;
+    outline: 2px solid var(--gold);
     outline-offset: 2px;
 }
 
@@ -211,7 +211,7 @@ a:focus {
 /* Improved Button Focus States */
 .primary-cta-button:focus,
 .secondary-cta-button:focus {
-    outline: 3px solid #8b7355;
+    outline: 3px solid var(--gold);
     outline-offset: 2px;
     border-radius: 30px;
 }

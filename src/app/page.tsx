@@ -30,7 +30,7 @@ export default function HomePage() {
                                         maxHeight: "450px",
                                         borderRadius: "50%",
                                         overflow: "hidden",
-                                        border: "3px solid #8b7355",
+                                        border: "3px solid var(--gold)",
                                         boxShadow: "0 12px 48px rgba(139, 115, 85, 0.25), 0 0 0 8px rgba(255, 255, 255, 0.9)",
                                         marginBottom: "1.5rem",
                                         position: "relative",

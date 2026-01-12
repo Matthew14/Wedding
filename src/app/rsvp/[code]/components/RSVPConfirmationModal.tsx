@@ -48,7 +48,7 @@ export function RSVPConfirmationModal({
                         fw={400}
                         size="xl"
                         style={{
-                            color: "#2d2d2d",
+                            color: "var(--text-primary)",
                             fontFamily: "var(--font-playfair), serif",
                             fontSize: "1.75rem",
                             letterSpacing: "0.02em"
@@ -213,8 +213,8 @@ export function RSVPConfirmationModal({
                         className="secondary-cta-button"
                         size="md"
                         style={{
-                            borderColor: "#6d5a44",
-                            color: "#6d5a44",
+                            borderColor: "var(--gold-dark)",
+                            color: "var(--gold-dark)",
                             fontWeight: 500,
                             borderWidth: "2px",
                             borderRadius: "8px",
@@ -223,8 +223,8 @@ export function RSVPConfirmationModal({
                         styles={{
                             root: {
                                 '&:disabled': {
-                                    borderColor: '#8b7355',
-                                    color: '#8b7355',
+                                    borderColor: 'var(--gold)',
+                                    color: 'var(--gold)',
                                     opacity: 0.6,
                                 },
                             },
@@ -237,7 +237,7 @@ export function RSVPConfirmationModal({
                         className="primary-cta-button"
                         size="md"
                         style={{
-                            backgroundColor: "#6d5a44",
+                            backgroundColor: "var(--gold-dark)",
                             color: "#ffffff",
                             fontWeight: 500,
                             borderRadius: "8px",
@@ -246,7 +246,7 @@ export function RSVPConfirmationModal({
                         styles={{
                             root: {
                                 '&:disabled': {
-                                    backgroundColor: '#8b7355',
+                                    backgroundColor: 'var(--gold)',
                                     color: '#ffffff',
                                     opacity: 0.6,
                                 },
