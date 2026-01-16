@@ -89,7 +89,7 @@ jobs:
     - name: Setup Supabase CLI
       uses: supabase/setup-cli@v1
       with:
-        version: latest
+        version: 2.67.1
 
     - name: Copy migrations to test instance
       run: |
