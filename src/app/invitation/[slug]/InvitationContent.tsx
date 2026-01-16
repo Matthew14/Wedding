@@ -446,29 +446,23 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
                                         Please click here to RSVP
                                     </Button>
 
-                                    {/* Website info */}
+                                    {/* Schedule link */}
                                     <Box style={{ marginTop: "0.5rem" }}>
                                         <Text
+                                            component="a"
+                                            href={`/schedule?from=${slug}`}
                                             style={{
                                                 fontSize: "0.95rem",
                                                 color: "var(--gold-dark)",
                                                 fontFamily: "var(--font-cormorant), serif",
                                                 letterSpacing: "0.05em",
                                                 lineHeight: 1.6,
+                                                textDecoration: "underline",
+                                                textUnderlineOffset: "3px",
+                                                cursor: "pointer",
                                             }}
                                         >
-                                            For more information on our wedding
-                                        </Text>
-                                        <Text
-                                            style={{
-                                                fontSize: "0.95rem",
-                                                color: "var(--gold-dark)",
-                                                fontFamily: "var(--font-cormorant), serif",
-                                                letterSpacing: "0.05em",
-                                                lineHeight: 1.6,
-                                            }}
-                                        >
-                                            please look around this website.
+                                            View the schedule
                                         </Text>
                                     </Box>
 

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Container, Title, Text, Stack, Box } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
 import {
@@ -11,6 +12,7 @@ import {
     IconDoor,
     IconDoorEnter,
 } from "@tabler/icons-react";
+import BackToInvitation from "./BackToInvitation";
 
 interface TimelineEvent {
     time?: string;
@@ -76,6 +78,9 @@ export default function SchedulePage() {
             <Navigation />
             <main id="main-content">
                 <Box style={{ paddingTop: 56 }}>
+                    <Suspense fallback={null}>
+                        <BackToInvitation />
+                    </Suspense>
                     {/* Day Sections */}
                     {schedule.map((day, index) => (
                         <Box
