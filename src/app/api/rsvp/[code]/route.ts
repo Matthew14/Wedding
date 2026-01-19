@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { checkRateLimit, rateLimitedResponse, addRateLimitHeaders, RATE_LIMITS } from "@/utils/api/rateLimit";
+import { sendRSVPNotification } from "@/utils/email/resend";
 
 // GET: Fetch RSVP data and invitees
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
@@ -221,6 +222,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                 }, { status: 207 });
                 return addRateLimitHeaders(response, rateLimit);
             }
+        }
+
+        // Send email notification (non-blocking, fails silently)
+        // Fetch invitee names for the notification
+        const { data: inviteesForEmail } = await supabase
+            .from("invitees")
+            .select("first_name, last_name, coming")
+            .eq("invitation_id", rsvpData.invitation_id);
+
+        if (inviteesForEmail) {
+            const guestNames = inviteesForEmail.map(i => `${i.first_name} ${i.last_name}`.trim());
+            const attendingCount = inviteesForEmail.filter(i => i.coming).length;
+
+            // Fire and forget - don't await to avoid slowing down the response
+            sendRSVPNotification({
+                guestNames,
+                accepted: body.accepted,
+                attendingCount,
+                totalInvited: inviteesForEmail.length,
+                stayingVilla: stayingVillaBoolean,
+                dietaryRestrictions: body.dietary_restrictions,
+                songRequest: body.song_request,
+                travelPlans: body.travel_plans,
+                message: body.message,
+                code: code.toUpperCase(),
+            }).catch(err => console.error('[Email] Notification error:', err));
         }
 
         const response = NextResponse.json({
