@@ -45,7 +45,8 @@
     "next": "15.5.9",
     "posthog-js": "^1.310.0",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "resend": "^6.8.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
