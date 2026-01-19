@@ -330,14 +330,14 @@ describe("/api/rsvp/[code]", () => {
 
         it("updates multiple invitees from same invitation", async () => {
             const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
-            let inviteeUpdateCount = 0;
+            let inviteeCallCount = 0;
 
             mockSupabaseClient.from.mockImplementation((table: string) => {
                 if (table === "RSVPs") {
                     return createMockChain({ data: mockRsvp, error: null });
                 }
                 if (table === "invitees") {
-                    inviteeUpdateCount++;
+                    inviteeCallCount++;
                     return createMockChain({ data: null, error: null });
                 }
                 return createMockChain();
@@ -359,7 +359,8 @@ describe("/api/rsvp/[code]", () => {
 
             expect(response.status).toBe(200);
             expect(data.success).toBe(true);
-            expect(inviteeUpdateCount).toBe(3);
+            // 3 invitee updates + 1 select for email notification
+            expect(inviteeCallCount).toBe(4);
         });
 
         it("returns 500 when invitee update fails (no silent failure)", async () => {
