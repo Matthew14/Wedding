@@ -108,11 +108,8 @@ export default function LoginPage() {
                                     size="lg"
                                     loading={loading}
                                     fullWidth
-                                    style={{
-                                        backgroundColor: "#8b7355",
-                                        borderColor: "#8b7355",
-                                        marginTop: "1rem",
-                                    }}
+                                    color="gold"
+                                    style={{ marginTop: "1rem" }}
                                 >
                                     Sign In
                                 </Button>

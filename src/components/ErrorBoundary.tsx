@@ -3,6 +3,7 @@
 import { Component, ReactNode } from 'react';
 import { usePostHog } from 'posthog-js/react';
 import { Container, Title, Text, Button, Stack, Paper, Code } from '@mantine/core';
+import { COLORS } from '@/constants';
 
 interface ErrorBoundaryProps {
     children: ReactNode;
@@ -14,8 +15,8 @@ interface ErrorBoundaryState {
     resetKey: number;
 }
 
-// Theme gold color - hardcoded to avoid SSR issues with useMantineTheme hook
-const GOLD_COLOR = '#8b7355';
+// Use centralized color constant (avoids SSR issues with useMantineTheme hook in class component)
+const GOLD_COLOR = COLORS.gold;
 
 // Wrapper component to access PostHog hook
 function ErrorBoundaryWithPostHog({ children }: ErrorBoundaryProps) {

@@ -53,8 +53,8 @@ export function RSVPFormFields({
             {/* Are you joining us? */}
             <Box mb="xl">
                 <Group gap="sm" mb="md">
-                    <IconBook size={20} color="#6d5a44" />
-                    <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                    <IconBook size={20} color="var(--gold-dark)" />
+                    <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                         Are you joining us?
                     </Text>
                     <Text span style={{ color: "#e53e3e" }}>
@@ -124,8 +124,8 @@ export function RSVPFormFields({
                     {form.values.invitees.length > 1 && (
                         <Box mb="xl">
                             <Group gap="sm" mb="md">
-                                <IconUsers size={20} color="#6d5a44" />
-                                <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                                <IconUsers size={20} color="var(--gold-dark)" />
+                                <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                     Is everyone coming?
                                 </Text>
                                 <Text span style={{ color: "#e53e3e" }}>
@@ -145,7 +145,7 @@ export function RSVPFormFields({
                                         tabIndex={0}
                                         style={{
                                             cursor: 'pointer',
-                                            borderColor: invitee.coming ? '#6d5a44' : '#dee2e6',
+                                            borderColor: invitee.coming ? 'var(--gold-dark)' : '#dee2e6',
                                             backgroundColor: invitee.coming ? 'rgba(109, 90, 68, 0.05)' : '#fff',
                                             transition: 'all 0.2s ease',
                                         }}
@@ -165,7 +165,7 @@ export function RSVPFormFields({
                                                     width: 24,
                                                     height: 24,
                                                     borderRadius: '50%',
-                                                    backgroundColor: invitee.coming ? '#6d5a44' : '#e9ecef',
+                                                    backgroundColor: invitee.coming ? 'var(--gold-dark)' : '#e9ecef',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -194,8 +194,8 @@ export function RSVPFormFields({
                     {villaOffered && (
                         <Box mb="xl">
                             <Group gap="sm" mb="md">
-                                <IconBed size={20} color="#6d5a44" />
-                                <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                                <IconBed size={20} color="var(--gold-dark)" />
+                                <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                     Will you be staying with us?
                                 </Text>
                                 <Text span style={{ color: "#e53e3e" }}>
@@ -218,7 +218,7 @@ export function RSVPFormFields({
                                     withBorder
                                     style={{
                                         cursor: 'pointer',
-                                        borderColor: form.values.staying_villa === "yes" ? '#6d5a44' : '#dee2e6',
+                                        borderColor: form.values.staying_villa === "yes" ? 'var(--gold-dark)' : '#dee2e6',
                                         backgroundColor: form.values.staying_villa === "yes" ? 'rgba(109, 90, 68, 0.08)' : '#fff',
                                         transition: 'all 0.2s ease',
                                     }}
@@ -231,8 +231,8 @@ export function RSVPFormFields({
                                     }}
                                 >
                                     <Group justify="center" gap="xs">
-                                        <IconCheck size={20} color={form.values.staying_villa === "yes" ? '#6d5a44' : '#9ca3af'} />
-                                        <Text fw={500} style={{ color: form.values.staying_villa === "yes" ? '#6d5a44' : '#6c757d' }}>
+                                        <IconCheck size={20} color={form.values.staying_villa === "yes" ? 'var(--gold-dark)' : '#9ca3af'} />
+                                        <Text fw={500} style={{ color: form.values.staying_villa === "yes" ? 'var(--gold-dark)' : '#6c757d' }}>
                                             {form.values.invitees.length > 1 ? "Yes, we're staying" : "Yes, I'm staying"}
                                         </Text>
                                     </Group>
@@ -269,8 +269,8 @@ export function RSVPFormFields({
                     {/* Dietary restrictions */}
                     <Box mb="xl">
                         <Group gap="sm" mb="md">
-                            <IconChefHat size={20} color="#6d5a44" />
-                            <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                            <IconChefHat size={20} color="var(--gold-dark)" />
+                            <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                 Do you have any allergies or specific dietary requests?
                             </Text>
                         </Group>
@@ -295,8 +295,8 @@ export function RSVPFormFields({
                     {/* Song request */}
                     <Box mb="xl">
                         <Group gap="sm" mb="md">
-                            <IconMusic size={20} color="#6d5a44" />
-                            <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                            <IconMusic size={20} color="var(--gold-dark)" />
+                            <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                 Got a song request for the wedding playlist? Add it here!
                             </Text>
                         </Group>
@@ -318,8 +318,8 @@ export function RSVPFormFields({
                     {/* Travel plans */}
                     <Box mb="xl">
                         <Group gap="sm" mb="md">
-                            <IconPlane size={20} color="#6d5a44" />
-                            <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                            <IconPlane size={20} color="var(--gold-dark)" />
+                            <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                                 Please add any travel plans you have
                             </Text>
                         </Group>
@@ -346,8 +346,8 @@ export function RSVPFormFields({
             {/* Additional message */}
             <Box mb="xl">
                 <Group gap="sm" mb="md">
-                    <IconMessage size={20} color="#6d5a44" />
-                    <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
+                    <IconMessage size={20} color="var(--gold-dark)" />
+                    <Text size="lg" fw={500} style={{ color: "var(--text-primary)" }}>
                         Anything else you&apos;d like us to know?
                     </Text>
                 </Group>
@@ -379,7 +379,7 @@ export function RSVPFormFields({
                 disabled={submitting || !hasChanges}
                 className="primary-cta-button"
                 style={{
-                    backgroundColor: "#6d5a44",
+                    backgroundColor: "var(--gold-dark)",
                     color: "#ffffff",
                     borderRadius: "8px",
                     fontWeight: 500,
@@ -388,7 +388,7 @@ export function RSVPFormFields({
                 styles={{
                     root: {
                         '&:disabled': {
-                            backgroundColor: '#8b7355',
+                            backgroundColor: 'var(--gold)',
                             color: '#ffffff',
                             opacity: 0.6,
                         },
