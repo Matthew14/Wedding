@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Container, Title, Text, Stack, Box } from "@mantine/core";
+import { Container, Title, Text, Box } from "@mantine/core";
 import { Navigation } from "@/components/Navigation";
 import {
     IconHeart,
@@ -118,7 +118,13 @@ export default function SchedulePage() {
                                     </Title>
                                 </Box>
 
-                                <Stack gap="sm">
+                                <Box
+                                    style={{
+                                        borderLeft: `2px solid rgba(139, 115, 85, 0.2)`,
+                                        marginLeft: 10,
+                                        paddingLeft: 0,
+                                    }}
+                                >
                                     {day.events.map((event, eventIndex) => (
                                         <Box
                                             key={eventIndex}
@@ -126,48 +132,37 @@ export default function SchedulePage() {
                                                 display: "flex",
                                                 alignItems: "center",
                                                 gap: "1rem",
-                                                padding: "1rem 1.5rem",
-                                                backgroundColor: "rgba(255, 255, 255, 0.7)",
-                                                borderRadius: 12,
-                                                boxShadow: "0 2px 8px rgba(139, 115, 85, 0.08)",
+                                                padding: "0.75rem 0 0.75rem 1.5rem",
+                                                cursor: "default",
                                             }}
                                         >
-                                            {/* Icon */}
                                             <Box
                                                 style={{
-                                                    width: 40,
-                                                    height: 40,
-                                                    borderRadius: "50%",
-                                                    backgroundColor: "rgba(139, 115, 85, 0.1)",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
                                                     color: day.accentColor,
                                                     flexShrink: 0,
+                                                    display: "flex",
+                                                    alignItems: "center",
                                                 }}
                                             >
                                                 {event.icon}
                                             </Box>
-                                            {/* Content */}
-                                            <Box style={{ flex: 1 }}>
-                                                <Text
-                                                    style={{
-                                                        color: "var(--text-primary)",
-                                                        fontSize: "1.05rem",
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
-                                                    {event.time && (
-                                                        <span style={{ color: day.accentColor, marginRight: "0.5rem" }}>
-                                                            {event.time} —
-                                                        </span>
-                                                    )}
-                                                    {event.title}
-                                                </Text>
-                                            </Box>
+                                            <Text
+                                                style={{
+                                                    color: "var(--text-primary)",
+                                                    fontSize: "1.05rem",
+                                                    fontWeight: 400,
+                                                }}
+                                            >
+                                                {event.time && (
+                                                    <span style={{ color: day.accentColor, fontWeight: 500 }}>
+                                                        {event.time} —{" "}
+                                                    </span>
+                                                )}
+                                                {event.title}
+                                            </Text>
                                         </Box>
                                     ))}
-                                </Stack>
+                                </Box>
                             </Container>
                         </Box>
                     ))}
