@@ -273,6 +273,9 @@ export function RSVPFormFields({
                             <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                 Do you have any allergies or specific dietary requests?
                             </Text>
+                            <Text span size="sm" style={{ color: "#9ca3af" }}>
+                                (Optional)
+                            </Text>
                         </Group>
                         <Textarea
                             placeholder="Please let us know about any dietary requirements..."
@@ -299,6 +302,9 @@ export function RSVPFormFields({
                             <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                 Got a song request for the wedding playlist? Add it here!
                             </Text>
+                            <Text span size="sm" style={{ color: "#9ca3af" }}>
+                                (Optional)
+                            </Text>
                         </Group>
                         <TextInput
                             placeholder="What song would you like to hear at our wedding?"
@@ -321,6 +327,9 @@ export function RSVPFormFields({
                             <IconPlane size={20} color="#6d5a44" />
                             <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                                 Please add any travel plans you have
+                            </Text>
+                            <Text span size="sm" style={{ color: "#9ca3af" }}>
+                                (Optional)
                             </Text>
                         </Group>
                         <Textarea
@@ -349,6 +358,9 @@ export function RSVPFormFields({
                     <IconMessage size={20} color="#6d5a44" />
                     <Text size="lg" fw={500} style={{ color: "#2d2d2d" }}>
                         Anything else you&apos;d like us to know?
+                    </Text>
+                    <Text span size="sm" style={{ color: "#9ca3af" }}>
+                        (Optional)
                     </Text>
                 </Group>
                 <Textarea
