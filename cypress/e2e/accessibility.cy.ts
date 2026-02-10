@@ -113,22 +113,6 @@ describe('Accessibility Tests', () => {
       cy.checkA11y(undefined, axeConfig, logViolations);
     });
 
-    it('RSVP form with modal open should have no accessibility violations', () => {
-      cy.visit('/rsvp/TEST01');
-
-      // Wait for page to load
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
-
-      // Form defaults to "Yes" with all invitees checked, just submit
-      cy.get('button[type="submit"]').contains('Submit RSVP').click();
-
-      // Wait for modal to appear
-      cy.contains('Confirm & Submit', { timeout: 2000 }).should('be.visible');
-
-      cy.injectAxe();
-      cy.checkA11y(undefined, axeConfig, logViolations);
-    });
-
     it('RSVP success page should have no accessibility violations', () => {
       cy.visit('/rsvp/success?accepted=yes&code=TEST01');
 

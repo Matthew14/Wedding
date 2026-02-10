@@ -113,7 +113,7 @@ describe("InvitationContent", () => {
             expect(screen.getByText("Wish to invite")).toBeInTheDocument();
             expect(screen.getByText("John & Jane")).toBeInTheDocument();
             expect(screen.getByText("to join them to celebrate their marriage")).toBeInTheDocument();
-            expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+            expect(screen.getByText("View your RSVP")).toBeInTheDocument();
         });
 
         it("formats single guest name correctly", async () => {
@@ -260,10 +260,10 @@ describe("InvitationContent", () => {
             await renderComponent("john-jane-TEST01");
 
             await waitFor(() => {
-                expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+                expect(screen.getByText("View your RSVP")).toBeInTheDocument();
             });
 
-            await user.click(screen.getByText("Please click here to RSVP"));
+            await user.click(screen.getByText("View your RSVP"));
 
             expect(mockPush).toHaveBeenCalledWith("/rsvp/TEST01");
         });
@@ -279,10 +279,10 @@ describe("InvitationContent", () => {
             await renderComponent("john-jane-TEST01");
 
             await waitFor(() => {
-                expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+                expect(screen.getByText("View your RSVP")).toBeInTheDocument();
             });
 
-            await user.click(screen.getByText("Please click here to RSVP"));
+            await user.click(screen.getByText("View your RSVP"));
 
             expect(mockTrackEvent).toHaveBeenCalledWith("invitation_rsvp_clicked", {
                 code: "TEST01",
