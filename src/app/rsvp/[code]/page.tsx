@@ -218,7 +218,7 @@ export default function RSVPFormPage() {
                 <Box style={{ paddingTop: 56 }}>
                     <Container size="md" py="xl" className="fade-in">
                         <Stack gap="xl">
-                            <RSVPFormHeader guestNames={guestNames} infoText={infoText} />
+                            <RSVPFormHeader guestNames={guestNames} infoText={infoText} disabled />
 
                             <Paper className="elegant-card" radius="lg" p="xl">
                                 <form
@@ -237,6 +237,7 @@ export default function RSVPFormPage() {
                                         submitting={submitting}
                                         originalValues={originalValues}
                                         onInviteeChange={handleInviteeChange}
+                                        disabled
                                     />
                                 </form>
                             </Paper>

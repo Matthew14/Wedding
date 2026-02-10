@@ -1,13 +1,15 @@
 "use client";
 
-import { Box, Title, Text } from "@mantine/core";
+import { Box, Title, Text, Alert } from "@mantine/core";
+import { IconInfoCircle } from "@tabler/icons-react";
 
 interface RSVPFormHeaderProps {
     guestNames: string;
     infoText: string;
+    disabled?: boolean;
 }
 
-export function RSVPFormHeader({ guestNames, infoText }: RSVPFormHeaderProps) {
+export function RSVPFormHeader({ guestNames, infoText, disabled }: RSVPFormHeaderProps) {
     return (
         <Box style={{ textAlign: "center", marginBottom: "1rem" }}>
             {guestNames && (
@@ -25,7 +27,20 @@ export function RSVPFormHeader({ guestNames, infoText }: RSVPFormHeaderProps) {
                     {guestNames}
                 </Title>
             )}
-            {infoText ? (
+            {disabled ? (
+                <Alert
+                    icon={<IconInfoCircle size={20} />}
+                    color="gray"
+                    variant="light"
+                    radius="md"
+                    style={{ textAlign: "left", maxWidth: 600, margin: "0 auto" }}
+                >
+                    <Text size="md" style={{ lineHeight: 1.6 }}>
+                        The deadline for amending your RSVP has now passed. If you need to
+                        let us know about any changes, please contact us directly.
+                    </Text>
+                </Alert>
+            ) : infoText ? (
                 <Text size="lg" style={{ color: "#5a5a5a", lineHeight: 1.8, maxWidth: 600, margin: "0 auto" }} pb="md">
                     {infoText}
                 </Text>
