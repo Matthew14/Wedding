@@ -49,6 +49,12 @@ vi.mock("@/hooks", () => ({
     },
 }));
 
+// Mock the RSVP deadline utility - default to closed (after deadline)
+const mockIsRSVPClosed = vi.fn(() => true);
+vi.mock("@/utils/rsvpDeadline", () => ({
+    isRSVPClosed: () => mockIsRSVPClosed(),
+}));
+
 // Import after mocking
 import InvitationContent from "../InvitationContent";
 
@@ -78,6 +84,7 @@ describe("InvitationContent", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         global.fetch = vi.fn();
+        mockIsRSVPClosed.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -113,7 +120,7 @@ describe("InvitationContent", () => {
             expect(screen.getByText("Wish to invite")).toBeInTheDocument();
             expect(screen.getByText("John & Jane")).toBeInTheDocument();
             expect(screen.getByText("to join them to celebrate their marriage")).toBeInTheDocument();
-            expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+            expect(screen.getByText("View your RSVP")).toBeInTheDocument();
         });
 
         it("formats single guest name correctly", async () => {
@@ -248,6 +255,38 @@ describe("InvitationContent", () => {
         });
     });
 
+    describe("RSVP Button Text", () => {
+        it("shows 'Please click here to RSVP' before deadline", async () => {
+            mockIsRSVPClosed.mockReturnValue(false);
+
+            (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+                ok: true,
+                json: async () => createMockInvitationData(),
+            });
+
+            await renderComponent("john-jane-TEST01");
+
+            await waitFor(() => {
+                expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+            });
+        });
+
+        it("shows 'View your RSVP' after deadline", async () => {
+            mockIsRSVPClosed.mockReturnValue(true);
+
+            (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+                ok: true,
+                json: async () => createMockInvitationData(),
+            });
+
+            await renderComponent("john-jane-TEST01");
+
+            await waitFor(() => {
+                expect(screen.getByText("View your RSVP")).toBeInTheDocument();
+            });
+        });
+    });
+
     describe("RSVP Button Navigation", () => {
         it("navigates to RSVP page when button is clicked", async () => {
             const user = userEvent.setup();
@@ -260,10 +299,10 @@ describe("InvitationContent", () => {
             await renderComponent("john-jane-TEST01");
 
             await waitFor(() => {
-                expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+                expect(screen.getByText("View your RSVP")).toBeInTheDocument();
             });
 
-            await user.click(screen.getByText("Please click here to RSVP"));
+            await user.click(screen.getByText("View your RSVP"));
 
             expect(mockPush).toHaveBeenCalledWith("/rsvp/TEST01");
         });
@@ -279,10 +318,10 @@ describe("InvitationContent", () => {
             await renderComponent("john-jane-TEST01");
 
             await waitFor(() => {
-                expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+                expect(screen.getByText("View your RSVP")).toBeInTheDocument();
             });
 
-            await user.click(screen.getByText("Please click here to RSVP"));
+            await user.click(screen.getByText("View your RSVP"));
 
             expect(mockTrackEvent).toHaveBeenCalledWith("invitation_rsvp_clicked", {
                 code: "TEST01",

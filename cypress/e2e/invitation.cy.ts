@@ -98,6 +98,17 @@ describe('Invitation Page', () => {
     });
   });
 
+  describe('After RSVP Deadline', () => {
+    it('should show "View your RSVP" button after deadline', () => {
+      // Set clock to after the RSVP deadline (28 Feb 2026 23:59 UTC)
+      cy.clock(new Date('2026-03-01T00:00:00Z').getTime(), ['Date']);
+      cy.visit('/invitation/john-jane-TEST01');
+
+      cy.contains('John & Jane').should('be.visible');
+      cy.contains('View your RSVP').should('be.visible');
+    });
+  });
+
   describe('RSVP Button Navigation', () => {
     it('should navigate to RSVP form when clicking CTA button', () => {
       cy.visit('/invitation/john-jane-TEST01');

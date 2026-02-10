@@ -1,12 +1,13 @@
 "use client";
 
-import { Container, Text, Paper, Stack, Alert, Box, Button, Title } from "@mantine/core";
+import { Container, Text, Paper, Stack, Alert, Box, Button } from "@mantine/core";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { IconX, IconCalendarOff } from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
 import { RSVPFormData } from "@/types";
-import { useRSVPForm, useTracking, RSVPEvents, useScrollDepth, useFeatureFlag } from "@/hooks";
+import { useRSVPForm, useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
+import { isRSVPClosed } from "@/utils/rsvpDeadline";
 import { useRSVPData, useRSVPSubmission } from "./hooks";
 import { RSVPFormHeader, RSVPFormFields, RSVPConfirmationModal } from "./components";
 
@@ -17,13 +18,11 @@ export default function RSVPFormPage() {
 
     const [showConfirmation, setShowConfirmation] = useState(false);
     const previousAcceptedRef = useRef<boolean | null>(null);
+    const disabled = isRSVPClosed();
 
     const form = useRSVPForm();
     const { trackEvent } = useTracking();
     useScrollDepth('rsvp_form');
-
-    // Feature flag to disable RSVP editing after deadline
-    const isRSVPDisabled = useFeatureFlag('rsvp-disable-editing', false);
 
     const {
         loading,
@@ -128,61 +127,6 @@ export default function RSVPFormPage() {
         );
     }
 
-    // Show closed message if RSVP editing is disabled via feature flag
-    if (isRSVPDisabled) {
-        return (
-            <>
-                <Navigation />
-                <main id="main-content">
-                    <Box style={{ paddingTop: 56 }}>
-                        <Container size="sm" py="xl" className="fade-in">
-                            <Stack gap="xl" align="center">
-                                <Box style={{ textAlign: "center" }}>
-                                    <IconCalendarOff size={80} color="var(--gold-dark)" style={{ marginBottom: "1rem" }} />
-                                    <Title
-                                        order={1}
-                                        style={{
-                                            fontSize: "clamp(2rem, 5vw, 2.5rem)",
-                                            fontWeight: 400,
-                                            color: "var(--text-primary)",
-                                            fontFamily: "var(--font-playfair), serif",
-                                            marginBottom: "1rem",
-                                        }}
-                                    >
-                                        RSVPs Are Now Closed
-                                    </Title>
-                                    <Text
-                                        size="lg"
-                                        style={{
-                                            color: "var(--text-secondary)",
-                                            lineHeight: 1.8,
-                                            maxWidth: 450,
-                                            margin: "0 auto",
-                                        }}
-                                    >
-                                        The deadline for RSVPs has passed. If you need to make changes
-                                        to your response, please contact us directly.
-                                    </Text>
-                                </Box>
-                                <Button
-                                    onClick={() => router.push("/")}
-                                    variant="outline"
-                                    size="lg"
-                                    style={{
-                                        borderColor: "var(--gold-dark)",
-                                        color: "var(--gold-dark)",
-                                    }}
-                                >
-                                    Return Home
-                                </Button>
-                            </Stack>
-                        </Container>
-                    </Box>
-                </main>
-            </>
-        );
-    }
-
     if (error && !success) {
         return (
             <Container size="sm" py="xl">
@@ -218,7 +162,7 @@ export default function RSVPFormPage() {
                 <Box style={{ paddingTop: 56 }}>
                     <Container size="md" py="xl" className="fade-in">
                         <Stack gap="xl">
-                            <RSVPFormHeader guestNames={guestNames} infoText={infoText} />
+                            <RSVPFormHeader guestNames={guestNames} infoText={infoText} disabled={disabled} />
 
                             <Paper className="elegant-card" radius="lg" p="xl">
                                 <form
@@ -237,6 +181,7 @@ export default function RSVPFormPage() {
                                         submitting={submitting}
                                         originalValues={originalValues}
                                         onInviteeChange={handleInviteeChange}
+                                        disabled={disabled}
                                     />
                                 </form>
                             </Paper>
