@@ -443,7 +443,7 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
                                             e.currentTarget.style.color = "var(--gold-dark)";
                                         }}
                                     >
-                                        Please click here to RSVP
+                                        View your RSVP
                                     </Button>
 
                                     {/* Schedule link */}

@@ -35,6 +35,7 @@ interface RSVPFormFieldsProps {
     submitting: boolean;
     originalValues: RSVPFormData | null;
     onInviteeChange: (inviteeId: number, coming: boolean) => void;
+    disabled?: boolean;
 }
 
 export function RSVPFormFields({
@@ -45,11 +46,12 @@ export function RSVPFormFields({
     submitting,
     originalValues,
     onInviteeChange,
+    disabled,
 }: RSVPFormFieldsProps) {
     const { trackEvent } = useTracking();
 
     return (
-        <Stack gap="xl">
+        <Stack gap="xl" style={disabled ? { pointerEvents: 'none' } : undefined}>
             {/* Are you joining us? */}
             <Box mb="xl">
                 <Group gap="sm" mb="md">
@@ -280,6 +282,7 @@ export function RSVPFormFields({
                         <Textarea
                             placeholder="Please let us know about any dietary requirements..."
                             {...form.getInputProps("dietary_restrictions")}
+                            disabled={disabled}
                             onBlur={(e) => {
                                 if (e.target.value.trim()) {
                                     trackEvent(RSVPEvents.DIETARY_FILLED, {
@@ -309,6 +312,7 @@ export function RSVPFormFields({
                         <TextInput
                             placeholder="What song would you like to hear at our wedding?"
                             {...form.getInputProps("song_request")}
+                            disabled={disabled}
                             onBlur={(e) => {
                                 if (e.target.value.trim()) {
                                     trackEvent(RSVPEvents.SONG_FILLED, {
@@ -335,6 +339,7 @@ export function RSVPFormFields({
                         <Textarea
                             placeholder="Flight number, day of travel etc."
                             {...form.getInputProps("travel_plans")}
+                            disabled={disabled}
                             onBlur={(e) => {
                                 if (e.target.value.trim()) {
                                     trackEvent(RSVPEvents.TRAVEL_FILLED, {
@@ -366,6 +371,7 @@ export function RSVPFormFields({
                 <Textarea
                     placeholder="Any other information you'd like to share..."
                     {...form.getInputProps("message")}
+                    disabled={disabled}
                     onBlur={(e) => {
                         if (e.target.value.trim()) {
                             trackEvent(RSVPEvents.MESSAGE_FILLED, {
@@ -381,47 +387,51 @@ export function RSVPFormFields({
                 />
             </Box>
 
-            <Divider style={{ borderColor: "rgba(139, 115, 85, 0.2)" }} />
+            {!disabled && (
+                <>
+                    <Divider style={{ borderColor: "rgba(139, 115, 85, 0.2)" }} />
 
-            {/* Submit Button */}
-            <Button
-                type="submit"
-                size="lg"
-                loading={submitting}
-                disabled={submitting || !hasChanges}
-                className="primary-cta-button"
-                style={{
-                    backgroundColor: "#6d5a44",
-                    color: "#ffffff",
-                    borderRadius: "8px",
-                    fontWeight: 500,
-                    letterSpacing: "0.02em",
-                }}
-                styles={{
-                    root: {
-                        '&:disabled': {
-                            backgroundColor: '#8b7355',
-                            color: '#ffffff',
-                            opacity: 0.6,
-                        },
-                    },
-                }}
-                fullWidth
-            >
-                Submit RSVP
-            </Button>
-            {!hasChanges && originalValues && (
-                <Text
-                    size="sm"
-                    style={{
-                        color: "var(--text-secondary)",
-                        textAlign: "center",
-                        fontStyle: "italic",
-                        marginTop: "-0.5rem"
-                    }}
-                >
-                    No changes to submit
-                </Text>
+                    {/* Submit Button */}
+                    <Button
+                        type="submit"
+                        size="lg"
+                        loading={submitting}
+                        disabled={submitting || !hasChanges}
+                        className="primary-cta-button"
+                        style={{
+                            backgroundColor: "#6d5a44",
+                            color: "#ffffff",
+                            borderRadius: "8px",
+                            fontWeight: 500,
+                            letterSpacing: "0.02em",
+                        }}
+                        styles={{
+                            root: {
+                                '&:disabled': {
+                                    backgroundColor: '#8b7355',
+                                    color: '#ffffff',
+                                    opacity: 0.6,
+                                },
+                            },
+                        }}
+                        fullWidth
+                    >
+                        Submit RSVP
+                    </Button>
+                    {!hasChanges && originalValues && (
+                        <Text
+                            size="sm"
+                            style={{
+                                color: "var(--text-secondary)",
+                                textAlign: "center",
+                                fontStyle: "italic",
+                                marginTop: "-0.5rem"
+                            }}
+                        >
+                            No changes to submit
+                        </Text>
+                    )}
+                </>
             )}
         </Stack>
     );
