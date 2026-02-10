@@ -51,7 +51,7 @@ export function RSVPFormFields({
     const { trackEvent } = useTracking();
 
     return (
-        <Stack gap="xl" style={disabled ? { pointerEvents: 'none' } : undefined}>
+        <Stack gap="xl" style={disabled ? { pointerEvents: 'none', opacity: 0.5 } : undefined}>
             {/* Are you joining us? */}
             <Box mb="xl">
                 <Group gap="sm" mb="md">
