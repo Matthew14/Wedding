@@ -49,6 +49,12 @@ vi.mock("@/hooks", () => ({
     },
 }));
 
+// Mock the RSVP deadline utility - default to closed (after deadline)
+const mockIsRSVPClosed = vi.fn(() => true);
+vi.mock("@/utils/rsvpDeadline", () => ({
+    isRSVPClosed: () => mockIsRSVPClosed(),
+}));
+
 // Import after mocking
 import InvitationContent from "../InvitationContent";
 
@@ -78,6 +84,7 @@ describe("InvitationContent", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         global.fetch = vi.fn();
+        mockIsRSVPClosed.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -244,6 +251,38 @@ describe("InvitationContent", () => {
                 expect(mockTrackEvent).toHaveBeenCalledWith("invitation_invalid_link", {
                     reason: "invalid_code_or_names",
                 });
+            });
+        });
+    });
+
+    describe("RSVP Button Text", () => {
+        it("shows 'Please click here to RSVP' before deadline", async () => {
+            mockIsRSVPClosed.mockReturnValue(false);
+
+            (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+                ok: true,
+                json: async () => createMockInvitationData(),
+            });
+
+            await renderComponent("john-jane-TEST01");
+
+            await waitFor(() => {
+                expect(screen.getByText("Please click here to RSVP")).toBeInTheDocument();
+            });
+        });
+
+        it("shows 'View your RSVP' after deadline", async () => {
+            mockIsRSVPClosed.mockReturnValue(true);
+
+            (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+                ok: true,
+                json: async () => createMockInvitationData(),
+            });
+
+            await renderComponent("john-jane-TEST01");
+
+            await waitFor(() => {
+                expect(screen.getByText("View your RSVP")).toBeInTheDocument();
             });
         });
     });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { checkRateLimit, rateLimitedResponse, addRateLimitHeaders, RATE_LIMITS } from "@/utils/api/rateLimit";
+import { isRSVPClosed } from "@/utils/rsvpDeadline";
 
 // GET: Fetch RSVP data and invitees
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
@@ -78,6 +79,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // POST: Submit RSVP form
 export async function POST(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
     try {
+        // RSVP submissions are closed after the deadline
+        if (isRSVPClosed()) {
+            return NextResponse.json(
+                { error: "RSVP submissions are now closed. Please contact us directly for any changes." },
+                { status: 403 }
+            );
+        }
+
         // Rate limit: 20 requests per minute per IP
         const rateLimit = checkRateLimit(request, RATE_LIMITS.RSVP_SUBMIT);
         if (!rateLimit.success) {

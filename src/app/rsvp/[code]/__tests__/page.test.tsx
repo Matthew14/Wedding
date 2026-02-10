@@ -55,6 +55,12 @@ vi.mock("@/hooks", async (importOriginal) => {
     };
 });
 
+// Mock the RSVP deadline utility - default to closed (after deadline)
+const mockIsRSVPClosed = vi.fn(() => true);
+vi.mock("@/utils/rsvpDeadline", () => ({
+    isRSVPClosed: () => mockIsRSVPClosed(),
+}));
+
 // Import after mocking
 import RSVPFormPage from "../page";
 
@@ -109,6 +115,7 @@ describe("RSVPFormPage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         global.fetch = vi.fn();
+        mockIsRSVPClosed.mockReturnValue(true);
     });
 
     afterEach(() => {

@@ -95,8 +95,10 @@ describe('RSVP Flow', () => {
     // - Paste too-long code (e.g., "TEST0123") -> truncates to "TEST01"
   });
 
-  describe('RSVP Form - Read Only', () => {
+  describe('RSVP Form - Read Only (After Deadline)', () => {
     beforeEach(() => {
+      // Set clock to after the RSVP deadline (28 Feb 2026 23:59 UTC)
+      cy.clock(new Date('2026-03-01T00:00:00Z').getTime(), ['Date']);
       // Navigate directly to form page with valid code
       cy.visit('/rsvp/TEST01');
       // Wait for page to load - look for formatted guest names header

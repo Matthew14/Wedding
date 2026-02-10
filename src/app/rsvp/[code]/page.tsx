@@ -7,6 +7,7 @@ import { IconX } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
 import { RSVPFormData } from "@/types";
 import { useRSVPForm, useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
+import { isRSVPClosed } from "@/utils/rsvpDeadline";
 import { useRSVPData, useRSVPSubmission } from "./hooks";
 import { RSVPFormHeader, RSVPFormFields, RSVPConfirmationModal } from "./components";
 
@@ -17,6 +18,7 @@ export default function RSVPFormPage() {
 
     const [showConfirmation, setShowConfirmation] = useState(false);
     const previousAcceptedRef = useRef<boolean | null>(null);
+    const disabled = isRSVPClosed();
 
     const form = useRSVPForm();
     const { trackEvent } = useTracking();
@@ -160,7 +162,7 @@ export default function RSVPFormPage() {
                 <Box style={{ paddingTop: 56 }}>
                     <Container size="md" py="xl" className="fade-in">
                         <Stack gap="xl">
-                            <RSVPFormHeader guestNames={guestNames} infoText={infoText} disabled />
+                            <RSVPFormHeader guestNames={guestNames} infoText={infoText} disabled={disabled} />
 
                             <Paper className="elegant-card" radius="lg" p="xl">
                                 <form
@@ -179,7 +181,7 @@ export default function RSVPFormPage() {
                                         submitting={submitting}
                                         originalValues={originalValues}
                                         onInviteeChange={handleInviteeChange}
-                                        disabled
+                                        disabled={disabled}
                                     />
                                 </form>
                             </Paper>
