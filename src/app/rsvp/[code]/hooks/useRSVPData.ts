@@ -5,7 +5,7 @@ import { UseFormReturnType } from "@mantine/form";
 import { RSVPFormData, Invitee, DatabaseRSVPResponse } from "@/types";
 import { useTracking, RSVPEvents } from "@/hooks";
 import { fetchWithTimeout, isAbortError, FETCH_TIMEOUTS } from "@/utils/fetchWithTimeout";
-import { isRSVPClosed } from "@/utils/rsvpDeadline";
+import { isRSVPClosed, isInvitationExemptFromDeadline } from "@/utils/rsvpDeadline";
 
 /**
  * Format guest names with smart surname grouping.
@@ -55,6 +55,7 @@ interface UseRSVPDataResult {
     infoText: string;
     originalValues: RSVPFormData | null;
     isInitialLoad: boolean;
+    invitationId: number | null;
 }
 
 interface UseRSVPDataOptions {
@@ -70,6 +71,7 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
     const [guestNames, setGuestNames] = useState<string>("");
     const [villaOffered, setVillaOffered] = useState<boolean>(true);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [invitationId, setInvitationId] = useState<number | null>(null);
 
     const { trackEvent, identifyUser, setGroup } = useTracking();
 
@@ -91,6 +93,7 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
 
                     setGuestNames(names);
                     setVillaOffered(data.villaOffered ?? true);
+                    setInvitationId(data.invitationId);
 
                     identifyUser(code, {
                         rsvp_code: code,
@@ -162,10 +165,10 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
                             return 0;
                         });
 
-                        const rsvpClosed = isRSVPClosed();
+                        const rsvpClosed = isRSVPClosed() && !isInvitationExemptFromDeadline(data.invitationId);
 
                         // If RSVP is closed (disabled mode), leave form in neutral state
-                        // If RSVP is open, set helpful defaults for new submissions
+                        // If RSVP is open (or exempt from deadline), set helpful defaults for new submissions
                         if (rsvpClosed) {
                             form.setFieldValue("invitees",
                                 sortedInvitees.map((inv: Invitee) => ({
@@ -228,5 +231,6 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
         infoText,
         originalValues,
         isInitialLoad,
+        invitationId,
     };
 }
