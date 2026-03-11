@@ -53,6 +53,7 @@ vi.mock("@/hooks", () => ({
 const mockIsRSVPClosed = vi.fn(() => true);
 vi.mock("@/utils/rsvpDeadline", () => ({
     isRSVPClosed: () => mockIsRSVPClosed(),
+    isInvitationExemptFromDeadline: () => false,
 }));
 
 // Import after mocking

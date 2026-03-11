@@ -32,6 +32,7 @@ vi.mock('@/utils/fetchWithTimeout', () => ({
 // Mock isRSVPClosed
 vi.mock('@/utils/rsvpDeadline', () => ({
     isRSVPClosed: vi.fn(() => false), // Default to RSVP open
+    isInvitationExemptFromDeadline: vi.fn(() => false),
 }));
 
 import { fetchWithTimeout } from '@/utils/fetchWithTimeout';

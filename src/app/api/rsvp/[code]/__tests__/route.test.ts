@@ -56,6 +56,7 @@ vi.mock("@/utils/api/rateLimit", () => ({
 const mockIsRSVPClosed = vi.fn(() => false);
 vi.mock("@/utils/rsvpDeadline", () => ({
     isRSVPClosed: () => mockIsRSVPClosed(),
+    isInvitationExemptFromDeadline: () => false,
 }));
 
 describe("/api/rsvp/[code]", () => {
@@ -239,6 +240,12 @@ describe("/api/rsvp/[code]", () => {
     describe("POST /api/rsvp/[code] - After Deadline", () => {
         it("returns 403 when RSVP deadline has passed", async () => {
             mockIsRSVPClosed.mockReturnValue(true);
+
+            // Deadline check now happens after RSVP lookup, so we need to mock it
+            const mockRsvp = { id: "rsvp-123", invitation_id: 99 };
+            mockSupabaseClient.from.mockReturnValue(
+                createMockChain({ data: mockRsvp, error: null })
+            );
 
             const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
                 method: "POST",
