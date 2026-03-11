@@ -108,19 +108,19 @@ export default function RootLayout({
             </head>
             <body className={`${geist.variable} ${geistMono.variable} ${playfair.variable} ${greatVibes.variable} antialiased`} style={{ colorScheme: 'light', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 <PostHogProvider>
-                    <ErrorBoundary>
-                        <Suspense fallback={null}>
-                            <PageViewTracker />
-                        </Suspense>
-                        <MantineProvider theme={theme} forceColorScheme="light">
+                    <MantineProvider theme={theme} forceColorScheme="light">
+                        <ErrorBoundary>
+                            <Suspense fallback={null}>
+                                <PageViewTracker />
+                            </Suspense>
                             <AuthProvider>
                                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                     {children}
                                 </div>
                                 <Footer />
                             </AuthProvider>
-                        </MantineProvider>
-                    </ErrorBoundary>
+                        </ErrorBoundary>
+                    </MantineProvider>
                 </PostHogProvider>
                 <Analytics />
                 <SpeedInsights />
