@@ -154,11 +154,11 @@ describe('Invitation Page', () => {
       cy.contains('Invitation Not Found').should('be.visible');
     });
 
-    it('should show error page for mismatched name count', () => {
-      // TEST01 has 2 guests, but URL only has 1 name
+    it('should accept partial name match', () => {
+      // TEST01 has 2 guests (John, Jane), but URL only has 1 name - should still work
       cy.visit('/invitation/john-TEST01');
 
-      cy.contains('Invitation Not Found').should('be.visible');
+      cy.contains('John & Jane').should('be.visible');
     });
 
     it('should show error page for slug without code', () => {

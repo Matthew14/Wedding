@@ -382,14 +382,14 @@ describe("/api/invitation/[slug]", () => {
             expect(data.guestNames).toEqual(["James", "Sarah", "Tom", "Lucy"]);
         });
 
-        it("returns 404 when name count doesn't match invitee count", async () => {
+        it("accepts partial name match (subset of invitees)", async () => {
             const mockRSVP = {
                 id: "rsvp-123",
                 invitation_id: "inv-456",
                 short_url: "TEST03",
             };
 
-            // 3 invitees but only 2 names provided in URL
+            // 3 invitees but only 2 names provided in URL - should still match
             const mockInvitees = [
                 { id: "inv-1", first_name: "Michael", last_name: "Johnson" },
                 { id: "inv-2", first_name: "Sarah", last_name: "Johnson" },
@@ -429,8 +429,9 @@ describe("/api/invitation/[slug]", () => {
             });
             const data = await response.json();
 
-            expect(response.status).toBe(404);
-            expect(data.error).toBe("Invalid invitation link");
+            expect(response.status).toBe(200);
+            expect(data.valid).toBe(true);
+            expect(data.guestNames).toEqual(["Michael", "Sarah", "Emma"]);
         });
 
         it("uses generic error message for security (no info leakage)", async () => {
