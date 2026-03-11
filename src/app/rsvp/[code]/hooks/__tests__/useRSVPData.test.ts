@@ -29,7 +29,13 @@ vi.mock('@/utils/fetchWithTimeout', () => ({
     },
 }));
 
+// Mock isRSVPClosed
+vi.mock('@/utils/rsvpDeadline', () => ({
+    isRSVPClosed: vi.fn(() => false), // Default to RSVP open
+}));
+
 import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
+import { isRSVPClosed } from '@/utils/rsvpDeadline';
 
 const mockFetchWithTimeout = vi.mocked(fetchWithTimeout);
 
@@ -308,5 +314,91 @@ describe('useRSVPData', () => {
         });
 
         expect(result.current.villaOffered).toBe(true);
+    });
+
+    it('should initialize with neutral state when RSVP is closed for new user', async () => {
+        vi.mocked(isRSVPClosed).mockReturnValue(true);
+
+        const mockData = {
+            invitees: [
+                { id: '1', first_name: 'John', last_name: 'Doe', is_primary: true },
+                { id: '2', first_name: 'Jane', last_name: 'Doe', is_primary: false },
+            ],
+            accepted: true,
+            rsvpId: 'rsvp-1',
+            invitationId: 'inv-1',
+            stayingVilla: false,
+            dietaryRestrictions: '',
+            songRequest: '',
+            travelPlans: '',
+            message: '',
+            updatedAt: null, // New user
+            villaOffered: true,
+        };
+
+        mockFetchWithTimeout.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve(mockData),
+        } as Response);
+
+        const { result } = renderHook(() => useRSVPData({ code: 'TEST01', form: mockForm }));
+
+        await waitFor(() => {
+            expect(result.current.loading).toBe(false);
+        });
+
+        // Should set invitees with coming: false for disabled/closed RSVP
+        expect(mockForm.setFieldValue).toHaveBeenCalledWith('invitees', [
+            { id: '1', name: 'John Doe', coming: false },
+            { id: '2', name: 'Jane Doe', coming: false },
+        ]);
+
+        // Should NOT set accepted or staying_villa to defaults
+        expect(mockForm.setFieldValue).not.toHaveBeenCalledWith('accepted', true);
+        expect(mockForm.setFieldValue).not.toHaveBeenCalledWith('staying_villa', 'yes');
+    });
+
+    it('should initialize with helpful defaults when RSVP is open for new user', async () => {
+        vi.mocked(isRSVPClosed).mockReturnValue(false);
+
+        const mockData = {
+            invitees: [
+                { id: '1', first_name: 'John', last_name: 'Doe', is_primary: true },
+                { id: '2', first_name: 'Jane', last_name: 'Doe', is_primary: false },
+            ],
+            accepted: true,
+            rsvpId: 'rsvp-1',
+            invitationId: 'inv-1',
+            stayingVilla: false,
+            dietaryRestrictions: '',
+            songRequest: '',
+            travelPlans: '',
+            message: '',
+            updatedAt: null, // New user
+            villaOffered: true,
+        };
+
+        mockFetchWithTimeout.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve(mockData),
+        } as Response);
+
+        const { result } = renderHook(() => useRSVPData({ code: 'TEST01', form: mockForm }));
+
+        await waitFor(() => {
+            expect(result.current.loading).toBe(false);
+        });
+
+        // Should set accepted to true
+        expect(mockForm.setFieldValue).toHaveBeenCalledWith('accepted', true);
+
+        // Should set invitees with coming: true for open RSVP
+        expect(mockForm.setFieldValue).toHaveBeenCalledWith('invitees', [
+            { id: '1', name: 'John Doe', coming: true },
+            { id: '2', name: 'Jane Doe', coming: true },
+        ]);
+
+        // Should set staying_villa to yes when villa offered
+        expect(mockForm.setFieldValue).toHaveBeenCalledWith('staying_villa', 'yes');
     });
 });

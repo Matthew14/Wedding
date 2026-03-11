@@ -1,7 +1,7 @@
 export interface RSVPFormData {
-    accepted: boolean;
+    accepted: boolean | null;
     invitees: { id: number; name: string; coming: boolean }[];
-    staying_villa: string;
+    staying_villa: string | null;
     dietary_restrictions: string;
     song_request: string;
     travel_plans: string;

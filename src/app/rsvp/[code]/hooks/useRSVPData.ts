@@ -5,6 +5,7 @@ import { UseFormReturnType } from "@mantine/form";
 import { RSVPFormData, Invitee, DatabaseRSVPResponse } from "@/types";
 import { useTracking, RSVPEvents } from "@/hooks";
 import { fetchWithTimeout, isAbortError, FETCH_TIMEOUTS } from "@/utils/fetchWithTimeout";
+import { isRSVPClosed } from "@/utils/rsvpDeadline";
 
 /**
  * Format guest names with smart surname grouping.
@@ -154,20 +155,39 @@ export function useRSVPData({ code, form }: UseRSVPDataOptions): UseRSVPDataResu
                             has_message: !!data.message,
                         });
                     } else {
-                        // New RSVP - default all invitees to coming since form defaults to accepted=true
+                        // New RSVP
                         const sortedInvitees = [...(data.invitees || [])].sort((a, b) => {
                             if (a.is_primary && !b.is_primary) return -1;
                             if (!a.is_primary && b.is_primary) return 1;
                             return 0;
                         });
-                        form.setFieldValue("invitees",
-                            sortedInvitees.map((inv: Invitee) => ({
-                                id: inv.id,
-                                name: `${inv.first_name} ${inv.last_name}`,
-                                coming: true,
-                            }))
-                        );
-                        if (!data.villaOffered) {
+
+                        const rsvpClosed = isRSVPClosed();
+
+                        // If RSVP is closed (disabled mode), leave form in neutral state
+                        // If RSVP is open, set helpful defaults for new submissions
+                        if (rsvpClosed) {
+                            form.setFieldValue("invitees",
+                                sortedInvitees.map((inv: Invitee) => ({
+                                    id: inv.id,
+                                    name: `${inv.first_name} ${inv.last_name}`,
+                                    coming: false,
+                                }))
+                            );
+                            // Keep accepted and staying_villa as null (already initialized)
+                        } else {
+                            form.setFieldValue("accepted", true);
+                            form.setFieldValue("invitees",
+                                sortedInvitees.map((inv: Invitee) => ({
+                                    id: inv.id,
+                                    name: `${inv.first_name} ${inv.last_name}`,
+                                    coming: true,
+                                }))
+                            );
+                            form.setFieldValue("staying_villa", data.villaOffered ? "yes" : "no");
+                        }
+
+                        if (!data.villaOffered && !rsvpClosed) {
                             form.setFieldValue("staying_villa", "no");
                         }
                     }
