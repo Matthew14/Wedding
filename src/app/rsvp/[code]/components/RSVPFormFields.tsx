@@ -70,8 +70,8 @@ export function RSVPFormFields({
                         withBorder
                         style={{
                             cursor: 'pointer',
-                            borderColor: form.values.accepted ? '#22c55e' : '#dee2e6',
-                            backgroundColor: form.values.accepted ? 'rgba(34, 197, 94, 0.08)' : '#fff',
+                            borderColor: form.values.accepted === true ? '#22c55e' : '#dee2e6',
+                            backgroundColor: form.values.accepted === true ? 'rgba(34, 197, 94, 0.08)' : '#fff',
                             transition: 'all 0.2s ease',
                         }}
                         onClick={() => {
@@ -84,8 +84,8 @@ export function RSVPFormFields({
                         }}
                     >
                         <Group justify="center" gap="xs">
-                            <IconCheck size={20} color={form.values.accepted ? '#22c55e' : '#9ca3af'} />
-                            <Text fw={500} style={{ color: form.values.accepted ? '#22c55e' : '#6c757d' }}>
+                            <IconCheck size={20} color={form.values.accepted === true ? '#22c55e' : '#9ca3af'} />
+                            <Text fw={500} style={{ color: form.values.accepted === true ? '#22c55e' : '#6c757d' }}>
                                 {form.values.invitees.length > 1 ? "Yes, we're coming!" : "Yes, I'm coming!"}
                             </Text>
                         </Group>
@@ -96,8 +96,8 @@ export function RSVPFormFields({
                         withBorder
                         style={{
                             cursor: 'pointer',
-                            borderColor: !form.values.accepted ? '#ef4444' : '#dee2e6',
-                            backgroundColor: !form.values.accepted ? 'rgba(239, 68, 68, 0.08)' : '#fff',
+                            borderColor: form.values.accepted === false ? '#ef4444' : '#dee2e6',
+                            backgroundColor: form.values.accepted === false ? 'rgba(239, 68, 68, 0.08)' : '#fff',
                             transition: 'all 0.2s ease',
                         }}
                         onClick={() => {
@@ -110,8 +110,8 @@ export function RSVPFormFields({
                         }}
                     >
                         <Group justify="center" gap="xs">
-                            <IconX size={20} color={!form.values.accepted ? '#ef4444' : '#9ca3af'} />
-                            <Text fw={500} style={{ color: !form.values.accepted ? '#ef4444' : '#6c757d' }}>
+                            <IconX size={20} color={form.values.accepted === false ? '#ef4444' : '#9ca3af'} />
+                            <Text fw={500} style={{ color: form.values.accepted === false ? '#ef4444' : '#6c757d' }}>
                                 {form.values.invitees.length > 1 ? "Sorry, we can't make it" : "Sorry, I can't make it"}
                             </Text>
                         </Group>
