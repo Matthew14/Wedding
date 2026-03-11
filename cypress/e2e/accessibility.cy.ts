@@ -62,6 +62,8 @@ describe('Accessibility Tests', () => {
   beforeEach(() => {
     // Reset database for consistent testing
     cy.resetDb();
+    // Freeze time before the RSVP deadline so forms load in normal (editable) mode
+    cy.clock(new Date('2026-02-01T00:00:00Z').getTime(), ['Date']);
   });
 
   describe('Public Pages', () => {
