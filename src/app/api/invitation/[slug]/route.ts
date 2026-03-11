@@ -72,11 +72,10 @@ export async function GET(
         // Normalize URL names (lowercase)
         const normalizedUrlNames = urlNames.map((name) => name.toLowerCase());
 
-        // Verify names match (order doesn't matter, but all names must match)
+        // Verify names match (order doesn't matter, at least one URL name must match a DB name)
         const namesMatch =
-            normalizedUrlNames.length === dbNames.length &&
-            normalizedUrlNames.every((name) => dbNames.includes(name)) &&
-            dbNames.every((name) => normalizedUrlNames.includes(name));
+            normalizedUrlNames.length > 0 &&
+            normalizedUrlNames.every((name) => dbNames.includes(name));
 
         if (!namesMatch) {
             // Generic error - don't reveal which part is wrong
