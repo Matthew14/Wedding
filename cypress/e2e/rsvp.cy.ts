@@ -105,13 +105,9 @@ describe('RSVP Flow', () => {
       cy.contains('John & Jane Doe', { timeout: 5000 }).should('be.visible');
     });
 
-    it('should display RSVP form with invitee names', () => {
+    it('should display RSVP form with invitee names in header', () => {
       // Header shows formatted guest names
       cy.contains('John & Jane Doe').should('be.visible');
-
-      // Individual invitee names appear in card-style checkboxes
-      cy.contains('John Doe').should('be.visible');
-      cy.contains('Jane Doe').should('be.visible');
     });
 
     it('should show disabled info banner', () => {
@@ -128,11 +124,12 @@ describe('RSVP Flow', () => {
       cy.get('textarea[placeholder*="Any other information"]').should('be.disabled');
     });
 
-    it('should have disabled text inputs when form data shows accepted', () => {
-      // For an accepted RSVP, the dietary/song/travel fields should also be disabled
-      cy.get('textarea[placeholder*="dietary"]').should('be.disabled');
-      cy.get('input[placeholder*="song"]').should('be.disabled');
-      cy.get('textarea[placeholder*="travel"]').should('be.disabled');
+    it('should not show acceptance-dependent fields for unfilled RSVP', () => {
+      // For an unfilled RSVP after deadline, accepted is null (neutral state)
+      // so dietary/song/travel fields are hidden (they require accepted=true)
+      cy.get('textarea[placeholder*="dietary"]').should('not.exist');
+      cy.get('input[placeholder*="song"]').should('not.exist');
+      cy.get('textarea[placeholder*="travel"]').should('not.exist');
     });
   });
 

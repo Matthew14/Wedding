@@ -4,6 +4,8 @@ describe('Invitation Page', () => {
   beforeEach(() => {
     // Reset database before each test for isolation
     cy.resetDb();
+    // Freeze time before the RSVP deadline so button shows "Please click here to RSVP"
+    cy.clock(new Date('2026-02-01T00:00:00Z').getTime(), ['Date']);
   });
 
   describe('Valid Invitation Links', () => {
@@ -100,8 +102,8 @@ describe('Invitation Page', () => {
 
   describe('After RSVP Deadline', () => {
     it('should show "View your RSVP" button after deadline', () => {
-      // Set clock to after the RSVP deadline (28 Feb 2026 23:59 UTC)
-      cy.clock(new Date('2026-03-01T00:00:00Z').getTime(), ['Date']);
+      // Move clock to after the RSVP deadline (28 Feb 2026 23:59 UTC)
+      cy.clock().then(clock => clock.setSystemTime(new Date('2026-03-01T00:00:00Z')));
       cy.visit('/invitation/john-jane-TEST01');
 
       cy.contains('John & Jane').should('be.visible');
