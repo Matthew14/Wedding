@@ -7,7 +7,7 @@ import { IconX } from "@tabler/icons-react";
 import { Navigation } from "@/components/Navigation";
 import { RSVPFormData } from "@/types";
 import { useRSVPForm, useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
-import { isRSVPClosed, isInvitationExemptFromDeadline } from "@/utils/rsvpDeadline";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRSVPData, useRSVPSubmission } from "./hooks";
 import { RSVPFormHeader, RSVPFormFields, RSVPConfirmationModal } from "./components";
 
@@ -21,6 +21,7 @@ export default function RSVPFormPage() {
 
     const form = useRSVPForm();
     const { trackEvent } = useTracking();
+    const { user } = useAuth();
     useScrollDepth('rsvp_form');
 
     const {
@@ -31,10 +32,9 @@ export default function RSVPFormPage() {
         infoText,
         originalValues,
         isInitialLoad,
-        invitationId,
     } = useRSVPData({ code, form });
 
-    const disabled = isRSVPClosed() && (invitationId === null || !isInvitationExemptFromDeadline(invitationId));
+    const disabled = !user;
 
     const {
         submitting,

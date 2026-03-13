@@ -56,11 +56,10 @@ vi.mock("@/hooks", async (importOriginal) => {
     };
 });
 
-// Mock the RSVP deadline utility - default to closed (after deadline)
-const mockIsRSVPClosed = vi.fn(() => true);
-vi.mock("@/utils/rsvpDeadline", () => ({
-    isRSVPClosed: () => mockIsRSVPClosed(),
-    isInvitationExemptFromDeadline: () => false,
+// Mock AuthContext - default to no user (form disabled)
+const mockGetAuthUser = vi.fn(() => null as object | null);
+vi.mock("@/contexts/AuthContext", () => ({
+    useAuth: () => ({ user: mockGetAuthUser() }),
 }));
 
 // Import after mocking
@@ -117,7 +116,7 @@ describe("RSVPFormPage", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         global.fetch = vi.fn();
-        mockIsRSVPClosed.mockReturnValue(true);
+        mockGetAuthUser.mockReturnValue(null);
     });
 
     afterEach(() => {
@@ -135,12 +134,9 @@ describe("RSVPFormPage", () => {
         });
 
         it("should load and populate form with RSVP data", async () => {
-            // Set RSVP as open to test loading new RSVP data with default values
-            mockIsRSVPClosed.mockReturnValue(false);
-
             vi.mocked(global.fetch).mockResolvedValueOnce({
                 ok: true,
-                json: () => Promise.resolve(createMockRSVPData()),
+                json: () => Promise.resolve(createAmendmentData()),
             } as Response);
 
             await renderPage();
@@ -349,9 +345,9 @@ describe("RSVPFormPage", () => {
         });
     });
 
-    describe("Before Deadline", () => {
+    describe("With Auth User", () => {
         beforeEach(() => {
-            mockIsRSVPClosed.mockReturnValue(false);
+            mockGetAuthUser.mockReturnValue({ id: "admin-user" });
         });
 
         describe("Form Initialization", () => {
@@ -433,22 +429,6 @@ describe("RSVPFormPage", () => {
                 });
             });
 
-            it("should allow submission for new RSVPs (no original values)", async () => {
-                vi.mocked(global.fetch).mockResolvedValueOnce({
-                    ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
-                } as Response);
-
-                await renderPage();
-
-                await waitFor(() => {
-                    expect(screen.getByText("John Doe")).toBeInTheDocument();
-                });
-
-                // Submit button should be enabled for new RSVPs
-                const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
-                expect(submitButton).not.toBeDisabled();
-            });
         });
 
         describe("Form Submission", () => {
@@ -457,7 +437,7 @@ describe("RSVPFormPage", () => {
 
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -489,7 +469,7 @@ describe("RSVPFormPage", () => {
                 vi.mocked(global.fetch)
                     .mockResolvedValueOnce({
                         ok: true,
-                        json: () => Promise.resolve(createMockRSVPData()),
+                        json: () => Promise.resolve(createAmendmentData()),
                     } as Response)
                     .mockResolvedValueOnce({
                         ok: true,
@@ -529,7 +509,7 @@ describe("RSVPFormPage", () => {
 
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -538,7 +518,7 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Select an invitee
+                // Uncheck an invitee to make a change (invitees start checked with amendment data)
                 const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
                 await user.click(johnCheckbox);
 
@@ -563,43 +543,12 @@ describe("RSVPFormPage", () => {
         });
 
         describe("Invitee Management", () => {
-            it("should auto-select single invitee when accepting", async () => {
-                // Set RSVP as open to test interactive functionality
-                mockIsRSVPClosed.mockReturnValue(false);
-
-                const singleInviteeData = createMockRSVPData({
-                    invitees: [
-                        { id: "inv-1", first_name: "John", last_name: "Doe", coming: false },
-                    ],
-                });
-
-                vi.mocked(global.fetch).mockResolvedValueOnce({
-                    ok: true,
-                    json: () => Promise.resolve(singleInviteeData),
-                } as Response);
-
-                await renderPage();
-
-                await waitFor(() => {
-                    // For single invitees, the checkbox is hidden and they're auto-marked as coming when RSVP is open
-                    // The form should be ready to submit
-                    const submitButton = screen.getByRole("button", { name: /Submit RSVP/i });
-                    expect(submitButton).not.toBeDisabled();
-                });
-
-                // No "Is everyone coming?" section for single invitees
-                expect(screen.queryByText("Is everyone coming?")).not.toBeInTheDocument();
-            });
-
             it("should show validation error when no invitees selected", async () => {
                 const user = userEvent.setup();
 
-                // Set RSVP as open to test interactive functionality
-                mockIsRSVPClosed.mockReturnValue(false);
-
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -608,7 +557,7 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Uncheck all invitees (they're checked by default when RSVP is open)
+                // Uncheck all invitees (both start checked with amendment data)
                 const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
                 const janeCheckbox = screen.getByRole("checkbox", { name: "Jane Doe" });
                 await user.click(johnCheckbox); // Uncheck John
@@ -623,7 +572,7 @@ describe("RSVPFormPage", () => {
             it("should show invitee checkboxes for multiple invitees", async () => {
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -639,12 +588,9 @@ describe("RSVPFormPage", () => {
             it("should toggle individual invitee attendance", async () => {
                 const user = userEvent.setup();
 
-                // Set RSVP as open to test interactive functionality
-                mockIsRSVPClosed.mockReturnValue(false);
-
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -656,7 +602,7 @@ describe("RSVPFormPage", () => {
                 const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
                 const janeCheckbox = screen.getByRole("checkbox", { name: "Jane Doe" });
 
-                // Initially all checked (default when "Yes" is selected and RSVP is open)
+                // Initially all checked (amendment data has coming: true)
                 expect(johnCheckbox).toBeChecked();
                 expect(janeCheckbox).toBeChecked();
 
@@ -681,12 +627,9 @@ describe("RSVPFormPage", () => {
             it("should hide villa and dietary questions when declining", async () => {
                 const user = userEvent.setup();
 
-                // Set RSVP as open to test interactive functionality
-                mockIsRSVPClosed.mockReturnValue(false);
-
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -695,7 +638,7 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Villa question should be visible when accepting (default state when RSVP is open)
+                // Villa question should be visible when accepting
                 expect(screen.getByText(/Will you be staying with us\?/i)).toBeInTheDocument();
 
                 // Decline the invitation
@@ -711,12 +654,9 @@ describe("RSVPFormPage", () => {
             it("should show message field regardless of acceptance status", async () => {
                 const user = userEvent.setup();
 
-                // Set RSVP as open to test interactive functionality
-                mockIsRSVPClosed.mockReturnValue(false);
-
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -725,7 +665,7 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Message field visible when accepting (default state when RSVP is open)
+                // Message field visible when accepting
                 expect(screen.getByText(/Anything else you'd like us to know/i)).toBeInTheDocument();
 
                 // Decline the invitation
@@ -743,12 +683,9 @@ describe("RSVPFormPage", () => {
             it("should display Guest Attendance section in confirmation modal", async () => {
                 const user = userEvent.setup();
 
-                // Set RSVP as open to test interactive functionality
-                mockIsRSVPClosed.mockReturnValue(false);
-
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData()),
                 } as Response);
 
                 await renderPage();
@@ -757,7 +694,7 @@ describe("RSVPFormPage", () => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
 
-                // Uncheck John (they're checked by default when RSVP is open)
+                // Uncheck John (invitees start checked with amendment data)
                 const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
                 await user.click(johnCheckbox);
 
@@ -777,12 +714,9 @@ describe("RSVPFormPage", () => {
             it("should display dietary restrictions in confirmation modal when provided", async () => {
                 const user = userEvent.setup();
 
-                // Set RSVP as open to test interactive functionality
-                mockIsRSVPClosed.mockReturnValue(false);
-
                 vi.mocked(global.fetch).mockResolvedValueOnce({
                     ok: true,
-                    json: () => Promise.resolve(createMockRSVPData()),
+                    json: () => Promise.resolve(createAmendmentData({ dietaryRestrictions: "" })),
                 } as Response);
 
                 await renderPage();
@@ -790,9 +724,6 @@ describe("RSVPFormPage", () => {
                 await waitFor(() => {
                     expect(screen.getByText("John Doe")).toBeInTheDocument();
                 });
-
-                // Invitees are already selected by default when RSVP is open
-                // No need to click checkboxes
 
                 // Add dietary restrictions
                 const dietaryTextarea = screen.getByPlaceholderText(/dietary requirements/i);
@@ -814,42 +745,11 @@ describe("RSVPFormPage", () => {
         });
 
         describe("Edge Cases", () => {
-            describe("Empty Invitees Handling", () => {
-                it("handles single invitee gracefully (auto-selected)", async () => {
-                    // Set RSVP as open to test interactive functionality
-                    mockIsRSVPClosed.mockReturnValue(false);
-
-                    const singleInviteeData = createMockRSVPData({
-                        invitees: [
-                            { id: "inv-1", first_name: "Solo", last_name: "Guest", coming: false },
-                        ],
-                    });
-
-                    global.fetch = vi.fn().mockResolvedValueOnce({
-                        ok: true,
-                        json: () => Promise.resolve(singleInviteeData),
-                    });
-
-                    await renderPage();
-
-                    // Wait for loading to finish and data to appear
-                    await waitFor(() => {
-                        expect(screen.queryByText("Loading")).not.toBeInTheDocument();
-                    });
-
-                    // Form defaults to "Yes" with single invitee auto-selected when RSVP is open
-                    // Should not show validation error for single invitee
-                    await waitFor(() => {
-                        expect(screen.queryByText(/select at least one guest/i)).not.toBeInTheDocument();
-                    });
-                });
-            });
-
             describe("Special Characters in Form Fields", () => {
                 it("handles special characters in dietary restrictions input", async () => {
                     global.fetch = vi.fn().mockResolvedValueOnce({
                         ok: true,
-                        json: () => Promise.resolve(createMockRSVPData()),
+                        json: () => Promise.resolve(createAmendmentData({ dietaryRestrictions: "" })),
                     });
 
                     await renderPage();
@@ -857,12 +757,6 @@ describe("RSVPFormPage", () => {
 
                     await waitFor(() => {
                         expect(screen.getByText("John Doe")).toBeInTheDocument();
-                    });
-
-                    // Form defaults to "Yes" with invitees checked
-                    // Wait for invitee checkboxes to appear (already checked)
-                    await waitFor(() => {
-                        expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
                     });
 
                     // Enter special characters in dietary field
@@ -876,7 +770,7 @@ describe("RSVPFormPage", () => {
                 it("handles unicode and emoji in message field", async () => {
                     global.fetch = vi.fn().mockResolvedValueOnce({
                         ok: true,
-                        json: () => Promise.resolve(createMockRSVPData()),
+                        json: () => Promise.resolve(createAmendmentData({ message: "" })),
                     });
 
                     await renderPage();
@@ -901,7 +795,7 @@ describe("RSVPFormPage", () => {
                     global.fetch = vi.fn()
                         .mockResolvedValueOnce({
                             ok: true,
-                            json: () => Promise.resolve(createMockRSVPData()),
+                            json: () => Promise.resolve(createAmendmentData()),
                         })
                         .mockResolvedValueOnce({
                             ok: true,
@@ -939,7 +833,7 @@ describe("RSVPFormPage", () => {
                     const mockFetch = vi.fn()
                         .mockResolvedValueOnce({
                             ok: true,
-                            json: () => Promise.resolve(createMockRSVPData()),
+                            json: () => Promise.resolve(createAmendmentData()),
                         })
                         .mockResolvedValueOnce({
                             ok: true,
@@ -985,7 +879,7 @@ describe("RSVPFormPage", () => {
                 it("maintains form state after validation error", async () => {
                     global.fetch = vi.fn().mockResolvedValueOnce({
                         ok: true,
-                        json: () => Promise.resolve(createMockRSVPData()),
+                        json: () => Promise.resolve(createAmendmentData({ message: "" })),
                     });
 
                     await renderPage();
@@ -999,7 +893,7 @@ describe("RSVPFormPage", () => {
                     const messageTextarea = screen.getByPlaceholderText(/any other information/i);
                     await user.type(messageTextarea, "Test message");
 
-                    // Uncheck all invitees (they're checked by default) to cause validation error
+                    // Uncheck all invitees (both start checked with amendment data) to cause validation error
                     const johnCheckbox = screen.getByRole("checkbox", { name: "John Doe" });
                     const janeCheckbox = screen.getByRole("checkbox", { name: "Jane Doe" });
                     await user.click(johnCheckbox);
@@ -1019,7 +913,7 @@ describe("RSVPFormPage", () => {
                 it("hides acceptance-specific fields when declining", async () => {
                     global.fetch = vi.fn().mockResolvedValueOnce({
                         ok: true,
-                        json: () => Promise.resolve(createMockRSVPData()),
+                        json: () => Promise.resolve(createAmendmentData()),
                     });
 
                     await renderPage();
@@ -1029,7 +923,7 @@ describe("RSVPFormPage", () => {
                         expect(screen.getByText("John Doe")).toBeInTheDocument();
                     });
 
-                    // Accept - form defaults to accepted=true, so invitees should already be visible
+                    // Accept - amendment data loads with accepted=true, so invitees are already visible
                     // Invitee checkboxes should be visible when accepting
                     await waitFor(() => {
                         expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
@@ -1050,7 +944,7 @@ describe("RSVPFormPage", () => {
                 it("handles maximum length text in dietary restrictions", async () => {
                     global.fetch = vi.fn().mockResolvedValueOnce({
                         ok: true,
-                        json: () => Promise.resolve(createMockRSVPData()),
+                        json: () => Promise.resolve(createAmendmentData({ dietaryRestrictions: "" })),
                     });
 
                     await renderPage();
@@ -1058,12 +952,6 @@ describe("RSVPFormPage", () => {
 
                     await waitFor(() => {
                         expect(screen.getByText("John Doe")).toBeInTheDocument();
-                    });
-
-                    // Form defaults to accepted=true, so invitees should already be visible and checked
-                    // Wait for invitee checkboxes
-                    await waitFor(() => {
-                        expect(screen.getByRole("checkbox", { name: "John Doe" })).toBeInTheDocument();
                     });
 
                     // Try to enter very long text (should be handled by form validation)

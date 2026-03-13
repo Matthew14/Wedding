@@ -26,8 +26,12 @@ function createMockChain(finalResult: { data: unknown; error: unknown } = { data
 }
 
 // Mock Supabase
+const mockGetUser = vi.fn(() => Promise.resolve({ data: { user: { id: "admin-user" } }, error: null }));
 const mockSupabaseClient = {
     from: vi.fn(),
+    auth: {
+        getUser: mockGetUser,
+    },
 };
 
 vi.mock("@/utils/supabase/server", () => ({
@@ -52,17 +56,10 @@ vi.mock("@/utils/api/rateLimit", () => ({
     },
 }));
 
-// Mock the RSVP deadline utility
-const mockIsRSVPClosed = vi.fn(() => false);
-vi.mock("@/utils/rsvpDeadline", () => ({
-    isRSVPClosed: () => mockIsRSVPClosed(),
-    isInvitationExemptFromDeadline: () => false,
-}));
-
 describe("/api/rsvp/[code]", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockIsRSVPClosed.mockReturnValue(false);
+        mockGetUser.mockResolvedValue({ data: { user: { id: "admin-user" } }, error: null });
     });
 
     describe("GET /api/rsvp/[code]", () => {
@@ -237,11 +234,10 @@ describe("/api/rsvp/[code]", () => {
         });
     });
 
-    describe("POST /api/rsvp/[code] - After Deadline", () => {
-        it("returns 403 when RSVP deadline has passed", async () => {
-            mockIsRSVPClosed.mockReturnValue(true);
+    describe("POST /api/rsvp/[code] - Unauthenticated", () => {
+        it("returns 403 when user is not authenticated", async () => {
+            mockGetUser.mockResolvedValue({ data: { user: null as unknown as { id: string } }, error: null });
 
-            // Deadline check now happens after RSVP lookup, so we need to mock it
             const mockRsvp = { id: "rsvp-123", invitation_id: 99 };
             mockSupabaseClient.from.mockReturnValue(
                 createMockChain({ data: mockRsvp, error: null })
@@ -259,10 +255,7 @@ describe("/api/rsvp/[code]", () => {
         });
     });
 
-    describe("POST /api/rsvp/[code] - Before Deadline", () => {
-        beforeEach(() => {
-            mockIsRSVPClosed.mockReturnValue(false);
-        });
+    describe("POST /api/rsvp/[code] - Authenticated", () => {
 
         it("returns 400 for invalid code format", async () => {
             const request = new NextRequest("http://localhost:3000/api/rsvp/AB", {
@@ -475,10 +468,7 @@ describe("/api/rsvp/[code]", () => {
     });
 
     describe("Edge Cases", () => {
-        describe("POST Edge Cases - Before Deadline", () => {
-            beforeEach(() => {
-                mockIsRSVPClosed.mockReturnValue(false);
-            });
+        describe("POST Edge Cases - Authenticated", () => {
 
             it("handles empty invitees array gracefully", async () => {
                 const mockRsvp = { id: "rsvp-123", invitation_id: "inv-456" };
