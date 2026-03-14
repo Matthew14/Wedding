@@ -8,6 +8,7 @@ import { Navigation } from "@/components/Navigation";
 import { RSVPFormData } from "@/types";
 import { useRSVPForm, useTracking, RSVPEvents, useScrollDepth } from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
+import { isInvitationExemptFromDeadline } from "@/utils/rsvpExemptions";
 import { useRSVPData, useRSVPSubmission } from "./hooks";
 import { RSVPFormHeader, RSVPFormFields, RSVPConfirmationModal } from "./components";
 
@@ -32,9 +33,10 @@ export default function RSVPFormPage() {
         infoText,
         originalValues,
         isInitialLoad,
+        invitationId,
     } = useRSVPData({ code, form });
 
-    const disabled = !user;
+    const disabled = !user && (invitationId === null || !isInvitationExemptFromDeadline(invitationId));
 
     const {
         submitting,

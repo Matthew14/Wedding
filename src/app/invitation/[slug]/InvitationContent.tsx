@@ -16,6 +16,7 @@ import Image from "next/image";
 import { Navigation } from "@/components/Navigation";
 import { useTracking, InvitationEvents } from "@/hooks";
 import { formatGuestNames, InvitationData } from "@/utils/invitation";
+import { isInvitationExemptFromDeadline } from "@/utils/rsvpExemptions";
 
 interface InvitationContentProps {
     slug: string;
@@ -443,7 +444,7 @@ export default function InvitationContent({ slug }: InvitationContentProps) {
                                             e.currentTarget.style.color = "var(--gold-dark)";
                                         }}
                                     >
-                                        {"View your RSVP"}
+                                        {isInvitationExemptFromDeadline(Number(invitationData.invitationId)) ? "Please click here to RSVP" : "View your RSVP"}
                                     </Button>
 
                                     {/* Schedule link */}

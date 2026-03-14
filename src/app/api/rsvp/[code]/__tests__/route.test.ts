@@ -38,6 +38,12 @@ vi.mock("@/utils/supabase/server", () => ({
     createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
 }));
 
+// Mock exemptions - default non-exempt; individual tests can override
+const mockIsExempt = vi.fn<(id: number) => boolean>();
+vi.mock("@/utils/rsvpExemptions", () => ({
+    isInvitationExemptFromDeadline: (id: number) => mockIsExempt(id),
+}));
+
 // Mock rate limiting to always allow requests in tests
 vi.mock("@/utils/api/rateLimit", () => ({
     checkRateLimit: vi.fn(() => ({
@@ -252,6 +258,27 @@ describe("/api/rsvp/[code]", () => {
 
             expect(response.status).toBe(403);
             expect(data.error).toContain("RSVP submissions are now closed");
+        });
+
+        it("allows submission for exempt invitation without authentication", async () => {
+            mockGetUser.mockResolvedValue({ data: { user: null as unknown as { id: string } }, error: null });
+            mockIsExempt.mockReturnValue(true);
+
+            const mockRsvp = { id: "rsvp-123", invitation_id: 4 };
+            const mockInvitation = { villa_offered: true };
+            mockSupabaseClient.from.mockImplementation((table: string) => {
+                if (table === "RSVPs") return createMockChain({ data: mockRsvp, error: null });
+                if (table === "invitation") return createMockChain({ data: mockInvitation, error: null });
+                return createMockChain();
+            });
+
+            const request = new NextRequest("http://localhost:3000/api/rsvp/ABCDEF", {
+                method: "POST",
+                body: JSON.stringify({ accepted: true }),
+            });
+            const response = await POST(request, { params: Promise.resolve({ code: "ABCDEF" }) });
+
+            expect(response.status).toBe(200);
         });
     });
 
