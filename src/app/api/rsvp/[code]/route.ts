@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { checkRateLimit, rateLimitedResponse, addRateLimitHeaders, RATE_LIMITS } from "@/utils/api/rateLimit";
+import { isInvitationExemptFromDeadline } from "@/utils/rsvpExemptions";
 
 // GET: Fetch RSVP data and invitees
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
@@ -104,9 +105,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             return NextResponse.json({ error: "RSVP code not found" }, { status: 404 });
         }
 
-        // Only authenticated users can submit RSVPs
+        // Require authentication unless the invitation is exempt
         const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (!authUser) {
+        if (!authUser && !isInvitationExemptFromDeadline(rsvpData.invitation_id)) {
             return NextResponse.json(
                 { error: "RSVP submissions are now closed. Please contact us directly for any changes." },
                 { status: 403 }

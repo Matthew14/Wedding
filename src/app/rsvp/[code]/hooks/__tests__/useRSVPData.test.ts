@@ -29,6 +29,12 @@ vi.mock('@/utils/fetchWithTimeout', () => ({
     },
 }));
 
+// Mock exemptions
+const mockIsExempt = vi.fn<(id: number) => boolean>();
+vi.mock('@/utils/rsvpExemptions', () => ({
+    isInvitationExemptFromDeadline: (id: number) => mockIsExempt(id),
+}));
+
 import { fetchWithTimeout } from '@/utils/fetchWithTimeout';
 
 const mockFetchWithTimeout = vi.mocked(fetchWithTimeout);
@@ -310,7 +316,7 @@ describe('useRSVPData', () => {
         expect(result.current.villaOffered).toBe(true);
     });
 
-    it('should initialize new RSVPs in neutral state', async () => {
+    it('should initialize new RSVPs in neutral state for non-exempt invitations', async () => {
         const mockData = {
             invitees: [
                 { id: '1', first_name: 'John', last_name: 'Doe', is_primary: true },
@@ -318,7 +324,7 @@ describe('useRSVPData', () => {
             ],
             accepted: true,
             rsvpId: 'rsvp-1',
-            invitationId: 'inv-1',
+            invitationId: 99,
             stayingVilla: false,
             dietaryRestrictions: '',
             songRequest: '',
@@ -339,14 +345,50 @@ describe('useRSVPData', () => {
             expect(result.current.loading).toBe(false);
         });
 
-        // Should set invitees with coming: false (neutral state)
         expect(mockForm.setFieldValue).toHaveBeenCalledWith('invitees', [
             { id: '1', name: 'John Doe', coming: false },
             { id: '2', name: 'Jane Doe', coming: false },
         ]);
-
-        // Should NOT pre-fill accepted or staying_villa
         expect(mockForm.setFieldValue).not.toHaveBeenCalledWith('accepted', true);
         expect(mockForm.setFieldValue).not.toHaveBeenCalledWith('staying_villa', 'yes');
+    });
+
+    it('should initialize new RSVPs with helpful defaults for exempt invitations', async () => {
+        mockIsExempt.mockReturnValue(true);
+
+        const mockData = {
+            invitees: [
+                { id: '1', first_name: 'John', last_name: 'Doe', is_primary: true },
+                { id: '2', first_name: 'Jane', last_name: 'Doe', is_primary: false },
+            ],
+            accepted: true,
+            rsvpId: 'rsvp-1',
+            invitationId: 4,
+            stayingVilla: false,
+            dietaryRestrictions: '',
+            songRequest: '',
+            travelPlans: '',
+            message: '',
+            updatedAt: null,
+            villaOffered: true,
+        };
+
+        mockFetchWithTimeout.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve(mockData),
+        } as Response);
+
+        const { result } = renderHook(() => useRSVPData({ code: 'TEST01', form: mockForm }));
+
+        await waitFor(() => {
+            expect(result.current.loading).toBe(false);
+        });
+
+        expect(mockForm.setFieldValue).toHaveBeenCalledWith('accepted', true);
+        expect(mockForm.setFieldValue).toHaveBeenCalledWith('invitees', [
+            { id: '1', name: 'John Doe', coming: true },
+            { id: '2', name: 'Jane Doe', coming: true },
+        ]);
+        expect(mockForm.setFieldValue).toHaveBeenCalledWith('staying_villa', 'yes');
     });
 });
