@@ -62,8 +62,6 @@ describe('Accessibility Tests', () => {
   beforeEach(() => {
     // Reset database for consistent testing
     cy.resetDb();
-    // Freeze time before the RSVP deadline so forms load in normal (editable) mode
-    cy.clock(new Date('2026-02-01T00:00:00Z').getTime(), ['Date']);
   });
 
   describe('Public Pages', () => {
@@ -106,10 +104,11 @@ describe('Accessibility Tests', () => {
     });
 
     it('RSVP form page should have no accessibility violations', () => {
-      cy.visit('/rsvp/TEST01');
+      // TEST04 is invitation ID 4 (exempt from deadline) so invitees render automatically
+      cy.visit('/rsvp/TEST04');
 
       // Wait for page to load with invitee data
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      cy.contains('James Williams', { timeout: 5000 }).should('be.visible');
 
       cy.injectAxe();
       cy.checkA11y(undefined, axeConfig, logViolations);
@@ -148,16 +147,17 @@ describe('Accessibility Tests', () => {
     });
 
     it('Card-based selections should have proper ARIA attributes', () => {
-      cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      // TEST04 is invitation ID 4 (exempt from deadline) so invitees render automatically
+      cy.visit('/rsvp/TEST04');
+      cy.contains('James Williams', { timeout: 5000 }).should('be.visible');
 
       // Verify invitee card checkboxes have proper ARIA attributes
-      cy.get('[role="checkbox"][aria-label="John Doe"]').should(($el) => {
+      cy.get('[role="checkbox"][aria-label="James Williams"]').should(($el) => {
         expect($el).to.have.attr('aria-checked');
         expect($el).to.have.attr('tabindex', '0');
       });
 
-      cy.get('[role="checkbox"][aria-label="Jane Doe"]').should(($el) => {
+      cy.get('[role="checkbox"][aria-label="Sarah Williams"]').should(($el) => {
         expect($el).to.have.attr('aria-checked');
         expect($el).to.have.attr('tabindex', '0');
       });
@@ -167,8 +167,9 @@ describe('Accessibility Tests', () => {
     });
 
     it('Text inputs and textareas should be accessible', () => {
-      cy.visit('/rsvp/TEST01');
-      cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
+      // TEST04 is invitation ID 4 (exempt from deadline) so invitees render automatically
+      cy.visit('/rsvp/TEST04');
+      cy.contains('James Williams', { timeout: 5000 }).should('be.visible');
 
       // Check that form text inputs exist and are accessible
       cy.get('textarea[placeholder*="dietary"]').should('exist');

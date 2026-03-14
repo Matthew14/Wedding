@@ -7,10 +7,6 @@ describe('Invitation Page', () => {
   });
 
   describe('Valid Invitation Links', () => {
-    beforeEach(() => {
-      // Freeze time before the RSVP deadline so button shows "Please click here to RSVP"
-      cy.clock(new Date('2026-02-01T00:00:00Z').getTime(), ['Date']);
-    });
     it('should display personalized invitation for a couple', () => {
       // TEST01 is linked to John Doe and Jane Doe
       // URL format: /invitation/name-name-CODE
@@ -29,8 +25,8 @@ describe('Invitation Page', () => {
       cy.contains('Gran Villa Rosa').should('be.visible');
       cy.contains('Vilanova i la Geltrú').should('be.visible');
 
-      // Check RSVP CTA button
-      cy.contains('Please click here to RSVP').should('be.visible');
+      // RSVP period is closed; button shows "View your RSVP"
+      cy.contains('View your RSVP').should('be.visible');
     });
 
     it('should display personalized invitation for a single guest', () => {
@@ -42,8 +38,8 @@ describe('Invitation Page', () => {
       cy.contains('Wish to invite').should('be.visible');
       cy.contains('Alice').should('be.visible');
 
-      // Check RSVP CTA button
-      cy.contains('Please click here to RSVP').should('be.visible');
+      // RSVP period is closed; button shows "View your RSVP"
+      cy.contains('View your RSVP').should('be.visible');
     });
 
     it('should handle case-insensitive names in URL', () => {
@@ -51,7 +47,7 @@ describe('Invitation Page', () => {
       cy.visit('/invitation/JOHN-JANE-TEST01');
 
       cy.contains('John & Jane').should('be.visible');
-      cy.contains('Please click here to RSVP').should('be.visible');
+      cy.contains('View your RSVP').should('be.visible');
     });
 
     it('should handle names in different order', () => {
@@ -59,7 +55,7 @@ describe('Invitation Page', () => {
       cy.visit('/invitation/jane-john-TEST01');
 
       cy.contains('John & Jane').should('be.visible');
-      cy.contains('Please click here to RSVP').should('be.visible');
+      cy.contains('View your RSVP').should('be.visible');
     });
 
     it('should display personalized invitation for 3 guests', () => {
@@ -73,12 +69,12 @@ describe('Invitation Page', () => {
       cy.contains('Wish to invite').should('be.visible');
       cy.contains('Michael, Sarah & Emma').should('be.visible');
 
-      // Check RSVP CTA button
-      cy.contains('Please click here to RSVP').should('be.visible');
+      // RSVP period is closed; button shows "View your RSVP"
+      cy.contains('View your RSVP').should('be.visible');
     });
 
     it('should display personalized invitation for 4 guests (family)', () => {
-      // TEST04 is linked to James, Sarah, Tom, Lucy Williams
+      // TEST04 is linked to James, Sarah, Tom, Lucy Williams (invitation ID 4, exempt from deadline)
       cy.visit('/invitation/james-sarah-tom-lucy-TEST04');
 
       // Check page loads without error
@@ -88,7 +84,7 @@ describe('Invitation Page', () => {
       cy.contains('Wish to invite').should('be.visible');
       cy.contains('James, Sarah, Tom & Lucy').should('be.visible');
 
-      // Check RSVP CTA button
+      // Invitation ID 4 is exempt from the deadline — button shows "Please click here to RSVP"
       cy.contains('Please click here to RSVP').should('be.visible');
     });
 
@@ -98,34 +94,19 @@ describe('Invitation Page', () => {
 
       // Should still display in original order from database
       cy.contains('Michael, Sarah & Emma').should('be.visible');
-      cy.contains('Please click here to RSVP').should('be.visible');
-    });
-  });
-
-  describe('After RSVP Deadline', () => {
-    it('should show "View your RSVP" button after deadline', () => {
-      // Set clock to after the RSVP deadline (28 Feb 2026 23:59 UTC)
-      cy.clock(new Date('2026-03-01T00:00:00Z').getTime(), ['Date']);
-      cy.visit('/invitation/john-jane-TEST01');
-
-      cy.contains('John & Jane').should('be.visible');
       cy.contains('View your RSVP').should('be.visible');
     });
   });
 
   describe('RSVP Button Navigation', () => {
-    beforeEach(() => {
-      cy.clock(new Date('2026-02-01T00:00:00Z').getTime(), ['Date']);
-    });
-
     it('should navigate to RSVP form when clicking CTA button', () => {
       cy.visit('/invitation/john-jane-TEST01');
 
       // Wait for invitation to load
       cy.contains('John & Jane').should('be.visible');
 
-      // Click the RSVP button
-      cy.contains('button', 'Please click here to RSVP').should('be.visible').click();
+      // Click the RSVP button (RSVP period is closed so shows "View your RSVP")
+      cy.contains('button', 'View your RSVP').should('be.visible').click();
 
       // Should navigate to RSVP form with the code
       cy.url({ timeout: 15000 }).should('include', '/rsvp/TEST01');
@@ -179,17 +160,13 @@ describe('Invitation Page', () => {
   });
 
   describe('Responsive Design', () => {
-    beforeEach(() => {
-      cy.clock(new Date('2026-02-01T00:00:00Z').getTime(), ['Date']);
-    });
-
     it('should display correctly on mobile', () => {
       cy.viewport('iphone-x');
       cy.visit('/invitation/john-jane-TEST01');
 
       cy.contains('Rebecca & Matthew').should('be.visible');
       cy.contains('John & Jane').should('be.visible');
-      cy.contains('Please click here to RSVP').should('be.visible');
+      cy.contains('View your RSVP').should('be.visible');
     });
 
     it('should display correctly on tablet', () => {
@@ -197,7 +174,7 @@ describe('Invitation Page', () => {
       cy.visit('/invitation/john-jane-TEST01');
 
       cy.contains('Rebecca & Matthew').should('be.visible');
-      cy.contains('Please click here to RSVP').should('be.visible');
+      cy.contains('View your RSVP').should('be.visible');
     });
   });
 
