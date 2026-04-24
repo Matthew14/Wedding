@@ -39,7 +39,7 @@ const schedule: DaySchedule[] = [
         events: [
             { time: "14:00", title: "Check in for staying guests", icon: <IconDoorEnter size={20} /> },
             { title: "Pool Bar & BBQ", icon: <IconPool size={20} /> },
-            { title: "Evening dinner", icon: <IconToolsKitchen2 size={20} /> },
+            { time: "19:00", title: "Tapas", icon: <IconToolsKitchen2 size={20} /> },
             { title: "Live entertainment", icon: <IconMusic size={20} /> },
         ],
     },
@@ -50,9 +50,10 @@ const schedule: DaySchedule[] = [
         bgColor: "linear-gradient(135deg, #fdfcfa 0%, #f5f0e8 100%)",
         accentColor: "var(--gold-dark)",
         events: [
-            { title: "Breakfast", icon: <IconChefHat size={20} /> },
-            { title: "Pre-Ceremony appetisers", icon: <IconGlass size={20} /> },
-            { title: "The Ceremony", icon: <IconHeart size={20} /> },
+            { time: "09:00", title: "Breakfast", icon: <IconChefHat size={20} /> },
+            { time: "12:00", title: "Pre-Ceremony appetisers", icon: <IconGlass size={20} /> },
+            { time: "14:30", title: "Cava reception", icon: <IconGlass size={20} /> },
+            { time: "15:00", title: "The Ceremony", icon: <IconHeart size={20} /> },
             { title: "Reception Dinner", icon: <IconToolsKitchen2 size={20} /> },
             { title: "Live band at Laguna Stage", icon: <IconMicrophone2 size={20} /> },
             { title: "DJ & dancing", icon: <IconMusic size={20} /> },
@@ -66,8 +67,8 @@ const schedule: DaySchedule[] = [
         accentColor: "var(--gold)",
         events: [
             { title: "Breakfast", icon: <IconChefHat size={20} /> },
-            { title: "Pool party & BBQ lunch", icon: <IconPool size={20} /> },
-            { time: "Afternoon", title: "Check out", icon: <IconDoor size={20} /> },
+            { time: "11:00", title: "Check out", icon: <IconDoor size={20} /> },
+            { time: "until 13:00", title: "Pool party & BBQ lunch", icon: <IconPool size={20} /> },
         ],
     },
 ];
