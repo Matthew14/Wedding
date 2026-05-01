@@ -160,7 +160,11 @@ export function SeatingMap({ allSeats = [], highlightedSeats = [], onSeatClick }
                         stroke={isOwn ? "#6d5a44" : isParty ? "#c9a84c" : "rgba(139,115,85,0.3)"}
                         strokeWidth={isOwn ? 2.5 : isParty ? 2 : 1}
                         style={clickable ? { cursor: "pointer" } : undefined}
-                        onClick={clickable ? () => onSeatClick?.(clickable) : undefined}
+                        onClick={clickable ? () => onSeatClick?.({
+                            name: clickable.name,
+                            tableNumber: clickable.tableNumber,
+                            seatNumber: clickable.seatNumber,
+                        }) : undefined}
                     />
                 );
             })}
