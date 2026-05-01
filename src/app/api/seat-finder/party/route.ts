@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Fetch all members of the same invitation
     const { data: party, error: partyError } = await supabase
         .from("invitees")
-        .select("id, first_name, last_name, is_primary")
+        .select("id, first_name, last_name, is_primary, table_number, seat_number")
         .eq("invitation_id", invitee.invitation_id)
         .order("is_primary", { ascending: false })
         .order("first_name");
