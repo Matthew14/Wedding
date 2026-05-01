@@ -139,7 +139,7 @@ describe("SeatingMap", () => {
             const onSeatClick = vi.fn();
 
             renderMap({
-                allSeats: [{ tableNumber: "2", seatNumber: 1, name: "Venue Guest" }],
+                allSeats: [{ tableNumber: "2", seatNumber: 2, name: "Venue Guest" }],
                 onSeatClick,
             });
 
@@ -149,7 +149,7 @@ describe("SeatingMap", () => {
                 (r) => r.style.cursor === "pointer" && r.getAttribute("fill") === "#e4ddd0"
             );
 
-            // Click the first one that corresponds to table 2, seat 1
+            // Click the first one that corresponds to table 2, seat 2
             // Since we only have one allSeats entry, only that rect should be pointer+default-fill
             expect(pointerRects.length).toBeGreaterThanOrEqual(1);
             await user.click(pointerRects[0]);
@@ -157,7 +157,7 @@ describe("SeatingMap", () => {
             expect(onSeatClick).toHaveBeenCalledWith({
                 name: "Venue Guest",
                 tableNumber: "2",
-                seatNumber: 1,
+                seatNumber: 2,
             });
         });
 
