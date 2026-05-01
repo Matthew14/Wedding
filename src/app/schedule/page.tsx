@@ -6,23 +6,24 @@ import {
     IconGlass,
     IconMusic,
     IconPool,
-    IconMicrophone2,
     IconChefHat,
     IconToolsKitchen2,
     IconDoor,
     IconDoorEnter,
+    IconStar,
 } from "@tabler/icons-react";
 import BackToInvitation from "./BackToInvitation";
 
 interface TimelineEvent {
     time?: string;
+    endTime?: string;
     title: string;
+    location?: string;
     icon: React.ReactNode;
 }
 
 interface DaySchedule {
     day: string;
-    date: string;
     title: string;
     bgColor: string;
     accentColor: string;
@@ -31,44 +32,114 @@ interface DaySchedule {
 
 const schedule: DaySchedule[] = [
     {
-        day: "Day One",
-        date: "Friday",
+        day: "Day 1 — Arrival Day",
         title: "Welcome",
         bgColor: "linear-gradient(135deg, #f9f7f2 0%, #f0ebe0 100%)",
         accentColor: "var(--gold)",
         events: [
-            { time: "14:00", title: "Check in for staying guests", icon: <IconDoorEnter size={20} /> },
-            { title: "Pool Bar & BBQ", icon: <IconPool size={20} /> },
-            { time: "19:00", title: "Tapas", icon: <IconToolsKitchen2 size={20} /> },
-            { title: "Live entertainment", icon: <IconMusic size={20} /> },
+            {
+                time: "14:00",
+                title: "Check-in",
+                icon: <IconDoorEnter size={20} />,
+            },
+            {
+                time: "14:30",
+                endTime: "16:30",
+                title: "Welcome Lunch",
+                icon: <IconChefHat size={20} />,
+            },
+            {
+                time: "19:00",
+                endTime: "22:00",
+                title: "Tapas Night",
+                location: "Mimosa tree",
+                icon: <IconToolsKitchen2 size={20} />,
+            },
         ],
     },
     {
-        day: "Day Two",
-        date: "Saturday",
+        day: "Day 2 — Wedding Day",
         title: "The Wedding",
         bgColor: "linear-gradient(135deg, #fdfcfa 0%, #f5f0e8 100%)",
         accentColor: "var(--gold-dark)",
         events: [
-            { time: "09:00", title: "Breakfast", icon: <IconChefHat size={20} /> },
-            { time: "12:00", title: "Pre-Ceremony appetisers", icon: <IconGlass size={20} /> },
-            { time: "14:30", title: "Cava reception", icon: <IconGlass size={20} /> },
-            { time: "15:00", title: "The Ceremony", icon: <IconHeart size={20} /> },
-            { title: "Reception Dinner", icon: <IconToolsKitchen2 size={20} /> },
-            { title: "Live band at Laguna Stage", icon: <IconMicrophone2 size={20} /> },
-            { title: "DJ & dancing", icon: <IconMusic size={20} /> },
+            {
+                time: "09:00",
+                endTime: "10:00",
+                title: "Breakfast",
+                icon: <IconChefHat size={20} />,
+            },
+            {
+                time: "12:00",
+                endTime: "13:00",
+                title: "Lunch",
+                icon: <IconToolsKitchen2 size={20} />,
+            },
+            {
+                time: "14:30",
+                endTime: "15:00",
+                title: "Welcome Cava",
+                icon: <IconGlass size={20} />,
+            },
+            {
+                time: "15:00",
+                endTime: "16:00",
+                title: "Wedding Ceremony",
+                location: "Arch",
+                icon: <IconHeart size={20} />,
+            },
+            {
+                time: "16:30",
+                endTime: "17:30",
+                title: "Appetizers at the Piazza",
+                icon: <IconGlass size={20} />,
+            },
+            {
+                time: "18:00",
+                endTime: "21:00",
+                title: "Wedding Dinner",
+                location: "Palm Trees",
+                icon: <IconToolsKitchen2 size={20} />,
+            },
+            {
+                time: "21:00",
+                endTime: "23:00",
+                title: "Live Band",
+                location: "Laguna Bar",
+                icon: <IconMusic size={20} />,
+            },
+            {
+                time: "00:00",
+                endTime: "03:00",
+                title: "Night Club Party",
+                location: "Night Club",
+                icon: <IconStar size={20} />,
+            },
         ],
     },
     {
-        day: "Day Three",
-        date: "Sunday",
+        day: "Day 3 — Departure Day",
         title: "Farewell",
         bgColor: "linear-gradient(135deg, #f9f7f2 0%, #f0ebe0 100%)",
         accentColor: "var(--gold)",
         events: [
-            { title: "Breakfast", icon: <IconChefHat size={20} /> },
-            { time: "11:00", title: "Check out", icon: <IconDoor size={20} /> },
-            { time: "until 13:00", title: "Pool party & BBQ lunch", icon: <IconPool size={20} /> },
+            {
+                time: "08:00",
+                endTime: "10:00",
+                title: "Breakfast",
+                icon: <IconChefHat size={20} />,
+            },
+            {
+                time: "11:00",
+                endTime: "13:00",
+                title: "Pool party & BBQ",
+                icon: <IconPool size={20} />,
+            },
+            {
+                time: "13:00",
+                title: "Depart",
+                icon: <IconDoor size={20} />,
+            },
         ],
     },
 ];
@@ -101,10 +172,10 @@ export default function SchedulePage() {
                                             letterSpacing: "0.15em",
                                             textTransform: "uppercase",
                                             fontWeight: 600,
-                                            marginBottom: "0.5rem",
+                                            marginBottom: "0.75rem",
                                         }}
                                     >
-                                        {day.day} — {day.date}
+                                        {day.day}
                                     </Text>
                                     <Title
                                         order={2}
@@ -131,7 +202,7 @@ export default function SchedulePage() {
                                             key={eventIndex}
                                             style={{
                                                 display: "flex",
-                                                alignItems: "center",
+                                                alignItems: "flex-start",
                                                 gap: "1rem",
                                                 padding: "0.75rem 0 0.75rem 1.5rem",
                                                 cursor: "default",
@@ -143,24 +214,39 @@ export default function SchedulePage() {
                                                     flexShrink: 0,
                                                     display: "flex",
                                                     alignItems: "center",
+                                                    paddingTop: "0.15rem",
                                                 }}
                                             >
                                                 {event.icon}
                                             </Box>
-                                            <Text
-                                                style={{
-                                                    color: "var(--text-primary)",
-                                                    fontSize: "1.05rem",
-                                                    fontWeight: 400,
-                                                }}
-                                            >
-                                                {event.time && (
-                                                    <span style={{ color: day.accentColor, fontWeight: 500 }}>
-                                                        {event.time} —{" "}
-                                                    </span>
+                                            <Box>
+                                                <Text
+                                                    style={{
+                                                        color: "var(--text-primary)",
+                                                        fontSize: "1.05rem",
+                                                        fontWeight: 400,
+                                                    }}
+                                                >
+                                                    {event.time && (
+                                                        <span style={{ color: day.accentColor, fontWeight: 500 }}>
+                                                            {event.time}
+                                                            {event.endTime ? `–${event.endTime}` : ""} —{" "}
+                                                        </span>
+                                                    )}
+                                                    {event.title}
+                                                </Text>
+                                                {event.location && (
+                                                    <Text
+                                                        style={{
+                                                            fontSize: "0.875rem",
+                                                            color: "var(--text-secondary)",
+                                                            marginTop: "0.1rem",
+                                                        }}
+                                                    >
+                                                        {event.location}
+                                                    </Text>
                                                 )}
-                                                {event.title}
-                                            </Text>
+                                            </Box>
                                         </Box>
                                     ))}
                                 </Box>
