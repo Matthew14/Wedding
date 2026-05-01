@@ -14,6 +14,12 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient();
 
+    const SEAT_FINDER_PUBLIC_DATE = new Date("2026-05-22T00:00:00Z");
+    if (new Date() < SEAT_FINDER_PUBLIC_DATE) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Look up the invitee to get their invitation_id
     const { data: invitee, error: inviteeError } = await supabase
         .from("invitees")
