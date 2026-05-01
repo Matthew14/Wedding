@@ -20,25 +20,25 @@ interface SeatingMapProps {
 // Bride at right end of table 1, groom at left end of table 2, adjacent at the shared edge
 // Positions 6 and 7 in the 12-seat row (45px spacing from 153)
 const COUPLE_SEATS = [
-    { key: "bride", x: 378, y: 92, label: "Bride" },
-    { key: "groom", x: 423, y: 92, label: "Groom" },
+    { key: "bride", x: 378, y: 88, label: "Bride" },
+    { key: "groom", x: 423, y: 88, label: "Groom" },
 ];
 
 // Layout constants — edges meet to form a connected U-shape
 const LX   = 148;   // left outer edge (L1 left, L3/L5 left)
 const RX   = 652;   // right outer edge (L2 right, L4/L6 right)
-const SW   = 88;    // side table column width
+const SW   = 108;   // side table column width
 const TY   = 110;   // top of L1/L2
-const TH   = 56;    // height of L1/L2
-const SY   = TY + TH;   // 166 — side tables start here
-const DY   = 382;   // dividing line between L3/L4 and L5/L6
-const BY   = 596;   // bottom of L5/L6
+const TH   = 72;    // height of L1/L2
+const SY   = TY + TH;   // 182 — side tables start here
+const DY   = 400;   // dividing line between L3/L4 and L5/L6
+const BY   = 616;   // bottom of L5/L6
 const GAP  = 0;     // tables 1 and 2 share an edge
 const MID  = (LX + RX) / 2;  // 400
 
 // Pill dimensions: "v" = tall (top-row seats), "h" = wide (side seats)
-const VW = 15, VH = 21;
-const HW = 21, HH = 15;
+const VW = 26, VH = 36;
+const HW = 36, HH = 26;
 
 const TABLES = [
     { id: "1", x: LX,        y: TY, w: MID - LX - GAP / 2,   h: TH },
@@ -51,57 +51,57 @@ const TABLES = [
 
 const SEATS = [
     // 1 — 12-seat row at 45px spacing across both tables; T1 seats occupy positions 1-5
-    { t: "1", s: 1,  x: 153, y: 92,  o: "v" },
-    { t: "1", s: 2,  x: 198, y: 92,  o: "v" },
-    { t: "1", s: 3,  x: 243, y: 92,  o: "v" },
-    { t: "1", s: 4,  x: 288, y: 92,  o: "v" },
-    { t: "1", s: 5,  x: 333, y: 92,  o: "v" },
-    // 2 — T2 seats occupy positions 8-12
-    { t: "2", s: 1,  x: 468, y: 92,  o: "v" },
-    { t: "2", s: 2,  x: 513, y: 92,  o: "v" },
-    { t: "2", s: 3,  x: 558, y: 92,  o: "v" },
-    { t: "2", s: 4,  x: 603, y: 92,  o: "v" },
-    { t: "2", s: 5,  x: 648, y: 92,  o: "v" },
+    { t: "1", s: 1,  x: 153, y: 88,  o: "v" },
+    { t: "1", s: 2,  x: 198, y: 88,  o: "v" },
+    { t: "1", s: 3,  x: 243, y: 88,  o: "v" },
+    { t: "1", s: 4,  x: 288, y: 88,  o: "v" },
+    { t: "1", s: 5,  x: 333, y: 88,  o: "v" },
+    // 2 — T2 seats occupy positions 8-12; s1 is groom (couple seat), guests start at s2
+    { t: "2", s: 2,  x: 468, y: 88,  o: "v" },
+    { t: "2", s: 3,  x: 513, y: 88,  o: "v" },
+    { t: "2", s: 4,  x: 558, y: 88,  o: "v" },
+    { t: "2", s: 5,  x: 603, y: 88,  o: "v" },
+    { t: "2", s: 6,  x: 648, y: 88,  o: "v" },
     // 3 — west (outer) and east (inner)
-    { t: "3", s: 1,  x: 128, y: 192, o: "h" },
-    { t: "3", s: 2,  x: 128, y: 232, o: "h" },
-    { t: "3", s: 3,  x: 128, y: 275, o: "h" },
-    { t: "3", s: 4,  x: 128, y: 322, o: "h" },
-    { t: "3", s: 5,  x: 128, y: 360, o: "h" },
-    { t: "3", s: 6,  x: 252, y: 275, o: "h" },
-    { t: "3", s: 7,  x: 252, y: 322, o: "h" },
-    { t: "3", s: 8,  x: 252, y: 360, o: "h" },
+    { t: "3", s: 1,  x: 128, y: 208, o: "h" },
+    { t: "3", s: 2,  x: 128, y: 248, o: "h" },
+    { t: "3", s: 3,  x: 128, y: 291, o: "h" },
+    { t: "3", s: 4,  x: 128, y: 338, o: "h" },
+    { t: "3", s: 5,  x: 128, y: 376, o: "h" },
+    { t: "3", s: 6,  x: 276, y: 291, o: "h" },
+    { t: "3", s: 7,  x: 276, y: 338, o: "h" },
+    { t: "3", s: 8,  x: 276, y: 376, o: "h" },
     // 4 — west (inner) and east (outer)
-    { t: "4", s: 1,  x: 548, y: 275, o: "h" },
-    { t: "4", s: 2,  x: 548, y: 322, o: "h" },
-    { t: "4", s: 3,  x: 548, y: 360, o: "h" },
-    { t: "4", s: 4,  x: 672, y: 192, o: "h" },
-    { t: "4", s: 5,  x: 672, y: 232, o: "h" },
-    { t: "4", s: 6,  x: 672, y: 275, o: "h" },
-    { t: "4", s: 7,  x: 672, y: 322, o: "h" },
-    { t: "4", s: 8,  x: 672, y: 360, o: "h" },
+    { t: "4", s: 1,  x: 524, y: 291, o: "h" },
+    { t: "4", s: 2,  x: 524, y: 338, o: "h" },
+    { t: "4", s: 3,  x: 524, y: 376, o: "h" },
+    { t: "4", s: 4,  x: 672, y: 208, o: "h" },
+    { t: "4", s: 5,  x: 672, y: 248, o: "h" },
+    { t: "4", s: 6,  x: 672, y: 291, o: "h" },
+    { t: "4", s: 7,  x: 672, y: 338, o: "h" },
+    { t: "4", s: 8,  x: 672, y: 376, o: "h" },
     // 5 — west (outer) and east (inner)
-    { t: "5", s: 1,  x: 128, y: 400, o: "h" },
-    { t: "5", s: 2,  x: 128, y: 442, o: "h" },
-    { t: "5", s: 3,  x: 128, y: 486, o: "h" },
-    { t: "5", s: 4,  x: 128, y: 532, o: "h" },
-    { t: "5", s: 5,  x: 128, y: 572, o: "h" },
-    { t: "5", s: 6,  x: 252, y: 400, o: "h" },
-    { t: "5", s: 7,  x: 252, y: 442, o: "h" },
-    { t: "5", s: 8,  x: 252, y: 486, o: "h" },
-    { t: "5", s: 9,  x: 252, y: 532, o: "h" },
-    { t: "5", s: 10, x: 252, y: 572, o: "h" },
+    { t: "5", s: 1,  x: 128, y: 418, o: "h" },
+    { t: "5", s: 2,  x: 128, y: 460, o: "h" },
+    { t: "5", s: 3,  x: 128, y: 504, o: "h" },
+    { t: "5", s: 4,  x: 128, y: 550, o: "h" },
+    { t: "5", s: 5,  x: 128, y: 590, o: "h" },
+    { t: "5", s: 6,  x: 276, y: 418, o: "h" },
+    { t: "5", s: 7,  x: 276, y: 460, o: "h" },
+    { t: "5", s: 8,  x: 276, y: 504, o: "h" },
+    { t: "5", s: 9,  x: 276, y: 550, o: "h" },
+    { t: "5", s: 10, x: 276, y: 590, o: "h" },
     // 6 — west (inner) and east (outer)
-    { t: "6", s: 1,  x: 548, y: 400, o: "h" },
-    { t: "6", s: 2,  x: 548, y: 442, o: "h" },
-    { t: "6", s: 3,  x: 548, y: 486, o: "h" },
-    { t: "6", s: 4,  x: 548, y: 532, o: "h" },
-    { t: "6", s: 5,  x: 548, y: 572, o: "h" },
-    { t: "6", s: 6,  x: 672, y: 400, o: "h" },
-    { t: "6", s: 7,  x: 672, y: 442, o: "h" },
-    { t: "6", s: 8,  x: 672, y: 486, o: "h" },
-    { t: "6", s: 9,  x: 672, y: 532, o: "h" },
-    { t: "6", s: 10, x: 672, y: 572, o: "h" },
+    { t: "6", s: 1,  x: 524, y: 418, o: "h" },
+    { t: "6", s: 2,  x: 524, y: 460, o: "h" },
+    { t: "6", s: 3,  x: 524, y: 504, o: "h" },
+    { t: "6", s: 4,  x: 524, y: 550, o: "h" },
+    { t: "6", s: 5,  x: 524, y: 590, o: "h" },
+    { t: "6", s: 6,  x: 672, y: 418, o: "h" },
+    { t: "6", s: 7,  x: 672, y: 460, o: "h" },
+    { t: "6", s: 8,  x: 672, y: 504, o: "h" },
+    { t: "6", s: 9,  x: 672, y: 550, o: "h" },
+    { t: "6", s: 10, x: 672, y: 590, o: "h" },
 ];
 
 export function SeatingMap({ allSeats = [], highlightedSeats = [], onSeatClick }: SeatingMapProps) {
@@ -114,12 +114,12 @@ export function SeatingMap({ allSeats = [], highlightedSeats = [], onSeatClick }
 
     return (
         <svg
-            viewBox="0 0 800 620"
+            viewBox="0 0 800 640"
             width="100%"
             style={{ display: "block" }}
             aria-label="Venue seating map"
         >
-            <rect width="800" height="620" fill="#f0ebe0" rx="8" />
+            <rect width="800" height="640" fill="#f0ebe0" rx="8" />
 
             {TABLES.map((t) => (
                 <g key={t.id}>
