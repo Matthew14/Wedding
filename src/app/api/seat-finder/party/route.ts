@@ -6,10 +6,9 @@ export async function GET(request: NextRequest) {
     const rateLimit = checkRateLimit(request, RATE_LIMITS.GENERAL);
     if (!rateLimit.success) return rateLimitedResponse(rateLimit);
 
-    const idParam = request.nextUrl.searchParams.get("id");
-    const inviteeId = idParam ? parseInt(idParam, 10) : NaN;
+    const inviteeId = request.nextUrl.searchParams.get("id")?.trim() ?? "";
 
-    if (isNaN(inviteeId)) {
+    if (!inviteeId) {
         return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
@@ -31,6 +30,8 @@ export async function GET(request: NextRequest) {
         .from("invitees")
         .select("id, first_name, last_name, is_primary, table_number, seat_number")
         .eq("invitation_id", invitee.invitation_id)
+        .eq("coming", true)
+        .not("seat_number", "is", null)
         .order("is_primary", { ascending: false })
         .order("first_name");
 
