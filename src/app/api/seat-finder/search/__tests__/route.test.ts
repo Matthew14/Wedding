@@ -5,7 +5,7 @@ import { GET } from "../route";
 const mockFrom = vi.fn();
 const mockSupabaseClient = {
     from: mockFrom,
-    auth: { getUser: vi.fn() },
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "test-user" } }, error: null }) },
 };
 
 vi.mock("@/utils/supabase/server", () => ({
