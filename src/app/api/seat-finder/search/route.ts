@@ -6,7 +6,9 @@ export async function GET(request: NextRequest) {
     const rateLimit = checkRateLimit(request, RATE_LIMITS.GENERAL);
     if (!rateLimit.success) return rateLimitedResponse(rateLimit);
 
-    const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+    const raw = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+    // Strip characters that could distort PostgREST filter strings
+    const q = raw.replace(/[^a-zA-Z\s\-']/g, "").trim();
 
     if (q.length < 2) {
         return NextResponse.json([]);
