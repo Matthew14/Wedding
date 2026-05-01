@@ -49,9 +49,9 @@ describe("Seat Finder", () => {
             cy.get("input[placeholder*='Search']", { timeout: 8000 }).should("be.visible");
         });
 
-        it("renders the SVG seating map on page load", () => {
+        it("does not render the SVG seating map before a search result is selected", () => {
             cy.visit("/seat-finder");
-            cy.get('svg[aria-label="Venue seating map"]', { timeout: 8000 }).should("be.visible");
+            cy.get('svg[aria-label="Venue seating map"]').should("not.exist");
         });
 
         it("shows a loader when typing 2+ characters into the search box", () => {
@@ -91,13 +91,13 @@ describe("Seat Finder", () => {
             cy.contains("h1", "Seat Finder").should("be.visible");
         });
 
-        it("maintains the SVG map while a search is in progress", () => {
+        it("does not show the SVG map while a search is in progress without a prior selection", () => {
             cy.visit("/seat-finder");
 
             cy.get("input[placeholder*='Search']", { timeout: 8000 }).type("Ma");
 
-            // SVG should still be present while loading
-            cy.get('svg[aria-label="Venue seating map"]').should("be.visible");
+            // SVG only appears after a result is selected, not during typing
+            cy.get('svg[aria-label="Venue seating map"]').should("not.exist");
         });
     });
 });
