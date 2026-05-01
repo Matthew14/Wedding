@@ -36,6 +36,7 @@ export default function SeatFinderPage() {
     const nameToIdRef = useRef<Map<string, string>>(new Map());
     const justSelectedRef = useRef(false);
     const resultsRef = useRef<HTMLDivElement>(null);
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetch("/api/seat-finder/seats")
@@ -90,6 +91,7 @@ export default function SeatFinderPage() {
         justSelectedRef.current = true;
         setQuery(name);
         setSuggestions([]);
+        searchInputRef.current?.blur();
         setError(null);
 
         const id = nameToIdRef.current.get(name);
@@ -172,6 +174,7 @@ export default function SeatFinderPage() {
 
                         {/* Search */}
                         <Autocomplete
+                            ref={searchInputRef}
                             value={query}
                             onChange={setQuery}
                             onOptionSubmit={handleSelect}
