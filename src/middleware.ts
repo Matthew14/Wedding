@@ -34,6 +34,18 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    // Seat finder is auth-gated until May 22nd 2026 (day before the wedding)
+    const SEAT_FINDER_PUBLIC_DATE = new Date("2026-05-22T00:00:00Z");
+    if (
+        request.nextUrl.pathname.startsWith("/seat-finder") &&
+        new Date() < SEAT_FINDER_PUBLIC_DATE &&
+        !session
+    ) {
+        const redirectUrl = new URL("/login", request.url);
+        redirectUrl.searchParams.set("redirectedFrom", request.nextUrl.pathname);
+        return NextResponse.redirect(redirectUrl);
+    }
+
     // If logged in and trying to access login page, redirect to dashboard
     if (request.nextUrl.pathname === "/login" && session) {
         if (process.env.NODE_ENV === "development") {
@@ -46,5 +58,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/dashboard/:path*", "/login"],
+    matcher: ["/dashboard/:path*", "/login", "/seat-finder/:path*", "/seat-finder"],
 };
