@@ -168,7 +168,8 @@ export default function SeatFinderPage() {
                                     lineHeight: 1.5,
                                 }}
                             >
-                                Search for your name to find your party&apos;s seating.
+                                Search for your name to find your party&apos;s seating.{" "}
+                                Tap other guests to see who&apos;s sitting near you!
                             </Text>
                         </Box>
 
