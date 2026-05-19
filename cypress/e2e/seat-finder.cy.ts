@@ -3,9 +3,7 @@
 /**
  * Seat Finder E2E Tests
  *
- * Today is 2026-05-01, which is before the public release date of 2026-05-22.
- * The seat finder page is therefore auth-gated: unauthenticated visitors are
- * redirected to /login.
+ * The seat finder page is open to all visitors (no auth required).
  *
  * The seed data has no seat/table assignments by default, so search results
  * will be empty — tests cover the empty-state gracefully rather than asserting
@@ -17,15 +15,15 @@ describe("Seat Finder", () => {
         cy.resetDb();
     });
 
-    describe("Auth gate (before May 22nd 2026)", () => {
-        it("redirects unauthenticated users from /seat-finder to /login", () => {
+    describe("Public access (no auth required)", () => {
+        it("allows unauthenticated users to access /seat-finder", () => {
             cy.visit("/seat-finder");
-            cy.url({ timeout: 8000 }).should("include", "/login");
+            cy.url({ timeout: 8000 }).should("include", "/seat-finder");
         });
 
-        it("redirects unauthenticated users and preserves the return path", () => {
+        it("renders the Seat Finder heading for unauthenticated users", () => {
             cy.visit("/seat-finder");
-            cy.url({ timeout: 8000 }).should("include", "redirectedFrom");
+            cy.contains("h1", "Seat Finder", { timeout: 8000 }).should("be.visible");
         });
     });
 
