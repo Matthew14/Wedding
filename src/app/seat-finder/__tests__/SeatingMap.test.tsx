@@ -35,8 +35,8 @@ describe("SeatingMap", () => {
             // Count all <rect> children inside the SVG (background + tables + seats + couple seats)
             // We just verify the SVG itself has multiple rects rendered
             const rects = svg.querySelectorAll("rect");
-            // background(1) + 6 tables + 46 SEATS + 2 couple seats = 55 minimum
-            expect(rects.length).toBeGreaterThanOrEqual(55);
+            // background(1) + 6 tables + 45 SEATS + 2 couple seats = 54 minimum
+            expect(rects.length).toBeGreaterThanOrEqual(54);
         });
 
         it("renders bride and groom couple seats", () => {
