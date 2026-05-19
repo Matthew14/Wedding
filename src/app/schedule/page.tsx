@@ -83,13 +83,13 @@ const schedule: DaySchedule[] = [
             },
             {
                 time: "15:00",
-                endTime: "16:00",
+                endTime: "15:30",
                 title: "Wedding Ceremony",
                 location: "Arch",
                 icon: <IconHeart size={20} />,
             },
             {
-                time: "16:30",
+                time: "15:30",
                 endTime: "17:30",
                 title: "Appetizers at the Piazza",
                 icon: <IconGlass size={20} />,
