@@ -128,7 +128,7 @@ export default function SeatFinderPage() {
         : [];
 
     const seatedMembers = party?.filter((m) => m.table_number) ?? [];
-    const tableNumber = seatedMembers[0]?.table_number ?? null;
+    const tableNumbers = [...new Set(seatedMembers.map((m) => m.table_number!))];
     const primaryMember = party?.find((m) => m.is_primary);
     const partyLabel = primaryMember
         ? `${primaryMember.first_name} ${primaryMember.last_name}`
@@ -345,20 +345,25 @@ export default function SeatFinderPage() {
                                                 {party.length > 1 ? <>{partyLabel}&apos;s Party</> : selectedName}
                                             </Text>
                                         </Box>
-                                        {tableNumber && (
-                                            <Text
-                                                style={{
-                                                    fontSize: "0.75rem",
-                                                    color: "var(--gold-dark)",
-                                                    fontWeight: 600,
-                                                    background: "rgba(201,168,76,0.12)",
-                                                    border: "1px solid rgba(201,168,76,0.3)",
-                                                    borderRadius: 6,
-                                                    padding: "0.15rem 0.5rem",
-                                                }}
-                                            >
-                                                Table {tableNumber}
-                                            </Text>
+                                        {tableNumbers.length > 0 && (
+                                            <Box style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                                                {tableNumbers.map((tn) => (
+                                                    <Text
+                                                        key={tn}
+                                                        style={{
+                                                            fontSize: "0.75rem",
+                                                            color: "var(--gold-dark)",
+                                                            fontWeight: 600,
+                                                            background: "rgba(201,168,76,0.12)",
+                                                            border: "1px solid rgba(201,168,76,0.3)",
+                                                            borderRadius: 6,
+                                                            padding: "0.15rem 0.5rem",
+                                                        }}
+                                                    >
+                                                        Table {tn}
+                                                    </Text>
+                                                ))}
+                                            </Box>
                                         )}
                                     </Box>
                                     <Stack gap={0}>
@@ -390,7 +395,9 @@ export default function SeatFinderPage() {
                                                 </Text>
                                                 {member.seat_number && (
                                                     <Text style={{ fontSize: "0.75rem", color: "var(--text-secondary)", flexShrink: 0, marginLeft: "0.5rem" }}>
-                                                        Seat {member.seat_number}
+                                                        {tableNumbers.length > 1 && member.table_number
+                                                            ? `Table ${member.table_number}, Seat ${member.seat_number}`
+                                                            : `Seat ${member.seat_number}`}
                                                     </Text>
                                                 )}
                                             </Box>
