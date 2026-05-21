@@ -32,7 +32,7 @@ interface DaySchedule {
 
 const schedule: DaySchedule[] = [
     {
-        day: "Day 1 — Arrival Day",
+        day: "Day 1 — Friday — Arrival Day",
         title: "Welcome",
         bgColor: "linear-gradient(135deg, #f9f7f2 0%, #f0ebe0 100%)",
         accentColor: "var(--gold)",
@@ -58,7 +58,7 @@ const schedule: DaySchedule[] = [
         ],
     },
     {
-        day: "Day 2 — Wedding Day",
+        day: "Day 2 — Saturday — Wedding Day",
         title: "The Wedding",
         bgColor: "linear-gradient(135deg, #fdfcfa 0%, #f5f0e8 100%)",
         accentColor: "var(--gold-dark)",
@@ -118,7 +118,7 @@ const schedule: DaySchedule[] = [
         ],
     },
     {
-        day: "Day 3 — Departure Day",
+        day: "Day 3 — Sunday — Departure Day",
         title: "Farewell",
         bgColor: "linear-gradient(135deg, #f9f7f2 0%, #f0ebe0 100%)",
         accentColor: "var(--gold)",
