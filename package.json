@@ -62,7 +62,7 @@
     "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.4.21",
     "axe-core": "^4.11.0",
-    "cypress": "^15.8.1",
+    "cypress": "^15.15.0",
     "cypress-axe": "^1.7.0",
     "cypress-plugin-tab": "^1.0.5",
     "dotenv-cli": "^11.0.0",
