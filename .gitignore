@@ -56,3 +56,6 @@ cypress/downloads
 .mcp.json
 markdowns/.mcp.json
 staging-data.sql
+
+# Data exports (contain personal guest data)
+infra/export/
