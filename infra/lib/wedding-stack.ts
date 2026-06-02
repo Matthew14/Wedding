@@ -104,7 +104,7 @@ export class WeddingStack extends cdk.Stack {
       signInAliases: { email: true },
       selfSignUpEnabled: false,
       mfa: cognito.Mfa.OPTIONAL,
-      mfaSecondFactor: { totp: true, otp: false },
+      mfaSecondFactor: { otp: true, sms: false },
       passwordPolicy: {
         minLength: 12,
         requireUppercase: true,
