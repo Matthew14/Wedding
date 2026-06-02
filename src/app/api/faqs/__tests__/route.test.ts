@@ -2,50 +2,28 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, POST } from "../route";
 
-// Mock Supabase
-const mockGetUser = vi.fn();
-const mockSupabaseClient = {
-    from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockReturnThis(),
-    })),
-    auth: {
-        getUser: mockGetUser,
-    },
-};
+const mockQuery = vi.fn();
 
-vi.mock("@/utils/supabase/server", () => ({
-    createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
+vi.mock("@/utils/db/client", () => ({
+    getDb: () => ({ query: mockQuery }),
 }));
 
-// Helper to mock authenticated user
-const mockAuthenticatedUser = () => {
-    mockGetUser.mockResolvedValue({
-        data: { user: { id: "test-user-id", email: "test@example.com" } },
-        error: null,
-    });
-};
+vi.mock("@/utils/auth/requireAuth", () => ({
+    requireAuth: vi.fn(),
+}));
 
-// Helper to mock unauthenticated user
-const mockUnauthenticatedUser = () => {
-    mockGetUser.mockResolvedValue({
-        data: { user: null },
-        error: null,
-    });
-};
+import { requireAuth } from "@/utils/auth/requireAuth";
 
-// Helper to mock auth service error
-const mockAuthServiceError = () => {
-    mockGetUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: "Auth service unavailable" },
+const mockRequireAuth = requireAuth as ReturnType<typeof vi.fn>;
+
+const authenticated = () =>
+    mockRequireAuth.mockResolvedValue({ success: true, payload: { email: "admin@test.com" } });
+
+const unauthenticated = () =>
+    mockRequireAuth.mockResolvedValue({
+        success: false,
+        response: new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
     });
-};
 
 describe("/api/faqs", () => {
     beforeEach(() => {
@@ -55,58 +33,31 @@ describe("/api/faqs", () => {
     describe("GET /api/faqs", () => {
         it("returns FAQs successfully", async () => {
             const mockFAQs = [
-                { id: "test-1", question: "Test Q1", answer: "Test A1", created_at: "2024-01-01" },
-                { id: "test-2", question: "Test Q2", answer: "Test A2", created_at: "2024-01-02" },
+                { id: "test-1", question: "Q1", answer: "A1", created_at: "2024-01-01" },
             ];
-
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                insert: vi.fn().mockReturnThis(),
-                update: vi.fn().mockReturnThis(),
-                delete: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
-                single: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({
-                    data: mockFAQs,
-                    error: null,
-                }),
-            };
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            mockQuery.mockResolvedValue({ rows: mockFAQs });
 
             const response = await GET();
             const data = await response.json();
 
             expect(response.status).toBe(200);
             expect(data.faqs).toEqual(mockFAQs);
-            expect(mockSupabaseClient.from).toHaveBeenCalledWith("FAQs");
         });
 
         it("handles database errors", async () => {
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                insert: vi.fn().mockReturnThis(),
-                update: vi.fn().mockReturnThis(),
-                delete: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
-                single: vi.fn().mockReturnThis(),
-                order: vi.fn().mockResolvedValue({
-                    data: null,
-                    error: { message: "Database error" },
-                }),
-            };
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            mockQuery.mockRejectedValue(new Error("DB error"));
 
             const response = await GET();
             const data = await response.json();
 
             expect(response.status).toBe(500);
-            expect(data.error).toBe("Failed to fetch FAQs");
+            expect(data.error).toBe("Internal server error");
         });
     });
 
     describe("POST /api/faqs", () => {
-        it("returns 401 when user is not authenticated", async () => {
-            mockUnauthenticatedUser();
+        it("returns 401 when not authenticated", async () => {
+            unauthenticated();
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
                 method: "POST",
@@ -114,44 +65,13 @@ describe("/api/faqs", () => {
             });
 
             const response = await POST(request);
-            const data = await response.json();
-
             expect(response.status).toBe(401);
-            expect(data.error).toBe("Unauthorized");
-        });
-
-        it("returns 401 when auth service returns an error", async () => {
-            mockAuthServiceError();
-
-            const request = new NextRequest("http://localhost:3000/api/faqs", {
-                method: "POST",
-                body: JSON.stringify({ question: "Test", answer: "Test" }),
-            });
-
-            const response = await POST(request);
-            const data = await response.json();
-
-            expect(response.status).toBe(401);
-            expect(data.error).toBe("Unauthorized");
         });
 
         it("creates FAQ successfully when authenticated", async () => {
-            mockAuthenticatedUser();
+            authenticated();
             const newFAQ = { id: "new-faq", question: "New Question", answer: "New Answer" };
-
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                insert: vi.fn().mockReturnThis(),
-                update: vi.fn().mockReturnThis(),
-                delete: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
-                order: vi.fn().mockReturnThis(),
-                single: vi.fn().mockResolvedValue({
-                    data: newFAQ,
-                    error: null,
-                }),
-            };
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            mockQuery.mockResolvedValue({ rows: [newFAQ] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
                 method: "POST",
@@ -163,16 +83,14 @@ describe("/api/faqs", () => {
 
             expect(response.status).toBe(201);
             expect(data.faq).toEqual(newFAQ);
-            expect(mockSupabaseClient.from).toHaveBeenCalledWith("FAQs");
         });
 
         it("validates required fields", async () => {
-            mockAuthenticatedUser();
-            const invalidFAQ = { question: "", answer: "Some answer" };
+            authenticated();
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
                 method: "POST",
-                body: JSON.stringify(invalidFAQ),
+                body: JSON.stringify({ question: "", answer: "Some answer" }),
             });
 
             const response = await POST(request);
@@ -183,72 +101,37 @@ describe("/api/faqs", () => {
         });
 
         it("handles database errors during creation", async () => {
-            mockAuthenticatedUser();
-            const newFAQ = { question: "Valid Question", answer: "Valid Answer" };
-
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                insert: vi.fn().mockReturnThis(),
-                update: vi.fn().mockReturnThis(),
-                delete: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
-                order: vi.fn().mockReturnThis(),
-                single: vi.fn().mockResolvedValue({
-                    data: null,
-                    error: { message: "Insert failed" },
-                }),
-            };
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            authenticated();
+            mockQuery.mockRejectedValue(new Error("Insert failed"));
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
                 method: "POST",
-                body: JSON.stringify(newFAQ),
+                body: JSON.stringify({ question: "Valid Q", answer: "Valid A" }),
             });
 
             const response = await POST(request);
             const data = await response.json();
 
             expect(response.status).toBe(500);
-            expect(data.error).toBe("Failed to create FAQ");
+            expect(data.error).toBe("Internal server error");
         });
 
-        it("trims input data", async () => {
-            mockAuthenticatedUser();
-            const faqWithWhitespace = {
-                id: "  test-id  ",
-                question: "  Test Question  ",
-                answer: "  Test Answer  ",
-            };
-
-            const mockChain = {
-                select: vi.fn().mockReturnThis(),
-                insert: vi.fn().mockReturnThis(),
-                update: vi.fn().mockReturnThis(),
-                delete: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
-                order: vi.fn().mockReturnThis(),
-                single: vi.fn().mockResolvedValue({
-                    data: { id: "test-id", question: "Test Question", answer: "Test Answer" },
-                    error: null,
-                }),
-            };
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+        it("trims input data before inserting", async () => {
+            authenticated();
+            mockQuery.mockResolvedValue({ rows: [{ id: "test-id", question: "Test Q", answer: "Test A" }] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs", {
                 method: "POST",
-                body: JSON.stringify(faqWithWhitespace),
+                body: JSON.stringify({ id: "  test-id  ", question: "  Test Q  ", answer: "  Test A  " }),
             });
 
             await POST(request);
 
-            // Verify insert was called with trimmed data
-            expect(mockChain.insert).toHaveBeenCalledWith([
-                {
-                    id: "test-id",
-                    question: "Test Question",
-                    answer: "Test Answer",
-                },
-            ]);
+            const [sql, params] = mockQuery.mock.calls[0];
+            expect(sql).toContain("INSERT INTO faqs");
+            expect(params).toContain("test-id");
+            expect(params).toContain("Test Q");
+            expect(params).toContain("Test A");
         });
     });
 });

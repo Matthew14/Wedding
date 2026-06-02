@@ -3,7 +3,6 @@ import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import React from "react";
 
-// Mock Next.js router
 import { vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -19,41 +18,38 @@ vi.mock("next/navigation", () => ({
     useSearchParams: () => new URLSearchParams(),
 }));
 
-// Mock Next.js image
 vi.mock("next/image", () => ({
     default: (props: { src: string; alt: string; [key: string]: unknown }) => {
         const { src, alt, ...rest } = props;
-
         return React.createElement("img", { src, alt, ...rest });
     },
 }));
 
-// Mock environment variables
 vi.mock("process", () => ({
     env: {
         NODE_ENV: "test",
-        NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
-        OPENAI_API_KEY: "test-openai-key",
+        DATABASE_URL: "postgresql://test:test@localhost:5432/wedding_test",
+        AWS_REGION: "eu-west-1",
+        COGNITO_USER_POOL_ID: "eu-west-1_TEST",
+        COGNITO_CLIENT_ID: "test-client-id",
+        COGNITO_CLIENT_SECRET: "test-client-secret",
     },
 }));
 
-// Mock window.matchMedia for Mantine
 Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: vi.fn().mockImplementation(query => ({
         matches: false,
         media: query,
         onchange: null,
-        addListener: vi.fn(), // deprecated
-        removeListener: vi.fn(), // deprecated
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
     })),
 });
 
-// Clean up after each test
 afterEach(() => {
     cleanup();
 });

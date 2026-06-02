@@ -1,48 +1,45 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/middleware";
+import { jwtVerify, createRemoteJWKSet } from "jose";
+
+function getJwks() {
+    const region = process.env.AWS_REGION ?? "eu-west-1";
+    const userPoolId = process.env.COGNITO_USER_POOL_ID!;
+    const url = new URL(
+        `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`
+    );
+    return createRemoteJWKSet(url);
+}
+
+async function isAuthenticated(request: NextRequest): Promise<boolean> {
+    const token = request.cookies.get("wedding_session")?.value;
+    if (!token) return false;
+
+    try {
+        await jwtVerify(token, getJwks(), {
+            issuer: `https://cognito-idp.${process.env.AWS_REGION ?? "eu-west-1"}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+        });
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 export async function middleware(request: NextRequest) {
-    const { supabase, response } = createClient(request);
+    const authenticated = await isAuthenticated(request);
 
-    // Refresh session if expired - required for Server Components
-    const {
-        data: { session },
-        error,
-    } = await supabase.auth.getSession();
-
-    // Only log in development
-    if (process.env.NODE_ENV === "development") {
-        console.log(
-            `[MIDDLEWARE] ${request.nextUrl.pathname} - Session: ${session ? "authenticated" : "not authenticated"}`
-        );
-
-        if (error) {
-            console.log(`[MIDDLEWARE] Session error:`, error);
-        }
-    }
-
-    // Check if the user is accessing dashboard routes
     if (request.nextUrl.pathname.startsWith("/dashboard")) {
-        // If no session and trying to access dashboard, redirect to login
-        if (!session) {
-            if (process.env.NODE_ENV === "development") {
-                console.log(`[MIDDLEWARE] No session, redirecting to login`);
-            }
+        if (!authenticated) {
             const redirectUrl = new URL("/login", request.url);
             redirectUrl.searchParams.set("redirectedFrom", request.nextUrl.pathname);
             return NextResponse.redirect(redirectUrl);
         }
     }
 
-    // If logged in and trying to access login page, redirect to dashboard
-    if (request.nextUrl.pathname === "/login" && session) {
-        if (process.env.NODE_ENV === "development") {
-            console.log(`[MIDDLEWARE] Logged in user accessing login page, redirecting to dashboard`);
-        }
+    if (request.nextUrl.pathname === "/login" && authenticated) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    return response;
+    return NextResponse.next();
 }
 
 export const config = {

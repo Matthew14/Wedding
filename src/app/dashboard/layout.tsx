@@ -4,22 +4,18 @@ import { Container, Tabs, Box, Anchor, Group, Title, Button } from "@mantine/cor
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<string | null>(null);
-    const { signOut, loading } = useAuth();
+    const [signingOut, setSigningOut] = useState(false);
 
     useEffect(() => {
-        // Set active tab based on current path
         if (pathname.includes("/dashboard/faq-editor")) {
             setActiveTab("faq-editor");
         } else if (pathname.includes("/dashboard/invitations")) {
             setActiveTab("invitations");
-        } else if (pathname.includes("/dashboard/rsvps")) {
-            setActiveTab("rsvps");
         } else {
             setActiveTab("overview");
         }
@@ -30,8 +26,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             router.push("/dashboard/faq-editor");
         } else if (value === "invitations") {
             router.push("/dashboard/invitations");
-        } else if (value === "rsvps") {
-            router.push("/dashboard/rsvps");
         } else if (value === "overview") {
             router.push("/dashboard");
         }
@@ -39,13 +33,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     const handleSignOut = async () => {
-        await signOut();
+        setSigningOut(true);
+        await fetch("/api/auth/logout", { method: "POST" });
         router.push("/");
     };
 
     return (
         <>
-            {/* Simple header with home link */}
             <Box
                 style={{
                     borderBottom: "1px solid #e9ecef",
@@ -82,7 +76,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             >
                                 ← Back to Home
                             </Anchor>
-                            <Button variant="subtle" color="red" onClick={handleSignOut} loading={loading} size="sm">
+                            <Button variant="subtle" color="red" onClick={handleSignOut} loading={signingOut} size="sm">
                                 Sign Out
                             </Button>
                         </Group>
@@ -106,11 +100,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     backgroundColor: "#f8f9fa",
                                     borderColor: "#8b7355",
                                 },
-                                '&:hover[dataActive="true"]': {
-                                    backgroundColor: "#8b7355",
-                                    color: "#ffffff",
-                                    borderColor: "#8b7355",
-                                },
                             },
                         }}
                     >
@@ -118,7 +107,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <Tabs.Tab value="overview">Overview</Tabs.Tab>
                             <Tabs.Tab value="faq-editor">FAQ Editor</Tabs.Tab>
                             <Tabs.Tab value="invitations">Invitations</Tabs.Tab>
-                            <Tabs.Tab value="rsvps">RSVPs</Tabs.Tab>
                         </Tabs.List>
 
                         <Box mt="lg">{children}</Box>

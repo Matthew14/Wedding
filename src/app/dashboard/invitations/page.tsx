@@ -8,305 +8,38 @@ import {
     Box,
     Paper,
     Button,
-    Checkbox,
     Table,
-    Modal,
     Badge,
-    Alert,
     LoadingOverlay,
-    MultiSelect,
-    Anchor,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { IconPlus, IconUser, IconCopy, IconCheck, IconChevronUp, IconChevronDown, IconSelector } from "@tabler/icons-react";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { IconCopy, IconCheck, IconUser } from "@tabler/icons-react";
+import { useState, useEffect } from "react";
 
-interface Invitation {
-    id: number;
-    created_at: string;
-    isMatthewSide: boolean;
-    sent: boolean;
-    villa_offered: boolean;
-    rsvp_code?: string;
-}
-
-interface RSVP {
-    id: number;
+interface InvitationCode {
+    code: string;
     invitation_id: number;
-    short_url: string;
+    is_matthew_side: boolean;
+    invitee_names: string[];
 }
-
-interface Invitee {
-    id: number;
-    created_at: string;
-    first_name: string;
-    last_name: string;
-    invitation_id: number | null;
-}
-
-type SortField = "id" | "sent" | "villa_offered";
-type SortDirection = "asc" | "desc";
 
 export default function InvitationsPage() {
-    const [invitations, setInvitations] = useState<Invitation[]>([]);
-    const [invitees, setInvitees] = useState<Invitee[]>([]);
-    const [rsvps, setRsvps] = useState<RSVP[]>([]);
+    const [codes, setCodes] = useState<InvitationCode[]>([]);
     const [loading, setLoading] = useState(true);
-    const [opened, { open, close }] = useDisclosure(false);
-    const [alert, setAlert] = useState<{ type: "success" | "error"; message: string } | null>(null);
-    const [copiedLink, setCopiedLink] = useState<number | null>(null);
-    const [sortField, setSortField] = useState<SortField>("id");
-    const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-
-    const router = useRouter();
-    const supabase = createClient();
-
-    const showAlert = (type: "success" | "error", message: string) => {
-        setAlert({ type, message });
-        setTimeout(() => setAlert(null), 5000); // Auto-hide after 5 seconds
-    };
-
-    const validateInvitationForm = () => {
-        const errors: { [key: string]: string } = {};
-        if (invitationForm.isMatthewSide === undefined) {
-            errors.isMatthewSide = "Please select a side";
-        }
-        setInvitationErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
-
-    const resetInvitationForm = () => {
-        setInvitationForm({ isMatthewSide: true, villaOffered: true, selectedInvitees: [] });
-        setInvitationErrors({});
-    };
-
-    const [invitationForm, setInvitationForm] = useState({
-        isMatthewSide: true,
-        villaOffered: true,
-        selectedInvitees: [] as string[],
-    });
-
-    const [invitationErrors, setInvitationErrors] = useState<{ [key: string]: string }>({});
-
-    const fetchData = useCallback(async () => {
-        try {
-            setLoading(true);
-
-            // Fetch invitations with RSVP codes - use explicit fields instead of *
-            const { data: invitationsData, error: invitationsError } = await supabase
-                .from("invitation")
-                .select(`
-                    id,
-                    created_at,
-                    isMatthewSide,
-                    sent,
-                    villa_offered,
-                    RSVPs (short_url)
-                `)
-                .order("created_at", { ascending: false });
-
-            if (invitationsError) throw invitationsError;
-
-            // Transform data to flatten RSVP code
-            // Validate RSVPs is an array before accessing
-            const transformedInvitations = (invitationsData || []).map(inv => ({
-                ...inv,
-                rsvp_code: Array.isArray(inv.RSVPs) && inv.RSVPs.length > 0
-                    ? inv.RSVPs[0].short_url
-                    : undefined,
-                RSVPs: undefined,
-            }));
-
-            // Fetch invitees - use explicit fields instead of *
-            const { data: inviteesData, error: inviteesError } = await supabase
-                .from("invitees")
-                .select("id, created_at, first_name, last_name, invitation_id")
-                .order("created_at", { ascending: false });
-
-            if (inviteesError) throw inviteesError;
-
-            // Fetch RSVPs
-            const { data: rsvpsData, error: rsvpsError } = await supabase
-                .from("RSVPs")
-                .select("id, invitation_id, short_url");
-
-            if (rsvpsError) throw rsvpsError;
-
-            setInvitations(transformedInvitations);
-            setInvitees(inviteesData || []);
-            setRsvps(rsvpsData || []);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-            showAlert("error", "Failed to fetch data");
-        } finally {
-            setLoading(false);
-        }
-    }, [supabase]);
+    const [copied, setCopied] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        fetch("/api/dashboard/invitation-codes")
+            .then(r => r.json())
+            .then(data => { if (data.codes) setCodes(data.codes); })
+            .catch(err => console.error("Failed to fetch invitation codes:", err))
+            .finally(() => setLoading(false));
+    }, []);
 
-    const handleCreateInvitation = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!validateInvitationForm()) {
-            return;
-        }
-
-        try {
-            // Create the invitation first
-            const { data: invitationData, error: invitationError } = await supabase
-                .from("invitation")
-                .insert([{
-                    isMatthewSide: invitationForm.isMatthewSide,
-                    villa_offered: invitationForm.villaOffered,
-                }])
-                .select()
-                .single();
-
-            if (invitationError) throw invitationError;
-
-            // If there are selected invitees, associate them with the new invitation
-            if (invitationForm.selectedInvitees.length > 0) {
-                const { error: associationError } = await supabase
-                    .from("invitees")
-                    .update({ invitation_id: invitationData.id })
-                    .in("id", invitationForm.selectedInvitees);
-
-                if (associationError) throw associationError;
-            }
-
-            showAlert(
-                "success",
-                `Invitation created successfully${invitationForm.selectedInvitees.length > 0 ? ` with ${invitationForm.selectedInvitees.length} invitee(s)` : ""}`
-            );
-
-            resetInvitationForm();
-            close();
-            fetchData();
-        } catch (error) {
-            console.error("Error creating invitation:", error);
-            showAlert("error", "Failed to create invitation");
-        }
-    };
-
-    const getInviteesForInvitation = (invitationId: number) => {
-        return invitees.filter(invitee => invitee.invitation_id === invitationId);
-    };
-
-    const getUnassignedInvitees = () => {
-        return invitees.filter(invitee => invitee.invitation_id === null);
-    };
-
-    const getRsvpForInvitation = (invitationId: number) => {
-        return rsvps.find(rsvp => rsvp.invitation_id === invitationId);
-    };
-
-    const getInvitationLink = (invitationId: number) => {
-        const associatedInvitees = getInviteesForInvitation(invitationId);
-        const rsvp = getRsvpForInvitation(invitationId);
-
-        if (!rsvp || associatedInvitees.length === 0) {
-            return null;
-        }
-
-        const names = associatedInvitees.map(i => i.first_name.toLowerCase()).join("-");
-        return `/invitation/${names}-${rsvp.short_url}`;
-    };
-
-    const handleCopyLink = async (invitationId: number, link: string) => {
-        const fullUrl = `${window.location.origin}${link}`;
-        try {
-            await navigator.clipboard.writeText(fullUrl);
-            setCopiedLink(invitationId);
-            setTimeout(() => setCopiedLink(null), 2000);
-        } catch (error) {
-            console.error("Failed to copy link:", error);
-            showAlert("error", "Failed to copy link to clipboard");
-        }
-    };
-
-    const handleSentToggle = async (invitationId: number, currentValue: boolean) => {
-        try {
-            const { error } = await supabase
-                .from("invitation")
-                .update({ sent: !currentValue })
-                .eq("id", invitationId);
-
-            if (error) throw error;
-
-            // Update local state
-            setInvitations(prev =>
-                prev.map(inv => (inv.id === invitationId ? { ...inv, sent: !currentValue } : inv))
-            );
-        } catch (error) {
-            console.error("Error updating sent status:", error);
-            showAlert("error", "Failed to update sent status");
-        }
-    };
-
-    const handleVillaToggle = async (invitationId: number, currentValue: boolean) => {
-        try {
-            const { error } = await supabase
-                .from("invitation")
-                .update({ villa_offered: !currentValue })
-                .eq("id", invitationId);
-
-            if (error) throw error;
-
-            // Update local state
-            setInvitations(prev =>
-                prev.map(inv => (inv.id === invitationId ? { ...inv, villa_offered: !currentValue } : inv))
-            );
-        } catch (error) {
-            console.error("Error updating villa offered status:", error);
-            showAlert("error", "Failed to update villa offered status");
-        }
-    };
-
-    const handleSort = (field: SortField) => {
-        if (sortField === field) {
-            setSortDirection(prev => (prev === "asc" ? "desc" : "asc"));
-        } else {
-            setSortField(field);
-            setSortDirection("desc");
-        }
-    };
-
-    const getSortedInvitations = () => {
-        return [...invitations].sort((a, b) => {
-            let aVal: number | boolean;
-            let bVal: number | boolean;
-
-            switch (sortField) {
-                case "id":
-                    aVal = a.id;
-                    bVal = b.id;
-                    break;
-                case "sent":
-                    aVal = a.sent ? 1 : 0;
-                    bVal = b.sent ? 1 : 0;
-                    break;
-                case "villa_offered":
-                    aVal = a.villa_offered ? 1 : 0;
-                    bVal = b.villa_offered ? 1 : 0;
-                    break;
-            }
-
-            if (sortDirection === "asc") {
-                return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-            } else {
-                return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
-            }
-        });
-    };
-
-    const SortIcon = ({ field }: { field: SortField }) => {
-        if (sortField !== field) return <IconSelector size={14} style={{ opacity: 0.5 }} />;
-        return sortDirection === "asc" ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />;
+    const handleCopy = async (code: string) => {
+        const url = `${window.location.origin}/photos?code=${code}`;
+        await navigator.clipboard.writeText(url);
+        setCopied(code);
+        setTimeout(() => setCopied(null), 2000);
     };
 
     return (
@@ -322,331 +55,74 @@ export default function InvitationsPage() {
                         fontFamily: "serif",
                     }}
                 >
-                    Invitations Management
+                    Invitation Codes
                 </Title>
                 <Text size="lg" style={{ color: "#6c757d" }}>
-                    Create invitations and manage guest associations
+                    Photo upload access codes for each invitation
                 </Text>
             </Box>
 
-            {/* Alert Messages */}
-            {alert && (
-                <Alert
-                    color={alert.type === "success" ? "green" : "red"}
-                    title={alert.type === "success" ? "Success" : "Error"}
-                    onClose={() => setAlert(null)}
-                    withCloseButton
-                >
-                    {alert.message}
-                </Alert>
-            )}
-
-            {/* Action Buttons */}
-            <Group justify="center" gap="lg">
-                <Button leftSection={<IconPlus size={16} />} onClick={open} variant="filled" color="#8b7355" size="lg">
-                    Create Invitation
-                </Button>
-            </Group>
-
-            {/* Summary Cards */}
             <Group justify="center" gap="lg">
                 <Paper shadow="sm" radius="md" p="md" style={{ textAlign: "center", minWidth: 120 }}>
-                    <Text size="xl" fw={700} color="#22c55e">
-                        {invitations.length}
-                    </Text>
-                    <Text size="sm" color="#6c757d">
-                        Total Invitations
-                    </Text>
-                </Paper>
-                <Paper shadow="sm" radius="md" p="md" style={{ textAlign: "center", minWidth: 120 }}>
-                    <Text size="xl" fw={700} color="#3b82f6">
-                        {invitees.length}
-                    </Text>
-                    <Text size="sm" color="#6c757d">
-                        Total Invitees
-                    </Text>
-                </Paper>
-                <Paper shadow="sm" radius="md" p="md" style={{ textAlign: "center", minWidth: 120 }}>
-                    <Text size="xl" fw={700} color="#8b7355">
-                        {invitees.filter(i => i.invitation_id !== null).length}
-                    </Text>
-                    <Text size="sm" color="#6c757d">
-                        Assigned
-                    </Text>
-                </Paper>
-                <Paper shadow="sm" radius="md" p="md" style={{ textAlign: "center", minWidth: 120 }}>
-                    <Text size="xl" fw={700} color="#ef4444">
-                        {getUnassignedInvitees().length}
-                    </Text>
-                    <Text size="sm" color="#6c757d">
-                        Unassigned
-                    </Text>
+                    <Text size="xl" fw={700} style={{ color: "#22c55e" }}>{codes.length}</Text>
+                    <Text size="sm" style={{ color: "#6c757d" }}>Total Codes</Text>
                 </Paper>
             </Group>
 
-            <LoadingOverlay visible={loading} />
-
-            {/* Invitations Table */}
-            <Paper shadow="md" radius="lg" p="xl" style={{ backgroundColor: "#ffffff" }}>
-                <Title order={3} mb="lg" style={{ color: "#495057", textAlign: "center" }}>
-                    Invitations
-                </Title>
+            <Paper shadow="md" radius="lg" p="xl" style={{ backgroundColor: "#ffffff", position: "relative" }}>
+                <LoadingOverlay visible={loading} />
                 <Table striped highlightOnHover>
-                    <thead>
-                        <tr>
-                            <th
-                                onClick={() => handleSort("id")}
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057", cursor: "pointer", userSelect: "none" }}
-                            >
-                                <Group gap={4} justify="center">
-                                    ID
-                                    <SortIcon field="id" />
-                                </Group>
-                            </th>
-                            <th
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
-                            >
-                                Side
-                            </th>
-                            <th
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
-                            >
-                                Invitees
-                            </th>
-                            <th
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
-                            >
-                                Link
-                            </th>
-                            <th
-                                onClick={() => handleSort("villa_offered")}
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057", cursor: "pointer", userSelect: "none" }}
-                            >
-                                <Group gap={4} justify="center">
-                                    Villa
-                                    <SortIcon field="villa_offered" />
-                                </Group>
-                            </th>
-                            <th
-                                onClick={() => handleSort("sent")}
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057", cursor: "pointer", userSelect: "none" }}
-                            >
-                                <Group gap={4} justify="center">
-                                    Sent
-                                    <SortIcon field="sent" />
-                                </Group>
-                            </th>
-                            <th
-                                style={{ textAlign: "center", padding: "16px 12px", fontWeight: 600, color: "#495057" }}
-                            >
-                                RSVP
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {getSortedInvitations().map((invitation, index) => {
-                            const associatedInvitees = getInviteesForInvitation(invitation.id);
-
-                            return (
-                                <tr
-                                    key={invitation.id}
-                                    style={{ backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8f9fa" }}
-                                >
-                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
-                                        <Text fw={600} size="lg">
-                                            #{invitation.id}
-                                        </Text>
-                                    </td>
-                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
-                                        <Badge
-                                            color={invitation.isMatthewSide ? "blue" : "pink"}
-                                            variant="light"
-                                            size="lg"
-                                            style={{ padding: "8px 16px", fontSize: "14px" }}
-                                        >
-                                            {invitation.isMatthewSide ? "Matthew's Side" : "Rebecca's Side"}
-                                        </Badge>
-                                    </td>
-                                    <td style={{ padding: "20px 12px", verticalAlign: "middle" }}>
-                                        {associatedInvitees.length > 0 ? (
-                                            <Stack
-                                                gap="xs"
-                                                style={{ minHeight: "40px", justifyContent: "center" }}
-                                            >
-                                                {associatedInvitees.map(invitee => (
-                                                    <Group
-                                                        key={invitee.id}
-                                                        gap="sm"
-                                                    >
-                                                        <IconUser
-                                                            size={16}
-                                                            style={{ color: "#8b7355", flexShrink: 0 }}
-                                                        />
-                                                        <Text size="sm" c="dimmed" style={{ fontWeight: 500 }}>
-                                                            {invitee.first_name} {invitee.last_name}
-                                                        </Text>
-                                                    </Group>
-                                                ))}
-                                            </Stack>
-                                        ) : (
-                                            <Text
-                                                size="sm"
-                                                c="dimmed"
-                                                style={{ fontStyle: "italic" }}
-                                            >
-                                                No invitees assigned
-                                            </Text>
-                                        )}
-                                    </td>
-                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
-                                        {(() => {
-                                            const link = getInvitationLink(invitation.id);
-                                            const isCopied = copiedLink === invitation.id;
-                                            return link ? (
-                                                <Group gap="xs" justify="center" wrap="nowrap">
-                                                    <Anchor
-                                                        href={link}
-                                                        target="_blank"
-                                                        size="xs"
-                                                        style={{
-                                                            fontFamily: "monospace",
-                                                            wordBreak: "break-all",
-                                                            maxWidth: 200,
-                                                        }}
-                                                    >
-                                                        {link}
-                                                    </Anchor>
-                                                    <Button
-                                                        variant="subtle"
-                                                        color={isCopied ? "green" : "#8b7355"}
-                                                        size="xs"
-                                                        onClick={() => handleCopyLink(invitation.id, link)}
-                                                        style={{ padding: "4px 8px" }}
-                                                    >
-                                                        {isCopied ? (
-                                                            <IconCheck size={14} />
-                                                        ) : (
-                                                            <IconCopy size={14} />
-                                                        )}
-                                                    </Button>
-                                                </Group>
-                                            ) : (
-                                                <Text size="sm" c="dimmed" style={{ fontStyle: "italic" }}>
-                                                    No RSVP
-                                                </Text>
-                                            );
-                                        })()}
-                                    </td>
-                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
-                                        <Checkbox
-                                            checked={invitation.villa_offered}
-                                            onChange={() => handleVillaToggle(invitation.id, invitation.villa_offered)}
-                                            color="#8b7355"
-                                            size="md"
-                                            style={{ display: "flex", justifyContent: "center" }}
-                                            aria-label="Villa offered"
-                                        />
-                                    </td>
-                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
-                                        <Checkbox
-                                            checked={invitation.sent}
-                                            onChange={() => handleSentToggle(invitation.id, invitation.sent)}
-                                            color="#8b7355"
-                                            size="md"
-                                            style={{ display: "flex", justifyContent: "center" }}
-                                        />
-                                    </td>
-                                    <td style={{ textAlign: "center", padding: "20px 12px", verticalAlign: "middle" }}>
-                                        <Button
-                                            variant="outline"
-                                            color="#8b7355"
-                                            size="sm"
-                                            onClick={() => {
-                                                if (invitation.rsvp_code) {
-                                                    router.push(`/rsvp/${invitation.rsvp_code}`);
-                                                }
-                                            }}
-                                            disabled={!invitation.rsvp_code}
-                                            style={{ minWidth: "80px" }}
-                                        >
-                                            View RSVP
-                                        </Button>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
+                    <Table.Thead>
+                        <Table.Tr>
+                            <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Code</Table.Th>
+                            <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Invitation</Table.Th>
+                            <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Side</Table.Th>
+                            <Table.Th style={{ fontWeight: 600, color: "#495057" }}>Guests</Table.Th>
+                            <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Copy Link</Table.Th>
+                        </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                        {codes.map(item => (
+                            <Table.Tr key={item.code}>
+                                <Table.Td style={{ textAlign: "center" }}>
+                                    <Text ff="monospace" fw={600}>{item.code}</Text>
+                                </Table.Td>
+                                <Table.Td style={{ textAlign: "center" }}>
+                                    <Text fw={500}>#{item.invitation_id}</Text>
+                                </Table.Td>
+                                <Table.Td style={{ textAlign: "center" }}>
+                                    <Badge
+                                        color={item.is_matthew_side ? "blue" : "pink"}
+                                        variant="light"
+                                    >
+                                        {item.is_matthew_side ? "Matthew's" : "Rebecca's"}
+                                    </Badge>
+                                </Table.Td>
+                                <Table.Td>
+                                    <Stack gap={4}>
+                                        {item.invitee_names.map(name => (
+                                            <Group key={name} gap="xs">
+                                                <IconUser size={14} style={{ color: "#8b7355" }} />
+                                                <Text size="sm" c="dimmed">{name}</Text>
+                                            </Group>
+                                        ))}
+                                    </Stack>
+                                </Table.Td>
+                                <Table.Td style={{ textAlign: "center" }}>
+                                    <Button
+                                        variant="subtle"
+                                        color={copied === item.code ? "green" : "#8b7355"}
+                                        size="xs"
+                                        onClick={() => handleCopy(item.code)}
+                                    >
+                                        {copied === item.code ? <IconCheck size={14} /> : <IconCopy size={14} />}
+                                    </Button>
+                                </Table.Td>
+                            </Table.Tr>
+                        ))}
+                    </Table.Tbody>
                 </Table>
             </Paper>
-
-            {/* Create Invitation Modal */}
-            <Modal opened={opened} onClose={close} title="Create New Invitation" size="lg">
-                <form onSubmit={handleCreateInvitation}>
-                    <Stack gap="md">
-                        <Checkbox
-                            label="Is this invitation for Matthew's side of the family?"
-                            checked={invitationForm.isMatthewSide}
-                            onChange={event =>
-                                setInvitationForm(prev => ({ ...prev, isMatthewSide: event.currentTarget.checked }))
-                            }
-                            error={invitationErrors.isMatthewSide}
-                        />
-
-                        <Checkbox
-                            label="Offer villa accommodation to these guests?"
-                            checked={invitationForm.villaOffered}
-                            onChange={event =>
-                                setInvitationForm(prev => ({ ...prev, villaOffered: event.currentTarget.checked }))
-                            }
-                        />
-
-                        <MultiSelect
-                            label="Select Invitees (Optional)"
-                            placeholder="Choose invitees to associate with this invitation"
-                            data={invitees
-                                .filter(invitee => invitee.invitation_id === null) // Only show unassigned invitees
-                                .map(invitee => ({
-                                    value: invitee.id.toString(),
-                                    label: `${invitee.first_name} ${invitee.last_name}`,
-                                }))}
-                            value={invitationForm.selectedInvitees}
-                            onChange={values =>
-                                setInvitationForm(prev => ({
-                                    ...prev,
-                                    selectedInvitees: values,
-                                }))
-                            }
-                            searchable
-                            clearable
-                        />
-
-                        {(() => {
-                            const unassignedCount = invitees.filter(invitee => invitee.invitation_id === null).length;
-                            return unassignedCount === 0 ? (
-                                <Alert color="blue" variant="light">
-                                    <Text size="sm">
-                                        All invitees are already assigned. Create the invitation first and assign
-                                        invitees later.
-                                    </Text>
-                                </Alert>
-                            ) : (
-                                <Text size="sm" c="dimmed">
-                                    Only unassigned invitees are shown. You can assign more invitees later.
-                                </Text>
-                            );
-                        })()}
-
-                        <Group justify="flex-end" mt="md">
-                            <Button variant="outline" onClick={close}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" color="#8b7355">
-                                Create Invitation
-                            </Button>
-                        </Group>
-                    </Stack>
-                </form>
-            </Modal>
         </Stack>
     );
 }

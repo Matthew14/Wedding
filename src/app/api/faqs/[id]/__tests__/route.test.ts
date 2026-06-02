@@ -2,65 +2,30 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET, PUT, DELETE } from "../route";
 
-// Mock Supabase
-const mockGetUser = vi.fn();
-const mockSupabaseClient = {
-    from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        single: vi.fn().mockReturnThis(),
-    })),
-    auth: {
-        getUser: mockGetUser,
-    },
-};
+const mockQuery = vi.fn();
 
-vi.mock("@/utils/supabase/server", () => ({
-    createClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
+vi.mock("@/utils/db/client", () => ({
+    getDb: () => ({ query: mockQuery }),
 }));
 
-// Helper to mock authenticated user
-const mockAuthenticatedUser = () => {
-    mockGetUser.mockResolvedValue({
-        data: { user: { id: "test-user-id", email: "test@example.com" } },
-        error: null,
-    });
-};
+vi.mock("@/utils/auth/requireAuth", () => ({
+    requireAuth: vi.fn(),
+}));
 
-// Helper to mock unauthenticated user
-const mockUnauthenticatedUser = () => {
-    mockGetUser.mockResolvedValue({
-        data: { user: null },
-        error: null,
-    });
-};
+import { requireAuth } from "@/utils/auth/requireAuth";
 
-// Helper to mock auth service error
-const mockAuthServiceError = () => {
-    mockGetUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: "Auth service unavailable" },
-    });
-};
+const mockRequireAuth = requireAuth as ReturnType<typeof vi.fn>;
 
-// Helper to create params promise
+const authenticated = () =>
+    mockRequireAuth.mockResolvedValue({ success: true, payload: { email: "admin@test.com" } });
+
+const unauthenticated = () =>
+    mockRequireAuth.mockResolvedValue({
+        success: false,
+        response: new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
+    });
+
 const createParams = (id: string) => Promise.resolve({ id });
-
-// Helper to create a complete mock chain with all methods
-const createMockChain = (overrides: Record<string, unknown> = {}) => ({
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    single: vi.fn().mockReturnThis(),
-    ...overrides,
-});
 
 describe("/api/faqs/[id]", () => {
     beforeEach(() => {
@@ -70,14 +35,7 @@ describe("/api/faqs/[id]", () => {
     describe("GET /api/faqs/[id]", () => {
         it("returns FAQ successfully", async () => {
             const mockFAQ = { id: "test-1", question: "Test Q", answer: "Test A" };
-
-            const mockChain = createMockChain({
-                single: vi.fn().mockResolvedValue({
-                    data: mockFAQ,
-                    error: null,
-                }),
-            });
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            mockQuery.mockResolvedValue({ rows: [mockFAQ] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1");
             const response = await GET(request, { params: createParams("test-1") });
@@ -88,13 +46,7 @@ describe("/api/faqs/[id]", () => {
         });
 
         it("returns 404 for non-existent FAQ", async () => {
-            const mockChain = createMockChain({
-                single: vi.fn().mockResolvedValue({
-                    data: null,
-                    error: { code: "PGRST116", message: "Not found" },
-                }),
-            });
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            mockQuery.mockResolvedValue({ rows: [] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs/nonexistent");
             const response = await GET(request, { params: createParams("nonexistent") });
@@ -103,11 +55,22 @@ describe("/api/faqs/[id]", () => {
             expect(response.status).toBe(404);
             expect(data.error).toBe("FAQ not found");
         });
+
+        it("handles database errors", async () => {
+            mockQuery.mockRejectedValue(new Error("DB error"));
+
+            const request = new NextRequest("http://localhost:3000/api/faqs/test-1");
+            const response = await GET(request, { params: createParams("test-1") });
+            const data = await response.json();
+
+            expect(response.status).toBe(500);
+            expect(data.error).toBe("Internal server error");
+        });
     });
 
     describe("PUT /api/faqs/[id]", () => {
-        it("returns 401 when user is not authenticated", async () => {
-            mockUnauthenticatedUser();
+        it("returns 401 when not authenticated", async () => {
+            unauthenticated();
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "PUT",
@@ -115,38 +78,13 @@ describe("/api/faqs/[id]", () => {
             });
 
             const response = await PUT(request, { params: createParams("test-1") });
-            const data = await response.json();
-
             expect(response.status).toBe(401);
-            expect(data.error).toBe("Unauthorized");
-        });
-
-        it("returns 401 when auth service returns an error", async () => {
-            mockAuthServiceError();
-
-            const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
-                method: "PUT",
-                body: JSON.stringify({ question: "Updated Q", answer: "Updated A" }),
-            });
-
-            const response = await PUT(request, { params: createParams("test-1") });
-            const data = await response.json();
-
-            expect(response.status).toBe(401);
-            expect(data.error).toBe("Unauthorized");
         });
 
         it("updates FAQ successfully when authenticated", async () => {
-            mockAuthenticatedUser();
+            authenticated();
             const updatedFAQ = { id: "test-1", question: "Updated Q", answer: "Updated A" };
-
-            const mockChain = createMockChain({
-                single: vi.fn().mockResolvedValue({
-                    data: updatedFAQ,
-                    error: null,
-                }),
-            });
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            mockQuery.mockResolvedValue({ rows: [updatedFAQ] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "PUT",
@@ -161,7 +99,7 @@ describe("/api/faqs/[id]", () => {
         });
 
         it("validates required fields", async () => {
-            mockAuthenticatedUser();
+            authenticated();
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "PUT",
@@ -175,16 +113,9 @@ describe("/api/faqs/[id]", () => {
             expect(data.error).toBe("Question and answer are required");
         });
 
-        it("returns 404 for non-existent FAQ", async () => {
-            mockAuthenticatedUser();
-
-            const mockChain = createMockChain({
-                single: vi.fn().mockResolvedValue({
-                    data: null,
-                    error: { code: "PGRST116", message: "Not found" },
-                }),
-            });
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+        it("returns 404 when FAQ not found", async () => {
+            authenticated();
+            mockQuery.mockResolvedValue({ rows: [] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs/nonexistent", {
                 method: "PUT",
@@ -200,43 +131,20 @@ describe("/api/faqs/[id]", () => {
     });
 
     describe("DELETE /api/faqs/[id]", () => {
-        it("returns 401 when user is not authenticated", async () => {
-            mockUnauthenticatedUser();
+        it("returns 401 when not authenticated", async () => {
+            unauthenticated();
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "DELETE",
             });
 
             const response = await DELETE(request, { params: createParams("test-1") });
-            const data = await response.json();
-
             expect(response.status).toBe(401);
-            expect(data.error).toBe("Unauthorized");
-        });
-
-        it("returns 401 when auth service returns an error", async () => {
-            mockAuthServiceError();
-
-            const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
-                method: "DELETE",
-            });
-
-            const response = await DELETE(request, { params: createParams("test-1") });
-            const data = await response.json();
-
-            expect(response.status).toBe(401);
-            expect(data.error).toBe("Unauthorized");
         });
 
         it("deletes FAQ successfully when authenticated", async () => {
-            mockAuthenticatedUser();
-
-            const mockChain = createMockChain({
-                eq: vi.fn().mockResolvedValue({
-                    error: null,
-                }),
-            });
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            authenticated();
+            mockQuery.mockResolvedValue({ rows: [] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "DELETE",
@@ -250,14 +158,8 @@ describe("/api/faqs/[id]", () => {
         });
 
         it("handles database errors during deletion", async () => {
-            mockAuthenticatedUser();
-
-            const mockChain = createMockChain({
-                eq: vi.fn().mockResolvedValue({
-                    error: { message: "Delete failed" },
-                }),
-            });
-            mockSupabaseClient.from.mockReturnValue(mockChain);
+            authenticated();
+            mockQuery.mockRejectedValue(new Error("Delete failed"));
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "DELETE",
@@ -267,7 +169,7 @@ describe("/api/faqs/[id]", () => {
             const data = await response.json();
 
             expect(response.status).toBe(500);
-            expect(data.error).toBe("Failed to delete FAQ");
+            expect(data.error).toBe("Internal server error");
         });
     });
 });
