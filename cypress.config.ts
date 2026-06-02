@@ -1,5 +1,5 @@
 import { defineConfig } from 'cypress';
-import { resetDatabase, queryDatabase, queryDatabaseMultiple } from './cypress/support/database';
+import { resetDatabase, queryDatabase } from './cypress/support/database';
 
 export default defineConfig({
   projectId: 'b4zibi',
@@ -22,11 +22,6 @@ export default defineConfig({
         // Query single record from database
         async queryDatabase(params: { table: string; code?: string; id?: string }) {
           return await queryDatabase(params);
-        },
-
-        // Query multiple records from database
-        async queryDatabaseMultiple(params: { table: string; column?: string; value?: string }) {
-          return await queryDatabaseMultiple(params);
         },
 
         // Logging tasks for accessibility test results

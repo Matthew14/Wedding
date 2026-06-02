@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
-import { requireAuth } from "@/utils/api/requireAuth";
+import { getDb } from "@/utils/db/client";
+import { requireAuth } from "@/utils/auth/requireAuth";
 
 export interface FAQ {
     id?: string;
@@ -9,61 +9,48 @@ export interface FAQ {
     created_at?: string;
 }
 
-// GET /api/faqs - Get all FAQs
 export async function GET() {
     try {
-        const supabase = await createClient();
-
-        const { data: faqs, error } = await supabase.from("FAQs").select("*").order("created_at", { ascending: true });
-
-        if (error) {
-            console.error("Error fetching FAQs:", error);
-            return NextResponse.json({ error: "Failed to fetch FAQs" }, { status: 500 });
-        }
-
-        return NextResponse.json({ faqs });
+        const db = getDb();
+        const { rows } = await db.query<FAQ>(
+            "SELECT id, question, answer, created_at FROM faqs ORDER BY created_at ASC"
+        );
+        return NextResponse.json({ faqs: rows });
     } catch (error) {
         console.error("Error in GET /api/faqs:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
-// POST /api/faqs - Create a new FAQ (requires authentication)
 export async function POST(request: NextRequest) {
+    const auth = await requireAuth(request);
+    if (!auth.success) return auth.response;
+
     try {
-        const supabase = await createClient();
-
-        // Verify user is authenticated
-        const auth = await requireAuth(supabase);
-        if (!auth.success) {
-            return auth.response;
-        }
-
         const { id, question, answer }: FAQ = await request.json();
 
         if (!question || !answer) {
             return NextResponse.json({ error: "Question and answer are required" }, { status: 400 });
         }
 
-        // Prepare the insert data
-        const insertData: Partial<FAQ> = {
-            question: question.trim(),
-            answer: answer.trim(),
-        };
+        const db = getDb();
+        let row: FAQ;
 
-        // Only include id if it's provided
-        if (id && id.trim()) {
-            insertData.id = id.trim();
+        if (id?.trim()) {
+            const { rows } = await db.query<FAQ>(
+                "INSERT INTO faqs (id, question, answer) VALUES ($1, $2, $3) RETURNING *",
+                [id.trim(), question.trim(), answer.trim()]
+            );
+            row = rows[0];
+        } else {
+            const { rows } = await db.query<FAQ>(
+                "INSERT INTO faqs (question, answer) VALUES ($1, $2) RETURNING *",
+                [question.trim(), answer.trim()]
+            );
+            row = rows[0];
         }
 
-        const { data: faq, error } = await supabase.from("FAQs").insert([insertData]).select().single();
-
-        if (error) {
-            console.error("Error creating FAQ:", error);
-            return NextResponse.json({ error: "Failed to create FAQ" }, { status: 500 });
-        }
-
-        return NextResponse.json({ faq }, { status: 201 });
+        return NextResponse.json({ faq: row }, { status: 201 });
     } catch (error) {
         console.error("Error in POST /api/faqs:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

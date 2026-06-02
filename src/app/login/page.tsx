@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Container, Paper, TextInput, PasswordInput, Button, Title, Text, Alert, Stack, Box } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -12,29 +11,31 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const { signIn, user } = useAuth();
     const router = useRouter();
-
-    // Redirect if already logged in
-    useEffect(() => {
-        if (user) {
-            router.push("/dashboard");
-        }
-    }, [user, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setLoading(true);
 
-        const { error } = await signIn(email, password);
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
 
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-        } else {
-            // Success - redirect will happen via useEffect
+            if (!res.ok) {
+                const { error: msg } = await res.json();
+                setError(msg ?? "Sign in failed");
+                setLoading(false);
+                return;
+            }
+
             router.push("/dashboard");
+        } catch {
+            setError("An unexpected error occurred");
+            setLoading(false);
         }
     };
 

@@ -3,9 +3,6 @@ import { Geist, Geist_Mono, Playfair_Display, Great_Vibes } from "next/font/goog
 import "./globals.css";
 import { MantineProvider, ColorSchemeScript, createTheme } from "@mantine/core";
 import "@mantine/core/styles.css";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { PostHogProvider } from "@/components/PostHogProvider";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -113,17 +110,13 @@ export default function RootLayout({
                             <Suspense fallback={null}>
                                 <PageViewTracker />
                             </Suspense>
-                            <AuthProvider>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                    {children}
-                                </div>
-                                <Footer />
-                            </AuthProvider>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                {children}
+                            </div>
+                            <Footer />
                         </ErrorBoundary>
                     </MantineProvider>
                 </PostHogProvider>
-                <Analytics />
-                <SpeedInsights />
             </body>
         </html>
     );

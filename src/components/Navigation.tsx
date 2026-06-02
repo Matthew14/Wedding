@@ -1,11 +1,10 @@
 "use client";
 
-import { Container, Group, Burger, Paper, Transition, Anchor, Button } from "@mantine/core";
+import { Container, Group, Burger, Paper, Transition, Anchor } from "@mantine/core";
 import { useDisclosure, useFocusTrap } from "@mantine/hooks";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
 import { useTracking, SiteEvents } from "@/hooks";
 import classes from "./Navigation.module.css";
 
@@ -13,13 +12,11 @@ const links = [
     { link: "/location", label: "Location" },
     { link: "/schedule", label: "Schedule" },
     { link: "/faqs", label: "FAQs" },
-    { link: "/rsvp", label: "RSVP" },
 ];
 
 export function Navigation() {
     const [opened, { toggle, close }] = useDisclosure(false);
     const pathname = usePathname();
-    const { user } = useAuth();
     const { trackEvent } = useTracking();
 
     // Ref to burger button for returning focus on close
@@ -95,27 +92,6 @@ export function Navigation() {
                 <nav role="navigation" aria-label="Main navigation">
                     <Group gap={5} visibleFrom="xs">
                         {items}
-                        {user && (
-                            <Button
-                                component={Link}
-                                href="/dashboard"
-                                variant="filled"
-                                color="#8b7355"
-                                size="sm"
-                                style={{
-                                    backgroundColor: "var(--gold)",
-                                    color: "#ffffff",
-                                    textDecoration: "none",
-                                    borderRadius: "6px",
-                                    fontWeight: 500,
-                                    letterSpacing: "0.02em",
-                                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                                }}
-                                onClick={() => handleNavClick('Dashboard', '/dashboard')}
-                            >
-                                Dashboard
-                            </Button>
-                        )}
                     </Group>
                 </nav>
 
@@ -142,28 +118,6 @@ export function Navigation() {
                             aria-label="Mobile navigation menu"
                         >
                             {items}
-                            {user && (
-                                <Button
-                                    component={Link}
-                                    href="/dashboard"
-                                    variant="filled"
-                                    color="#8b7355"
-                                    size="sm"
-                                    fullWidth
-                                    style={{
-                                        backgroundColor: "var(--gold)",
-                                        color: "#ffffff",
-                                        textDecoration: "none",
-                                        marginTop: "0.5rem",
-                                        borderRadius: "6px",
-                                        fontWeight: 500,
-                                        letterSpacing: "0.02em",
-                                    }}
-                                    onClick={() => handleNavClick('Dashboard', '/dashboard')}
-                                >
-                                    Dashboard
-                                </Button>
-                            )}
                         </Paper>
                     )}
                 </Transition>
