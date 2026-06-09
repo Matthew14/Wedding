@@ -48,10 +48,10 @@ export const metadata: Metadata = {
         type: "website",
         images: [
             {
-                url: "/og-invitation.png",
-                width: 1200,
-                height: 630,
-                alt: "Rebecca & Matthew's Wedding",
+                url: "/rebecca-matthew-wedding-photo-2.jpeg",
+                width: 800,
+                height: 1200,
+                alt: "Rebecca & Matthew on their wedding day",
             },
         ],
     },
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "Rebecca & Matthew's Wedding",
         description: "Thanks for celebrating with us. Check back soon to see the photos.",
-        images: ["/og-invitation.png"],
+        images: ["/rebecca-matthew-wedding-photo-2.jpeg"],
     },
     other: {
         "color-scheme": "light",
