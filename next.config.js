@@ -27,6 +27,18 @@ const nextConfig = {
         output: "standalone",
         trailingSlash: true,
     }),
+    async redirects() {
+        return [
+            { source: '/faqs', destination: '/', permanent: true },
+            { source: '/invitation/:path*', destination: '/', permanent: true },
+            { source: '/location', destination: '/', permanent: true },
+            { source: '/privacy', destination: '/', permanent: true },
+            { source: '/rsvp', destination: '/', permanent: true },
+            { source: '/rsvp/:path*', destination: '/', permanent: true },
+            { source: '/schedule', destination: '/', permanent: true },
+            { source: '/seat-finder', destination: '/', permanent: true },
+        ];
+    },
     async headers() {
         return [
             {
