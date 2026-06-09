@@ -23,7 +23,8 @@ const nextConfig = {
     experimental: {
         optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
     },
-    ...(process.env.CI && {
+    // standalone only for GitHub CI — Amplify handles SSR natively (sets AWS_APP_ID)
+    ...(process.env.CI && !process.env.AWS_APP_ID && {
         output: "standalone",
         trailingSlash: true,
     }),
