@@ -6,7 +6,7 @@ const region = process.env.AWS_REGION ?? "eu-west-1";
 let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 
 function getJWKS() {
-    const userPoolId = process.env.COGNITO_USER_POOL_ID;
+    const userPoolId = process.env["COGNITO_USER_POOL_ID"];
     if (!userPoolId) throw new Error("COGNITO_USER_POOL_ID environment variable is required");
     if (!_jwks) {
         _jwks = createRemoteJWKSet(
@@ -20,7 +20,7 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
     const token = request.cookies.get("wedding_session")?.value;
     if (!token) return false;
 
-    const audience = process.env.COGNITO_CLIENT_ID;
+    const audience = process.env["COGNITO_CLIENT_ID"];
     if (!audience) throw new Error("COGNITO_CLIENT_ID environment variable is required");
 
     const userPoolId = process.env.COGNITO_USER_POOL_ID!;
