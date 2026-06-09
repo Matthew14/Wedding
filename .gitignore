@@ -59,6 +59,7 @@ staging-data.sql
 
 # Data exports (contain personal guest data)
 infra/export/
+infra/sql/import-data.sh
 
 # CDK build output
 infra/cdk.out/
