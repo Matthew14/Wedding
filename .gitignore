@@ -63,3 +63,6 @@ infra/sql/import-data.sh
 
 # CDK build output
 infra/cdk.out/
+
+# CDK context cache (contains AWS account ID)
+infra/cdk.context.json

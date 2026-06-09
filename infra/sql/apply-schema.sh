@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-CLUSTER_ARN="arn:aws:rds:eu-west-1:084032333902:cluster:weddingstack-auroracluster23d869c0-hexv7uynpwda"
-SECRET_ARN="arn:aws:secretsmanager:eu-west-1:084032333902:secret:wedding/db-credentials-XtbLYS"
+CLUSTER_ARN="${AURORA_CLUSTER_ARN:?AURORA_CLUSTER_ARN env var is required}"
+SECRET_ARN="${AURORA_SECRET_ARN:?AURORA_SECRET_ARN env var is required}"
 DB="wedding"
-PROFILE="wedding"
+PROFILE="${AWS_PROFILE:-wedding}"
 
 run() {
   echo "→ $1"

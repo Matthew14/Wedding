@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.1058.0",
+    "@aws-sdk/client-rds-data": "^3.1064.0",
     "@aws-sdk/client-rekognition": "^3.1058.0",
     "@aws-sdk/client-s3": "^3.1058.0",
     "@aws-sdk/s3-request-presigner": "^3.1058.0",
@@ -32,7 +33,6 @@
     "@tabler/icons-react": "^3.26.0",
     "jose": "^6.2.3",
     "next": "15.5.18",
-    "pg": "^8.21.0",
     "posthog-js": "^1.310.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -46,7 +46,6 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.10.2",
-    "@types/pg": "^8.20.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^5.0.1",
