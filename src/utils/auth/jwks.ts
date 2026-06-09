@@ -5,7 +5,7 @@ const region = process.env.AWS_REGION ?? "eu-west-1";
 let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 
 function getUserPoolId(): string {
-    const id = process.env["COGNITO_USER_POOL_ID"];
+    const id = process.env.COGNITO_USER_POOL_ID;
     if (!id) throw new Error("COGNITO_USER_POOL_ID environment variable is required");
     return id;
 }
