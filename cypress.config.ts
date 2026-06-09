@@ -1,5 +1,4 @@
 import { defineConfig } from 'cypress';
-import { resetDatabase, queryDatabase } from './cypress/support/database';
 
 export default defineConfig({
   projectId: 'b4zibi',
@@ -11,25 +10,11 @@ export default defineConfig({
     screenshotOnRunFailure: true,
 
     setupNodeEvents(on, config) {
-      // Database tasks for test isolation and verification
       on('task', {
-        // Reset database to clean state with test data
-        async resetDb() {
-          await resetDatabase();
-          return null;
-        },
-
-        // Query single record from database
-        async queryDatabase(params: { table: string; code?: string; id?: string }) {
-          return await queryDatabase(params);
-        },
-
-        // Logging tasks for accessibility test results
         log(message: string) {
           console.log(message);
           return null;
         },
-
         table(data: Array<Record<string, string | number>>) {
           console.table(data);
           return null;

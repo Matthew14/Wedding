@@ -1,19 +1,11 @@
 import { cookies } from "next/headers";
-import { jwtVerify, createRemoteJWKSet, type JWTPayload } from "jose";
+import { jwtVerify, type JWTPayload } from "jose";
+import { JWKS, JWT_ISSUER } from "./jwks";
 
 const SESSION_COOKIE = "wedding_session";
 
 export interface SessionPayload extends JWTPayload {
     email?: string;
-}
-
-function getJwks() {
-    const region = process.env.AWS_REGION ?? "eu-west-1";
-    const userPoolId = process.env.COGNITO_USER_POOL_ID!;
-    const url = new URL(
-        `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`
-    );
-    return createRemoteJWKSet(url);
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
@@ -22,8 +14,9 @@ export async function getSession(): Promise<SessionPayload | null> {
     if (!token) return null;
 
     try {
-        const { payload } = await jwtVerify<SessionPayload>(token, getJwks(), {
-            issuer: `https://cognito-idp.${process.env.AWS_REGION ?? "eu-west-1"}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+        const { payload } = await jwtVerify<SessionPayload>(token, JWKS, {
+            issuer: JWT_ISSUER,
+            audience: process.env.COGNITO_CLIENT_ID,
         });
         return payload;
     } catch {
