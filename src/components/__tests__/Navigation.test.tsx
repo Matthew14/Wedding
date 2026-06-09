@@ -1,62 +1,26 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "../../test/test-utils";
-
-vi.mock("next/navigation", () => ({
-    usePathname: vi.fn(() => "/"),
-    useRouter: vi.fn(() => ({
-        push: vi.fn(),
-        replace: vi.fn(),
-    })),
-}));
 
 vi.mock("../Navigation.module.css", () => ({
     default: {
         header: "header",
-        link: "link",
         inner: "inner",
-        dropdown: "dropdown",
     },
 }));
 
 import { Navigation } from "../Navigation";
 
 describe("Navigation", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-    });
-
-    it("renders navigation links", () => {
+    it("renders wedding title linking to home", () => {
         render(<Navigation />);
-        expect(screen.getByRole("link", { name: "Location" })).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: "Schedule" })).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: "FAQs" })).toBeInTheDocument();
-    });
-
-    it("does not render RSVP link", () => {
-        render(<Navigation />);
-        expect(screen.queryByRole("link", { name: "RSVP" })).not.toBeInTheDocument();
-    });
-
-    it("has correct href attributes", () => {
-        render(<Navigation />);
-        expect(screen.getByRole("link", { name: "Location" })).toHaveAttribute("href", "/location");
-        expect(screen.getByRole("link", { name: "Schedule" })).toHaveAttribute("href", "/schedule");
-        expect(screen.getByRole("link", { name: "FAQs" })).toHaveAttribute("href", "/faqs");
+        const link = screen.getByRole("link", { name: "Rebecca & Matthew" });
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveAttribute("href", "/");
     });
 
     it("has proper banner role for accessibility", () => {
         render(<Navigation />);
         expect(screen.getByRole("banner")).toBeInTheDocument();
-    });
-
-    it("renders mobile menu button", () => {
-        render(<Navigation />);
-        expect(screen.getByRole("button", { name: /open navigation menu/i })).toBeInTheDocument();
-    });
-
-    it("renders wedding title", () => {
-        render(<Navigation />);
-        expect(screen.getByRole("link", { name: "Rebecca & Matthew" })).toBeInTheDocument();
     });
 
     it("renders skip link for accessibility", () => {
@@ -66,8 +30,15 @@ describe("Navigation", () => {
         expect(skipLink).toHaveAttribute("href", "#main-content");
     });
 
-    it("does not render a Dashboard button (admin-only, bookmarked directly)", () => {
+    it("does not render removed page links", () => {
         render(<Navigation />);
-        expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("link", { name: "Location" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("link", { name: "Schedule" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("link", { name: "FAQs" })).not.toBeInTheDocument();
+    });
+
+    it("does not render mobile menu button", () => {
+        render(<Navigation />);
+        expect(screen.queryByRole("button", { name: /navigation menu/i })).not.toBeInTheDocument();
     });
 });
