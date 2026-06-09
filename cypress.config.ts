@@ -1,4 +1,5 @@
 import { defineConfig } from 'cypress';
+import { resetDatabase } from './cypress/support/database';
 
 export default defineConfig({
   projectId: 'b4zibi',
@@ -19,6 +20,11 @@ export default defineConfig({
           console.table(data);
           return null;
         },
+        // Note: auth tests require a Cognito admin user to exist in the test
+        // user pool (COGNITO_USER_POOL_ID). There is no automated setup for
+        // this — create the user manually via the AWS console or CLI before
+        // running E2E tests.
+        resetDb: () => resetDatabase().then(() => null),
       });
 
       return config;

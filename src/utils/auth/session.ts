@@ -29,6 +29,9 @@ export async function getSession(): Promise<SessionPayload | null> {
     }
 }
 
+// No refresh token flow: the session expires when the Cognito ID token does
+// (default 1 hour). Users of the admin dashboard will be silently logged out
+// after that window. This is an accepted trade-off for a low-traffic admin UI.
 export function setSessionCookie(token: string, maxAge: number) {
     return {
         name: SESSION_COOKIE,

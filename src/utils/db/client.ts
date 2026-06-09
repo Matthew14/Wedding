@@ -38,7 +38,7 @@ const db = {
             new ExecuteStatementCommand({
                 resourceArn: process.env.AURORA_CLUSTER_ARN!,
                 secretArn: process.env.AURORA_SECRET_ARN!,
-                database: "wedding",
+                database: process.env.DB_NAME ?? "wedding",
                 sql: transformedSql,
                 parameters,
                 formatRecordsAs: "JSON",
