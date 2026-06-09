@@ -43,13 +43,13 @@ export default function HomePage() {
                             }}
                         >
                             <Image
-                                src="/rebecca-matthew-wedding-photo.jpeg"
+                                src="/rebecca-matthew-wedding-photo-2.jpeg"
                                 alt="Rebecca and Matthew on their wedding day"
                                 fill
                                 sizes="(max-width: 768px) 80vw, 400px"
                                 style={{
                                     objectFit: "cover",
-                                    objectPosition: "75% center",
+                                    objectPosition: "center 90%",
                                 }}
                                 priority
                             />
