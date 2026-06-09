@@ -144,7 +144,7 @@ describe("/api/faqs/[id]", () => {
 
         it("deletes FAQ successfully when authenticated", async () => {
             authenticated();
-            mockQuery.mockResolvedValue({ rows: [] });
+            mockQuery.mockResolvedValue({ rows: [{ id: "test-1" }] });
 
             const request = new NextRequest("http://localhost:3000/api/faqs/test-1", {
                 method: "DELETE",
