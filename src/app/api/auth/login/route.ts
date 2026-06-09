@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signIn } from "@/utils/auth/cognito";
-import { setSessionCookie } from "@/utils/auth/session";
+import { setSessionCookie, setAccessTokenCookie } from "@/utils/auth/session";
 
 export async function POST(request: NextRequest) {
     try {
@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
         const tokens = await signIn(email as string, password as string);
 
         const response = NextResponse.json({ ok: true });
-        const cookie = setSessionCookie(tokens.idToken, tokens.expiresIn);
-        response.cookies.set(cookie);
+        response.cookies.set(setSessionCookie(tokens.idToken, tokens.expiresIn));
+        response.cookies.set(setAccessTokenCookie(tokens.accessToken, tokens.expiresIn));
 
         return response;
     } catch (err) {

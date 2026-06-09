@@ -16,10 +16,15 @@ export async function requireAuth(request: NextRequest): Promise<AuthResult> {
         };
     }
 
+    const audience = process.env.COGNITO_CLIENT_ID;
+    if (!audience) {
+        throw new Error("COGNITO_CLIENT_ID environment variable is required");
+    }
+
     try {
         const { payload } = await jwtVerify(token, JWKS, {
             issuer: JWT_ISSUER,
-            audience: process.env.COGNITO_CLIENT_ID,
+            audience,
         });
         return { success: true, payload };
     } catch {
