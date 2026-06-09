@@ -66,3 +66,7 @@ infra/cdk.out/
 
 # CDK context cache (contains AWS account ID)
 infra/cdk.context.json
+
+# infra dependencies
+infra/node_modules/
+infra/package-lock.json
