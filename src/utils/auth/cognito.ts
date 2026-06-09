@@ -4,8 +4,16 @@ import {
     GlobalSignOutCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
+// Bracket notation prevents Next.js webpack from inlining these at build time,
+// ensuring the runtime Lambda values are used instead of build-time substitutions.
+function getEnv(key: string): string {
+    const val = process.env[key];
+    if (!val) throw new Error(`${key} environment variable is required`);
+    return val;
+}
+
 const client = new CognitoIdentityProviderClient({
-    region: process.env.AWS_REGION ?? "eu-west-1",
+    region: process.env["AWS_REGION"] ?? "eu-west-1",
 });
 
 export interface CognitoTokens {
@@ -16,13 +24,14 @@ export interface CognitoTokens {
 }
 
 export async function signIn(email: string, password: string): Promise<CognitoTokens> {
+    const clientId = getEnv("COGNITO_CLIENT_ID");
     const command = new InitiateAuthCommand({
         AuthFlow: "USER_PASSWORD_AUTH",
-        ClientId: process.env.COGNITO_CLIENT_ID!,
+        ClientId: clientId,
         AuthParameters: {
             USERNAME: email,
             PASSWORD: password,
-            SECRET_HASH: await computeSecretHash(email),
+            SECRET_HASH: await computeSecretHash(email, clientId),
         },
     });
 
@@ -46,9 +55,8 @@ export async function signOut(accessToken: string): Promise<void> {
     await client.send(command);
 }
 
-async function computeSecretHash(username: string): Promise<string> {
-    const clientSecret = process.env.COGNITO_CLIENT_SECRET!;
-    const clientId = process.env.COGNITO_CLIENT_ID!;
+async function computeSecretHash(username: string, clientId: string): Promise<string> {
+    const clientSecret = getEnv("COGNITO_CLIENT_SECRET");
     const message = username + clientId;
 
     const key = await crypto.subtle.importKey(
