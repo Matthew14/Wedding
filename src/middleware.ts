@@ -1,22 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { jwtVerify, createRemoteJWKSet } from "jose";
 
-function getJwks() {
-    const region = process.env.AWS_REGION ?? "eu-west-1";
-    const userPoolId = process.env.COGNITO_USER_POOL_ID!;
-    const url = new URL(
-        `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`
-    );
-    return createRemoteJWKSet(url);
-}
+const region = process.env.AWS_REGION ?? "eu-west-1";
+const userPoolId = process.env.COGNITO_USER_POOL_ID!;
+
+const JWKS = createRemoteJWKSet(
+    new URL(`https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`)
+);
+
+const JWT_ISSUER = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
 
 async function isAuthenticated(request: NextRequest): Promise<boolean> {
     const token = request.cookies.get("wedding_session")?.value;
     if (!token) return false;
 
     try {
-        await jwtVerify(token, getJwks(), {
-            issuer: `https://cognito-idp.${process.env.AWS_REGION ?? "eu-west-1"}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+        await jwtVerify(token, JWKS, {
+            issuer: JWT_ISSUER,
+            audience: process.env.COGNITO_CLIENT_ID,
         });
         return true;
     } catch {

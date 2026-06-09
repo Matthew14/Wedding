@@ -34,8 +34,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const handleSignOut = async () => {
         setSigningOut(true);
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/");
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            router.push("/");
+        } finally {
+            setSigningOut(false);
+        }
     };
 
     return (

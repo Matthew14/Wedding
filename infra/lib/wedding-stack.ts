@@ -120,7 +120,7 @@ export class WeddingStack extends cdk.Stack {
       generateSecret: true,
     });
 
-    const cognitoClientSecret = new secretsmanager.Secret(this, 'CognitoClientSecret', {
+    new secretsmanager.Secret(this, 'CognitoClientSecret', {
       secretName: 'wedding/cognito-client-secret',
       secretStringValue: userPoolClient.userPoolClientSecret,
     });
@@ -181,7 +181,5 @@ export class WeddingStack extends cdk.Stack {
       description: 'Rekognition policy ARN — attach to Amplify execution role',
     });
 
-    // Suppress unused variable warnings for cognitoClientSecret
-    void cognitoClientSecret;
   }
 }

@@ -39,23 +39,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         const db = getDb();
-        const updateData: Record<string, string> = {
-            question: question.trim(),
-            answer: answer.trim(),
-        };
+
+        let rows: FAQ[];
         if (newId?.trim() && newId.trim() !== id) {
-            updateData.id = newId.trim();
+            ({ rows } = await db.query<FAQ>(
+                "UPDATE faqs SET id = $1, question = $2, answer = $3 WHERE id = $4 RETURNING *",
+                [newId.trim(), question.trim(), answer.trim(), id]
+            ));
+        } else {
+            ({ rows } = await db.query<FAQ>(
+                "UPDATE faqs SET question = $1, answer = $2 WHERE id = $3 RETURNING *",
+                [question.trim(), answer.trim(), id]
+            ));
         }
-
-        const setClauses = Object.keys(updateData)
-            .map((k, i) => `${k} = $${i + 1}`)
-            .join(", ");
-        const values = [...Object.values(updateData), id];
-
-        const { rows } = await db.query<FAQ>(
-            `UPDATE faqs SET ${setClauses} WHERE id = $${values.length} RETURNING *`,
-            values
-        );
 
         if (rows.length === 0) {
             return NextResponse.json({ error: "FAQ not found" }, { status: 404 });
@@ -75,7 +71,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     try {
         const { id } = await params;
         const db = getDb();
-        await db.query("DELETE FROM faqs WHERE id = $1", [id]);
+        const { rows } = await db.query("DELETE FROM faqs WHERE id = $1 RETURNING id", [id]);
+        if (rows.length === 0) {
+            return NextResponse.json({ error: "FAQ not found" }, { status: 404 });
+        }
         return NextResponse.json({ message: "FAQ deleted successfully" });
     } catch (error) {
         console.error("Error in DELETE /api/faqs/[id]:", error);
