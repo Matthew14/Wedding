@@ -13,7 +13,7 @@ export async function getSession(): Promise<SessionPayload | null> {
     const token = cookieStore.get(SESSION_COOKIE)?.value;
     if (!token) return null;
 
-    const audience = process.env.COGNITO_CLIENT_ID;
+    const audience = process.env["COGNITO_CLIENT_ID"];
     if (!audience) {
         throw new Error("COGNITO_CLIENT_ID environment variable is required");
     }

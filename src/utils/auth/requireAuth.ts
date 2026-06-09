@@ -16,7 +16,7 @@ export async function requireAuth(request: NextRequest): Promise<AuthResult> {
         };
     }
 
-    const audience = process.env.COGNITO_CLIENT_ID;
+    const audience = process.env["COGNITO_CLIENT_ID"];
     if (!audience) {
         throw new Error("COGNITO_CLIENT_ID environment variable is required");
     }
