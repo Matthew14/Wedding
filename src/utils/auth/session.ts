@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { jwtVerify, type JWTPayload } from "jose";
-import { JWKS, JWT_ISSUER } from "./jwks";
+import { getJWKS, getJWTIssuer } from "./jwks";
 
 const SESSION_COOKIE = "wedding_session";
 
@@ -19,8 +19,8 @@ export async function getSession(): Promise<SessionPayload | null> {
     }
 
     try {
-        const { payload } = await jwtVerify<SessionPayload>(token, JWKS, {
-            issuer: JWT_ISSUER,
+        const { payload } = await jwtVerify<SessionPayload>(token, getJWKS(), {
+            issuer: getJWTIssuer(),
             audience,
         });
         return payload;

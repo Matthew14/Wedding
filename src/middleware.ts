@@ -2,32 +2,32 @@ import { type NextRequest, NextResponse } from "next/server";
 import { jwtVerify, createRemoteJWKSet } from "jose";
 
 const region = process.env.AWS_REGION ?? "eu-west-1";
-const userPoolId = process.env.COGNITO_USER_POOL_ID;
 
-if (!userPoolId) {
-    throw new Error("COGNITO_USER_POOL_ID environment variable is required");
+let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function getJWKS() {
+    const userPoolId = process.env.COGNITO_USER_POOL_ID;
+    if (!userPoolId) throw new Error("COGNITO_USER_POOL_ID environment variable is required");
+    if (!_jwks) {
+        _jwks = createRemoteJWKSet(
+            new URL(`https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`)
+        );
+    }
+    return _jwks;
 }
-
-const JWKS = createRemoteJWKSet(
-    new URL(`https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`)
-);
-
-const JWT_ISSUER = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
 
 async function isAuthenticated(request: NextRequest): Promise<boolean> {
     const token = request.cookies.get("wedding_session")?.value;
     if (!token) return false;
 
     const audience = process.env.COGNITO_CLIENT_ID;
-    if (!audience) {
-        throw new Error("COGNITO_CLIENT_ID environment variable is required");
-    }
+    if (!audience) throw new Error("COGNITO_CLIENT_ID environment variable is required");
+
+    const userPoolId = process.env.COGNITO_USER_POOL_ID!;
+    const issuer = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
 
     try {
-        await jwtVerify(token, JWKS, {
-            issuer: JWT_ISSUER,
-            audience,
-        });
+        await jwtVerify(token, getJWKS(), { issuer, audience });
         return true;
     } catch {
         return false;
