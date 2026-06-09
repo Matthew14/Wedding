@@ -120,27 +120,6 @@ function WeddingDayPage() {
                                     >
                                         Schedule
                                     </Button>
-                                    <Button
-                                        component={Link}
-                                        href="/seat-finder"
-                                        size="xl"
-                                        variant="outline"
-                                        className="secondary-cta-button"
-                                        style={{
-                                            borderColor: "var(--gold-dark)",
-                                            backgroundColor: "#ffffff",
-                                            color: "var(--gold-dark)",
-                                            borderRadius: 30,
-                                            padding: "12px 30px",
-                                            fontSize: "18px",
-                                            fontWeight: 600,
-                                            borderWidth: "2px",
-                                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
-                                            transition: "all 0.2s ease",
-                                        }}
-                                    >
-                                        Seat Finder
-                                    </Button>
                                 </Group>
                             </Stack>
                         </Container>
