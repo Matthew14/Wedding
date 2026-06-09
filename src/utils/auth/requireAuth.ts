@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify, type JWTPayload } from "jose";
-import { JWKS, JWT_ISSUER } from "./jwks";
+import { getJWKS, getJWTIssuer } from "./jwks";
 
 export type AuthResult =
     | { success: true; payload: JWTPayload }
@@ -22,8 +22,8 @@ export async function requireAuth(request: NextRequest): Promise<AuthResult> {
     }
 
     try {
-        const { payload } = await jwtVerify(token, JWKS, {
-            issuer: JWT_ISSUER,
+        const { payload } = await jwtVerify(token, getJWKS(), {
+            issuer: getJWTIssuer(),
             audience,
         });
         return { success: true, payload };
