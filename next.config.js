@@ -15,6 +15,13 @@ const cognitoJwks = cognitoUserPoolId
     : "";
 
 const nextConfig = {
+    env: {
+        COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ?? "",
+        COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ?? "",
+        COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET ?? "",
+        AURORA_CLUSTER_ARN: process.env.AURORA_CLUSTER_ARN ?? "",
+        AURORA_SECRET_ARN: process.env.AURORA_SECRET_ARN ?? "",
+    },
     images: {
         remotePatterns: cloudfrontDomain
             ? [{ protocol: "https", hostname: new URL(cloudfrontDomain).hostname }]

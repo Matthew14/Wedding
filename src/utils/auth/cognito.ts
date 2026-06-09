@@ -4,16 +4,8 @@ import {
     GlobalSignOutCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
-// Bracket notation prevents Next.js webpack from inlining these at build time,
-// ensuring the runtime Lambda values are used instead of build-time substitutions.
-function getEnv(key: string): string {
-    const val = process.env[key];
-    if (!val) throw new Error(`${key} environment variable is required`);
-    return val;
-}
-
 const client = new CognitoIdentityProviderClient({
-    region: process.env["AWS_REGION"] ?? "eu-west-1",
+    region: process.env.AWS_REGION ?? "eu-west-1",
 });
 
 export interface CognitoTokens {
@@ -24,7 +16,9 @@ export interface CognitoTokens {
 }
 
 export async function signIn(email: string, password: string): Promise<CognitoTokens> {
-    const clientId = getEnv("COGNITO_CLIENT_ID");
+    const clientId = process.env.COGNITO_CLIENT_ID;
+    if (!clientId) throw new Error("COGNITO_CLIENT_ID environment variable is required");
+
     const command = new InitiateAuthCommand({
         AuthFlow: "USER_PASSWORD_AUTH",
         ClientId: clientId,
@@ -56,9 +50,10 @@ export async function signOut(accessToken: string): Promise<void> {
 }
 
 async function computeSecretHash(username: string, clientId: string): Promise<string> {
-    const clientSecret = getEnv("COGNITO_CLIENT_SECRET");
-    const message = username + clientId;
+    const clientSecret = process.env.COGNITO_CLIENT_SECRET;
+    if (!clientSecret) throw new Error("COGNITO_CLIENT_SECRET environment variable is required");
 
+    const message = username + clientId;
     const key = await crypto.subtle.importKey(
         "raw",
         new TextEncoder().encode(clientSecret),
@@ -66,7 +61,6 @@ async function computeSecretHash(username: string, clientId: string): Promise<st
         false,
         ["sign"]
     );
-
     const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
     return btoa(String.fromCharCode(...new Uint8Array(signature)));
 }
