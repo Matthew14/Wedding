@@ -1,6 +1,14 @@
 import { RDSDataClient, ExecuteStatementCommand, type Field } from "@aws-sdk/client-rds-data";
 
-const client = new RDSDataClient({ region: process.env.AWS_REGION ?? "eu-west-1" });
+const client = new RDSDataClient({
+    region: process.env.AWS_REGION ?? "eu-west-1",
+    ...(process.env.LAMBDA_AWS_KEY_ID && {
+        credentials: {
+            accessKeyId: process.env.LAMBDA_AWS_KEY_ID,
+            secretAccessKey: process.env.LAMBDA_AWS_SECRET!,
+        },
+    }),
+});
 
 type ParamValue = string | number | boolean | null | undefined;
 
