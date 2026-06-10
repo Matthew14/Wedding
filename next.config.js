@@ -21,6 +21,8 @@ const nextConfig = {
         COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET ?? "",
         AURORA_CLUSTER_ARN: process.env.AURORA_CLUSTER_ARN ?? "",
         AURORA_SECRET_ARN: process.env.AURORA_SECRET_ARN ?? "",
+        LAMBDA_AWS_KEY_ID: process.env.LAMBDA_AWS_KEY_ID ?? "",
+        LAMBDA_AWS_SECRET: process.env.LAMBDA_AWS_SECRET ?? "",
     },
     images: {
         remotePatterns: cloudfrontDomain
