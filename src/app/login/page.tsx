@@ -10,6 +10,9 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [challengeSession, setChallengeSession] = useState<string | null>(null);
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const router = useRouter();
 
@@ -19,15 +22,32 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
+            const body = challengeSession
+                ? { email, password, newPassword, session: challengeSession }
+                : { email, password };
+
+            if (challengeSession && newPassword !== confirmPassword) {
+                setError("Passwords do not match");
+                setLoading(false);
+                return;
+            }
+
             const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify(body),
             });
 
+            const data = await res.json();
+
             if (!res.ok) {
-                const { error: msg } = await res.json();
-                setError(msg ?? "Sign in failed");
+                setError(data.error ?? "Sign in failed");
+                setLoading(false);
+                return;
+            }
+
+            if (data.challenge === "NEW_PASSWORD_REQUIRED") {
+                setChallengeSession(data.session);
                 setLoading(false);
                 return;
             }
@@ -77,6 +97,12 @@ export default function LoginPage() {
                             </Alert>
                         )}
 
+                        {challengeSession && (
+                            <Alert color="blue" variant="light">
+                                Your temporary password has expired. Please set a new password to continue.
+                            </Alert>
+                        )}
+
                         <form onSubmit={handleSubmit}>
                             <Stack gap="md">
                                 <TextInput
@@ -86,23 +112,53 @@ export default function LoginPage() {
                                     required
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
+                                    disabled={!!challengeSession}
                                     styles={{
                                         label: { color: "#495057", fontWeight: 500 },
                                         input: { borderColor: "#dee2e6" },
                                     }}
                                 />
 
-                                <PasswordInput
-                                    label="Password"
-                                    placeholder="Enter your password"
-                                    required
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    styles={{
-                                        label: { color: "#495057", fontWeight: 500 },
-                                        input: { borderColor: "#dee2e6" },
-                                    }}
-                                />
+                                {!challengeSession && (
+                                    <PasswordInput
+                                        label="Password"
+                                        placeholder="Enter your password"
+                                        required
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        styles={{
+                                            label: { color: "#495057", fontWeight: 500 },
+                                            input: { borderColor: "#dee2e6" },
+                                        }}
+                                    />
+                                )}
+
+                                {challengeSession && (
+                                    <>
+                                        <PasswordInput
+                                            label="New Password"
+                                            placeholder="Choose a new password"
+                                            required
+                                            value={newPassword}
+                                            onChange={e => setNewPassword(e.target.value)}
+                                            styles={{
+                                                label: { color: "#495057", fontWeight: 500 },
+                                                input: { borderColor: "#dee2e6" },
+                                            }}
+                                        />
+                                        <PasswordInput
+                                            label="Confirm New Password"
+                                            placeholder="Confirm your new password"
+                                            required
+                                            value={confirmPassword}
+                                            onChange={e => setConfirmPassword(e.target.value)}
+                                            styles={{
+                                                label: { color: "#495057", fontWeight: 500 },
+                                                input: { borderColor: "#dee2e6" },
+                                            }}
+                                        />
+                                    </>
+                                )}
 
                                 <Button
                                     type="submit"
@@ -115,7 +171,7 @@ export default function LoginPage() {
                                         marginTop: "1rem",
                                     }}
                                 >
-                                    Sign In
+                                    {challengeSession ? "Set New Password" : "Sign In"}
                                 </Button>
                             </Stack>
                         </form>
