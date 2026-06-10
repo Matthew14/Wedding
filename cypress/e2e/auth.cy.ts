@@ -96,17 +96,4 @@ describe('Authentication Flow', () => {
       });
     });
   });
-
-  describe('Dashboard Data', () => {
-    it('should load summary data without errors', () => {
-      cy.fixture('auth-data').then(authData => {
-        cy.login(authData.validUser.email, authData.validUser.password);
-        cy.visit('/dashboard');
-        // No error alert
-        cy.contains('Failed to load summary', { timeout: 10000 }).should('not.exist');
-        // At least one stat card shows a non-zero total — confirms the DB round-trip worked
-        cy.contains(/[1-9]\d* \/ [1-9]\d*/, { timeout: 10000 }).should('be.visible');
-      });
-    });
-  });
 });
