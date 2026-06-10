@@ -1,10 +1,10 @@
 # Wedding
 
-Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, TypeScript, Mantine UI, and Supabase.
+Rebecca & Matthew's Wedding Website — built with Next.js 15, TypeScript, Mantine UI, and AWS.
 
 ## Features
 
-- **Homepage**: Elegant hero section with couple's engagement photo and call-to-action buttons
+- **Homepage**: Elegant hero section with couple's wedding photo
 - **Location**: Complete venue details for Gran Villa Rosa with integrated Google Maps, travel information, and parking details
 - **Schedule**: Comprehensive 3-day wedding timeline with detailed activities for each day
 - **FAQs**: Frequently asked questions with expandable accordion interface and admin editor
@@ -20,7 +20,10 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **UI Library**: Mantine Components v7.15.2
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Aurora Serverless v2 (PostgreSQL) via RDS Data API
+- **Auth**: AWS Cognito
+- **Hosting**: AWS Amplify (WEB_COMPUTE)
+- **Photos CDN**: CloudFront → S3
 - **Styling**: Custom CSS with Mantine integration
 - **Icons**: Tabler Icons
 - **Fonts**: Geist Sans & Geist Mono
@@ -34,28 +37,25 @@ Rebecca & Matthew's Wedding Website - A wedding website built with Next.js 15, T
     npm install
     ```
 
-2. **Set up Supabase**:
-   Start the local Supabase instance (requires Docker):
+2. **Set up environment variables**:
+   Copy `.env.example` to `.env.local` and fill in the values:
 
     ```bash
-    npm run supabase:start
+    cp .env.example .env.local
     ```
 
-3. **Set up environment variables**:
-   Copy `.env.local` and add your Supabase credentials:
+   You'll need:
+   - Cognito user pool ID, client ID, and client secret
+   - Aurora cluster ARN and secret ARN
+   - IAM access keys for the `wedding-api-lambda` user
 
-    ```bash
-    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-    ```
-
-4. **Run development server**:
+3. **Run development server**:
 
     ```bash
     npm run dev
     ```
 
-5. **Open [http://localhost:3000](http://localhost:3000)** in your browser
+4. **Open [http://localhost:3022](http://localhost:3022)** in your browser
 
 ## Project Structure
 
@@ -64,6 +64,8 @@ Wedding/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
 │   │   ├── api/            # API routes
+│   │   │   ├── auth/      # Login/logout endpoints
+│   │   │   ├── dashboard/ # Dashboard summary endpoint
 │   │   │   ├── faqs/      # FAQ API endpoints
 │   │   │   └── rsvp/      # RSVP API endpoints
 │   │   ├── dashboard/     # Admin dashboard (protected)
@@ -86,15 +88,14 @@ Wedding/
 │   ├── test/              # Test utilities and setup
 │   ├── types/             # TypeScript type definitions
 │   └── utils/             # Utility functions
-│       └── supabase/      # Supabase client setup
-│           ├── client.ts  # Client-side Supabase client
-│           ├── server.ts  # Server-side Supabase client
-│           └── middleware.ts # Middleware utilities
+│       ├── auth/          # Cognito auth helpers
+│       ├── db/            # Aurora Data API client
+│       └── logger.ts      # CloudWatch structured logger
 ├── public/
 │   ├── favicon.ico        # Custom wedding favicon
-│   └── rebecca-matthew-wedding-photo.jpeg # Hero image
+│   └── rebecca-matthew-wedding-photo-2.jpeg # Hero image
 ├── package.json           # Dependencies and scripts
-├── next.config.js         # Next.js configuration
+├── next.config.js         # Next.js configuration (bakes env vars for Lambda)
 ├── vitest.config.ts       # Vitest test configuration
 ├── tsconfig.json         # TypeScript configuration
 ├── postcss.config.mjs    # PostCSS configuration
@@ -104,43 +105,52 @@ Wedding/
 ## Customization
 
 - **Couple Names**: Update names in `src/app/layout.tsx` metadata and throughout components
-- **Hero Image**: Replace `/rebecca-matthew-wedding-photo.jpeg` in `public/` directory and update `src/app/page.tsx`
+- **Hero Image**: Replace `/rebecca-matthew-wedding-photo-2.jpeg` in `public/` and update `src/app/page.tsx`
 - **Color Scheme**: Modify the brown/gold theme (`#8b7355`) in `globals.css` and component styles
 - **Wedding Details**: Update venue information, dates, and timeline in respective page components
-- **Google Maps**: The location page includes Gran Villa Rosa map integration - update coordinates if needed
+- **Google Maps**: The location page includes Gran Villa Rosa map integration — update coordinates if needed
 - **FAQs**: Manage questions and answers through the admin dashboard at `/dashboard/faq-editor`
 - **Schedule**: Customize the 3-day timeline with your specific activities and timing
 
-## Database
+## Infrastructure
 
-The site uses Supabase as the database backend. You'll need to create the necessary tables in your Supabase project for features like RSVPs and FAQs.
+All resources run in AWS account `084032333902`, region `eu-west-1`:
+
+- **Amplify**: Hosts the Next.js app with auto-deploy on push to `main`
+- **Aurora Serverless v2**: PostgreSQL database accessed via RDS Data API
+- **Cognito**: Admin user authentication
+- **CloudFront + S3**: Wedding photo CDN
+- **CloudWatch**: Application logs at `/wedding/app` (90-day retention)
+
+See `docs/AWS_RESOURCES.md` for full resource inventory.
 
 ## Current Pages & Content
 
-- **Homepage** (`/`): Complete with hero image, couple introduction, and navigation to key pages
-- **Location** (`/location`): Full venue details for Gran Villa Rosa with embedded Google Maps, travel information, and parking details
-- **Schedule** (`/schedule`): Detailed 3-day wedding timeline with activities for each day including welcome events, ceremony, reception, and farewell celebration
-- **FAQs** (`/faqs`): Frequently asked questions with accordion interface, managed through admin dashboard
+- **Homepage** (`/`): Wedding photo and thank-you message
+- **Location** (`/location`): Full venue details for Gran Villa Rosa with embedded Google Maps
+- **Schedule** (`/schedule`): Detailed 3-day wedding timeline
+- **FAQs** (`/faqs`): Frequently asked questions, managed through admin dashboard
 - **RSVP** (`/rsvp`): RSVP entry page where guests enter their invitation code
-- **RSVP Form** (`/rsvp/[code]`): Dynamic RSVP form with attendance confirmation, dietary restrictions, song requests, and more
+- **RSVP Form** (`/rsvp/[code]`): Dynamic RSVP form with attendance confirmation, dietary restrictions, song requests
 - **RSVP Success** (`/rsvp/success`): Confirmation page after successful RSVP submission
 - **Login** (`/login`): Admin login page for dashboard access
 - **Dashboard** (`/dashboard`): Admin dashboard for managing FAQs and invitations (protected route)
 
 ## Development Status
 
-✅ **Complete**: Homepage, Location, Schedule pages with full content and styling  
-✅ **Complete**: Responsive navigation, custom styling, and animations  
-✅ **Complete**: Database connection setup  
-✅ **Complete**: RSVP system with invitation codes, form submission, and response tracking  
-✅ **Complete**: Admin dashboard with FAQ editor and invitation management  
-✅ **Complete**: Authentication system with protected routes  
-✅ **Complete**: Comprehensive unit testing with Vitest and React Testing Library  
-⏳ **Planned**: Photo gallery section to showcase photos once the wedding has taken place
+✅ **Complete**: Homepage, Location, Schedule pages with full content and styling
+✅ **Complete**: Responsive navigation, custom styling, and animations
+✅ **Complete**: Database connection (Aurora via RDS Data API)
+✅ **Complete**: RSVP system with invitation codes, form submission, and response tracking
+✅ **Complete**: Admin dashboard with FAQ editor and invitation management
+✅ **Complete**: Authentication system (Cognito) with protected routes
+✅ **Complete**: Comprehensive unit testing with Vitest and React Testing Library
+✅ **Complete**: E2E testing with Cypress in CI
+⏳ **Planned**: Photo gallery section to showcase photos
 
 ## Testing
 
-This project includes comprehensive testing at multiple levels. See [TESTING.md](TESTING.md) for detailed unit testing information and [cypress/README.md](cypress/README.md) for E2E testing documentation.
+This project includes comprehensive testing at multiple levels. See [docs/TESTING.md](docs/TESTING.md) for unit testing and [cypress/README.md](cypress/README.md) for E2E testing.
 
 ### Running Unit Tests
 
@@ -161,7 +171,7 @@ npm run test:ui
 ### Running E2E Tests
 
 ```bash
-# Run E2E tests (automated)
+# Run E2E tests (automated — builds, starts server, runs Cypress, stops)
 npm run test:e2e
 
 # Open Cypress in interactive mode
@@ -173,6 +183,7 @@ npm run cypress:run
 
 ## Additional Documentation
 
+- **[docs/AWS_RESOURCES.md](docs/AWS_RESOURCES.md)**: AWS resource inventory and cost estimates
 - **[docs/RSVP_SYSTEM_README.md](docs/RSVP_SYSTEM_README.md)**: Detailed documentation for the RSVP system
 - **[docs/TESTING.md](docs/TESTING.md)**: Comprehensive unit testing guide and best practices
 - **[cypress/README.md](cypress/README.md)**: E2E testing setup, configuration, and test coverage
@@ -182,10 +193,8 @@ npm run cypress:run
 
 ## Deployment
 
-The site is ready for deployment on Vercel, Netlify, or any Next.js-compatible platform.
+The site deploys automatically via AWS Amplify on every push to `main`. Environment variables are set in the Amplify console and baked into the Lambda bundle at build time via `next.config.js`.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-This wedding website template is open source and available for others to use for their own weddings or as inspiration for similar projects.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
