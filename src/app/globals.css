@@ -20,7 +20,7 @@ body {
     color: #2d2d2d;
     background: linear-gradient(to bottom, var(--ivory), var(--cream));
     background-attachment: fixed;
-    overflow-x: hidden;
+    overflow-x: clip;
     width: 100%;
     font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.7;
@@ -41,7 +41,7 @@ strong {
 /* Mobile viewport fix and smooth scrolling */
 html {
     width: 100%;
-    overflow-x: hidden;
+    overflow-x: clip;
     color-scheme: light only;
     scroll-behavior: smooth;
 }
@@ -291,7 +291,7 @@ a:focus {
     body,
     html {
         max-width: 100vw;
-        overflow-x: hidden;
+        overflow-x: clip;
     }
 
     /* Better text scaling on mobile */
