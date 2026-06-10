@@ -23,6 +23,7 @@ const nextConfig = {
         AURORA_SECRET_ARN: process.env.AURORA_SECRET_ARN ?? "",
         LAMBDA_AWS_KEY_ID: process.env.LAMBDA_AWS_KEY_ID ?? "",
         LAMBDA_AWS_SECRET: process.env.LAMBDA_AWS_SECRET ?? "",
+        S3_PHOTOS_BUCKET: process.env.S3_PHOTOS_BUCKET ?? "",
     },
     images: {
         remotePatterns: cloudfrontDomain
@@ -82,7 +83,7 @@ const nextConfig = {
                     },
                     {
                         key: "Content-Security-Policy",
-                        value: `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com${posthogUrls}; script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com${posthogUrls}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com${cloudfrontCsp}; font-src 'self' data:; connect-src 'self' https://maps.googleapis.com${posthogUrls}${cloudfrontCsp}${cognitoJwks}; frame-src 'self' https://www.google.com https://maps.googleapis.com;`,
+                        value: `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com${posthogUrls}; script-src-elem 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com${posthogUrls}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com${cloudfrontCsp}; font-src 'self' data:; connect-src 'self' https://maps.googleapis.com https://*.amazonaws.com${posthogUrls}${cloudfrontCsp}${cognitoJwks}; frame-src 'self' https://www.google.com https://maps.googleapis.com;`,
                     },
                 ],
             },

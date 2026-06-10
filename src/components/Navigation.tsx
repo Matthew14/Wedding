@@ -27,6 +27,20 @@ export function Navigation() {
                 >
                     Rebecca & Matthew
                 </Anchor>
+                <Anchor
+                    component={Link}
+                    href="/gallery"
+                    size="sm"
+                    fw={400}
+                    style={{
+                        color: "var(--gold-dark)",
+                        textDecoration: "none",
+                        letterSpacing: "0.05em",
+                        transition: "opacity 0.2s",
+                    }}
+                >
+                    Gallery
+                </Anchor>
             </Container>
         </header>
     );
