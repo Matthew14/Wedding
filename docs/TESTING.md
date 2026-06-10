@@ -4,7 +4,7 @@ This project uses comprehensive testing at multiple levels: unit tests and end-t
 
 ## Unit Testing Stack
 
-- **Test Runner**: [Vitest](https://vitest.dev/) - Fast, modern test runner
+- **Test Runner**: [Vitest](https://vitest.dev/) — Fast, modern test runner
 - **Component Testing**: [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 - **Test Environment**: jsdom for browser-like testing environment
 - **Mocking**: Vitest's built-in mocking capabilities
@@ -12,10 +12,10 @@ This project uses comprehensive testing at multiple levels: unit tests and end-t
 
 ## E2E Testing Stack
 
-- **Test Framework**: [Cypress](https://www.cypress.io/) - Modern E2E testing framework
-- **Test Database**: Local Supabase instance (isolated from development data)
-- **Test Server**: Next.js dev server on port 3907
-- **Custom Commands**: Database utilities and authentication helpers
+- **Test Framework**: [Cypress](https://www.cypress.io/) — Modern E2E testing framework
+- **Auth**: Real Cognito user pool (`ci@matthewoneill.com`) — credentials in GitHub secrets
+- **Test Server**: Next.js production build served with `next start` on port 3907
+- **Custom Commands**: Authentication helpers and no-op database reset
 - **CI/CD**: Automated testing in GitHub Actions
 
 For detailed E2E testing documentation, see [cypress/README.md](cypress/README.md).
@@ -24,7 +24,7 @@ For detailed E2E testing documentation, see [cypress/README.md](cypress/README.m
 
 ### Unit Tests
 
-Unit tests are organized using the `__tests__` folder pattern near the System Under Test (SUT):
+Unit tests are organised using the `__tests__` folder pattern near the System Under Test (SUT):
 
 ```
 src/
@@ -50,17 +50,18 @@ src/
 
 ### E2E Tests
 
-E2E tests are organized in the `cypress/` directory:
+E2E tests are organised in the `cypress/` directory:
 
 ```
 cypress/
 ├── e2e/
 │   ├── auth.cy.ts          # Authentication flow tests
-│   └── rsvp.cy.ts          # RSVP system tests
-├── fixtures/               # Test data
+│   └── accessibility.cy.ts # Accessibility (a11y) tests
+├── fixtures/               # Test data (auth-data.json written by CI)
 ├── support/
 │   ├── commands.ts         # Custom Cypress commands
-│   └── database.ts         # Database utilities
+│   ├── database.ts         # Database reset (no-op — Aurora in private VPC)
+│   └── e2e.ts              # Support file (auto-loaded, includes cypress-axe)
 └── tsconfig.json
 ```
 
@@ -85,7 +86,7 @@ npm run test:ui
 ### E2E Tests
 
 ```bash
-# Run E2E tests (automated - starts server, runs tests, stops server)
+# Run E2E tests (automated — builds, starts server, runs Cypress, stops)
 npm run test:e2e
 
 # Open Cypress in interactive mode
@@ -97,8 +98,6 @@ npm run cypress:run
 # Run Cypress tests with browser visible
 npm run cypress:headed
 ```
-
-For detailed E2E testing instructions, including Supabase setup and troubleshooting, see [cypress/README.md](cypress/README.md).
 
 ## Test Configuration
 
@@ -119,7 +118,6 @@ For detailed E2E testing instructions, including Supabase setup and troubleshoot
 ### Test Utils (`src/test/test-utils.tsx`)
 
 - Custom render function with providers
-- Mocked Supabase client for consistent testing
 - Re-exports all React Testing Library utilities
 
 ## Testing Patterns
@@ -166,11 +164,9 @@ it("handles sign in", async () => {
 
 ## Mocking Strategy
 
-### Supabase
+### AWS / Database
 
-- Mocked at the client level in `test-utils.tsx`
-- Consistent mock responses across all tests
-- Easy to override for specific test scenarios
+In unit tests, the Aurora Data API client and Cognito auth are mocked at the module level. E2E tests use a real Cognito user (`ci@matthewoneill.com`) and do not hit the database directly — the database reset command (`cy.resetDb()`) is a no-op since Aurora runs in a private VPC.
 
 ### Next.js Features
 
@@ -181,7 +177,6 @@ it("handles sign in", async () => {
 ### External APIs
 
 - Fetch: Mocked globally for API route tests
-- OpenAI: Mocked in specific test files
 
 ## Coverage Goals
 
@@ -192,7 +187,7 @@ it("handles sign in", async () => {
 
 ## Best Practices
 
-1. **Test Behavior, Not Implementation**: Focus on what the user sees and does
+1. **Test Behaviour, Not Implementation**: Focus on what the user sees and does
 2. **Use Descriptive Test Names**: Tests should read like documentation
 3. **Arrange-Act-Assert Pattern**: Clear test structure
 4. **Mock External Dependencies**: Keep tests isolated and fast
@@ -245,8 +240,10 @@ it('handles button click', async () => {
 
 Tests run automatically on:
 
-- Git commits (pre-commit hook)
-- Pull requests
-- Main branch pushes
+- Git commits (pre-commit hook — unit tests only)
+- Pull requests and pushes to `main`/`develop` — full CI suite (lint, unit, build, e2e, type-check)
 
-Coverage reports are generated and can be viewed in the coverage/ directory.
+The GitHub Actions workflow runs three jobs:
+- **test**: lint + unit tests + build (Node 20 & 22)
+- **e2e**: build with real Cognito secrets, run Cypress against `next start`
+- **type-check**: `tsc --noEmit`

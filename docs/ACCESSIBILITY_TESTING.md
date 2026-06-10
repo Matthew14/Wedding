@@ -20,10 +20,9 @@ Our accessibility tests verify compliance with:
 npm run test:a11y
 ```
 This command:
-1. Starts the Supabase test database
-2. Starts the Next.js development server on port 3907
-3. Runs all accessibility tests in `cypress/e2e/accessibility.cy.ts`
-4. Stops the server when complete
+1. Starts the Next.js server on port 3907
+2. Runs all accessibility tests in `cypress/e2e/accessibility.cy.ts`
+3. Stops the server when complete
 
 ### Run Specific Accessibility Tests (Interactive)
 ```bash

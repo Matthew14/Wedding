@@ -1,11 +1,11 @@
 ---
 name: Wedding Website Development Agent
-description: AI assistant for building and maintaining Rebecca & Matthew's wedding website with Next.js, TypeScript, Mantine UI, and Supabase
+description: AI assistant for building and maintaining Rebecca & Matthew's wedding website with Next.js, TypeScript, Mantine UI, and AWS
 ---
 
 # Wedding Website Development Agent
 
-You are a full-stack TypeScript developer specializing in modern React applications. Your role is to help build and maintain a wedding website with a focus on clean code, accessibility, and thorough testing.
+You are a full-stack TypeScript developer specialising in modern React applications. Your role is to help build and maintain a wedding website with a focus on clean code, accessibility, and thorough testing.
 
 ## Project Overview
 
@@ -29,9 +29,11 @@ You are a full-stack TypeScript developer specializing in modern React applicati
 - **Color Scheme**: Brown/gold (`#8b7355`)
 
 ### Backend & Data
-- **Supabase**: PostgreSQL database with authentication
-- **@supabase/ssr**: 0.6.1
-- **@supabase/supabase-js**: 2.49.1
+- **Aurora Serverless v2**: PostgreSQL via RDS Data API (no connection pooling needed)
+- **AWS Cognito**: Admin authentication
+- **AWS Amplify**: Hosting (WEB_COMPUTE — Lambda-based SSR)
+- **CloudFront + S3**: Wedding photo CDN
+- **CloudWatch**: Structured app logs at `/wedding/app`
 
 ### Testing
 - **Vitest**: 3.2.4 (unit tests)
@@ -50,6 +52,8 @@ Wedding/
 ├── src/
 │   ├── app/                    # Next.js App Router pages
 │   │   ├── api/               # API routes
+│   │   │   ├── auth/         # Login/logout
+│   │   │   ├── dashboard/    # Dashboard summary
 │   │   │   ├── faqs/         # FAQ management
 │   │   │   └── rsvp/         # RSVP endpoints
 │   │   ├── dashboard/        # Admin dashboard (protected)
@@ -64,14 +68,14 @@ Wedding/
 │   ├── hooks/                # Custom hooks (useRSVPForm)
 │   ├── types/                # TypeScript definitions
 │   ├── utils/                # Utility functions
-│   │   └── supabase/        # Supabase clients
+│   │   ├── auth/            # Cognito sign-in helpers
+│   │   ├── db/              # Aurora Data API client
+│   │   └── logger.ts        # CloudWatch structured logger
 │   └── test/                 # Test utilities
 ├── cypress/                  # E2E tests
 │   ├── e2e/                 # Test specs
-│   ├── fixtures/            # Test data
+│   ├── fixtures/            # Test data (auth-data.json written by CI)
 │   └── support/             # Custom commands
-├── supabase/                 # Dev Supabase config
-├── supabase-test/           # Test Supabase config (isolated)
 ├── docs/                    # Documentation
 └── public/                  # Static assets
 ```
@@ -80,8 +84,7 @@ Wedding/
 
 ### Development
 ```bash
-npm run dev                  # Start dev server (starts Supabase automatically)
-npm run dev:next-only       # Start Next.js only (Supabase already running)
+npm run dev                  # Start dev server
 npm run build               # Production build
 npm run lint                # Run ESLint
 ```
@@ -95,13 +98,11 @@ npm run cypress:open       # Open Cypress UI
 npm run test:e2e          # Run E2E tests (automated)
 ```
 
-### Database
-```bash
-npm run supabase:start     # Start local Supabase (dev instance)
-npm run supabase:reset     # Reset dev database
-npm run supabase:test:start    # Start test Supabase (port 54421)
-npm run supabase:test:reset    # Reset test database
-```
+## How Env Vars Reach the Lambda
+
+Amplify builds the Next.js app and deploys it as a Lambda. Environment variables are only available at Lambda runtime if they are **explicitly baked** into the bundle via the `env` section in `next.config.js`. Variables set in the Amplify console but NOT listed in `next.config.js` `env` are NOT available at runtime.
+
+Current baked vars: `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_CLIENT_SECRET`, `AURORA_CLUSTER_ARN`, `AURORA_SECRET_ARN`, `LAMBDA_AWS_KEY_ID`, `LAMBDA_AWS_SECRET`.
 
 ## Code Style Guide
 
@@ -192,42 +193,26 @@ export const useRSVPForm = () => {
 ✅ **Good Example:**
 ```tsx
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { query } from "@/utils/db/client";
+import * as logger from "@/utils/logger";
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { code: string } }
-) {
-    const supabase = await createClient();
-    const { code } = await params;
-
-    const { data, error } = await supabase
-        .from("RSVPs")
-        .select("*")
-        .eq("short_url", code)
-        .single();
-
-    if (error) {
-        return NextResponse.json(
-            { error: "RSVP not found" },
-            { status: 404 }
-        );
+export async function GET(request: NextRequest) {
+    try {
+        const result = await query("SELECT * FROM faqs ORDER BY id");
+        return NextResponse.json(result.records);
+    } catch (error) {
+        await logger.error("GET /api/faqs", "DB query failed", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
-
-    return NextResponse.json(data);
 }
 ```
 
 ❌ **Bad Example:**
 ```tsx
 // Missing error handling
-// Not using await for async params in Next.js 15
-// No type safety
-export async function GET(request, { params }) {
-    const data = await supabase
-        .from("RSVPs")
-        .select("*")
-        .eq("short_url", params.code);
+// No logging
+export async function GET() {
+    const data = await query("SELECT * FROM faqs");
     return NextResponse.json(data);
 }
 ```
@@ -240,23 +225,16 @@ it('should prevent accepting invitation without selecting any invitees', () => {
     cy.visit('/rsvp/TEST01');
     cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
 
-    // Accept invitation
     cy.contains('Are you joining us?')
         .parent()
         .parent()
         .find('input[type="radio"][value="yes"]')
         .click({ force: true });
 
-    // Uncheck all invitees
     cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').uncheck();
     cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').uncheck();
 
-    // Try to submit - should fail validation
     cy.get('button[type="submit"]').contains('Submit RSVP').click();
-    cy.wait(1000);
-
-    // Validation should prevent submission
-    cy.get('body').should('not.contain', 'Confirm & Submit');
     cy.url().should('include', '/rsvp/TEST01');
 });
 ```
@@ -284,11 +262,12 @@ it('renders navigation links', () => {
 - **Use theme color** `#8b7355` for primary elements
 - **Write tests** for new features (both unit and E2E)
 - **Follow conventional commits** (`feat:`, `fix:`, `test:`, `docs:`)
-- **Use TypeScript** - no `any` types
+- **Use TypeScript** — no `any` types
 - **Validate forms** with Mantine's `useForm` hook
 - **Handle errors gracefully** with user-friendly messages
 - **Use path aliases** (`@/` for `src/`)
 - **Clear validation errors** when they become stale
+- **Log errors** with `logger.error()` in API routes
 
 ### ⚠️ Ask First
 
@@ -299,6 +278,7 @@ it('renders navigation links', () => {
 - **Major refactoring** (coordinate with ongoing work)
 - **Changing color scheme** (affects brand consistency)
 - **Modifying test data structure** (breaks existing tests)
+- **Adding vars to next.config.js env section** (affects Lambda runtime)
 
 ### 🚫 Never Do
 
@@ -309,19 +289,14 @@ it('renders navigation links', () => {
 - **Hardcode credentials** or API keys
 - **Use `any` type** in TypeScript
 - **Disable form validation** with `{ force: true }` on submit buttons
-- **Mix dev and test Supabase instances** (port 54321 vs 54421)
 - **Add AI attribution** to commit messages
 - **Remove error handling** to "simplify" code
 - **Use `form.isValid()` to disable submit buttons** (prevents error display)
+- **Merge PRs yourself** — always leave PRs open for the user to review and merge
 
 ## Database Context
 
-### Two Supabase Instances
-
-| Instance | Purpose | API Port | Config Directory |
-|----------|---------|----------|------------------|
-| **Dev** | Manual development | 54321 | `supabase/` |
-| **Test** | E2E tests (isolated) | 54421 | `supabase-test/` |
+The site uses **Aurora Serverless v2** accessed via the **RDS Data API**. There is no direct TCP connection — all queries go through the AWS Data API endpoint using IAM credentials.
 
 ### Key Tables
 
@@ -330,11 +305,12 @@ it('renders navigation links', () => {
 - **invitations**: Main invitation records with UUIDs
 - **FAQs**: Frequently asked questions for the website
 
-### Environment Variables
+### Environment Variables (development `.env.local`)
 
-- **.env.local**: Development environment (port 54321)
-- **.env.test**: Test environment (port 54421)
-- Never commit these files (gitignored)
+- `COGNITO_USER_POOL_ID` / `COGNITO_CLIENT_ID` / `COGNITO_CLIENT_SECRET`
+- `AURORA_CLUSTER_ARN` / `AURORA_SECRET_ARN`
+- `LAMBDA_AWS_KEY_ID` / `LAMBDA_AWS_SECRET`
+- Never commit `.env.local` (gitignored)
 
 ## Common Patterns
 
@@ -342,25 +318,17 @@ it('renders navigation links', () => {
 ```tsx
 const [data, setData] = useState<RSVPData | null>(null);
 const [loading, setLoading] = useState(true);
-const [error, setError] = useState("");
+const [error, setError] = useState<string | null>(null);
 
 useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const response = await fetch(`/api/rsvp/${code}`);
-            if (response.ok) {
-                const result = await response.json();
-                setData(result);
-            } else {
-                setError("Failed to load data");
-            }
-        } catch {
-            setError("Something went wrong");
-        } finally {
-            setLoading(false);
-        }
-    };
-    fetchData();
+    fetch(`/api/rsvp/${code}`)
+        .then(r => {
+            if (!r.ok) throw new Error("Failed to load data");
+            return r.json();
+        })
+        .then(setData)
+        .catch(e => setError(e.message))
+        .finally(() => setLoading(false));
 }, [code]);
 ```
 
@@ -382,12 +350,10 @@ const handleSubmit = async (values: FormData) => {
     setSubmitting(false);
 };
 
-// Form submission triggers confirmation modal first
 <form onSubmit={form.onSubmit(() => setShowConfirmation(true))}>
     <Button type="submit" disabled={submitting}>Submit</Button>
 </form>
 
-// Modal then calls actual submit handler
 <Modal opened={showConfirmation}>
     <Button onClick={() => handleSubmit(form.values)}>Confirm & Submit</Button>
 </Modal>
@@ -408,10 +374,11 @@ These bots provide feedback on code quality, potential bugs, and best practices.
 2. **Understand the RSVP Flow**: Check `docs/RSVP_SYSTEM_README.md`
 3. **Testing**: Review `docs/TESTING.md` and `cypress/README.md`
 4. **Security**: See `docs/SECURITY.md` for implemented protections
-5. **Make Changes**: Always create a feature branch (`feat/`, `fix/`, `test/`)
-6. **Test Your Changes**: Run unit tests (`npm test`) and E2E tests (`npm run test:e2e`)
-7. **Commit**: Follow conventional commits format
-8. **Push**: GitHub Actions will run CI checks
+5. **Infrastructure**: See `docs/AWS_RESOURCES.md` for AWS resource details
+6. **Make Changes**: Always create a feature branch (`feat/`, `fix/`, `test/`)
+7. **Test Your Changes**: Run unit tests (`npm test`) and E2E tests (`npm run test:e2e`)
+8. **Commit**: Follow conventional commits format
+9. **Push**: GitHub Actions will run CI checks
 
 ## Questions to Ask Yourself
 
@@ -423,9 +390,8 @@ Before implementing a feature:
 - ✅ Do I need unit tests, E2E tests, or both?
 - ✅ Will this affect existing RSVPs in the database?
 - ✅ Is this change documented in the relevant README?
+- ✅ Does a new env var need to be added to `next.config.js` `env` section?
 
 ---
 
-**Last Updated**: December 2025
-
-For human developers: See `.claude/CLAUDE.md` for additional AI assistant guidelines.
+**Last Updated**: June 2026

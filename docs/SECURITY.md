@@ -17,12 +17,12 @@ This document outlines the security measures implemented in the wedding website.
 - **Why**: Prevents clickjacking, XSS, MIME-type sniffing, and other attacks
 - **Location**: `next.config.js`
 - **Headers Implemented**:
-    - `X-Frame-Options: DENY` - Prevents clickjacking
-    - `X-Content-Type-Options: nosniff` - Prevents MIME-type sniffing
-    - `Referrer-Policy: strict-origin-when-cross-origin` - Controls referrer information
-    - `X-XSS-Protection: 1; mode=block` - Enables XSS filtering
-    - `Permissions-Policy` - Restricts access to browser features
-    - `Content-Security-Policy` - Prevents XSS and other injection attacks
+    - `X-Frame-Options: DENY` — Prevents clickjacking
+    - `X-Content-Type-Options: nosniff` — Prevents MIME-type sniffing
+    - `Referrer-Policy: strict-origin-when-cross-origin` — Controls referrer information
+    - `X-XSS-Protection: 1; mode=block` — Enables XSS filtering
+    - `Permissions-Policy` — Restricts access to browser features
+    - `Content-Security-Policy` — Prevents XSS and other injection attacks
 
 ### 3. XSS Protection
 
@@ -40,10 +40,10 @@ This document outlines the security measures implemented in the wedding website.
 - **Why**: Prevents brute-force attacks, API abuse, and reduces costs
 - **Location**: `src/utils/api/rateLimit.ts` (reusable utility)
 - **Protected Endpoints**:
-    - `/api/rsvp/validate/[code]` - 5 requests/minute (strictest, prevents code guessing)
-    - `/api/rsvp/[code]` - 20 requests/minute (RSVP form submission)
-    - `/api/invitation/[slug]` - 30 requests/minute (invitation lookup)
-    - `/api/generate-faq-id` - 10 requests/minute (OpenAI cost protection)
+    - `/api/rsvp/validate/[code]` — 5 requests/minute (strictest, prevents code guessing)
+    - `/api/rsvp/[code]` — 20 requests/minute (RSVP form submission)
+    - `/api/invitation/[slug]` — 30 requests/minute (invitation lookup)
+    - `/api/generate-faq-id` — 10 requests/minute (OpenAI cost protection)
 - **Implementation**: In-memory rate limiter with per-IP tracking and validation
 - **Security Features**:
     - IP format validation prevents header spoofing attacks
@@ -51,92 +51,51 @@ This document outlines the security measures implemented in the wedding website.
     - Rate limit headers on all responses for client backoff
 - **Response**: Returns HTTP 429 with `Retry-After` header and rate limit metadata
 
-## 🔒 Existing Security Features
+## 🔒 Authentication & Authorization
 
-### Authentication & Authorization
+### AWS Cognito Authentication
 
-- **Supabase Authentication**: Email/password authentication via Supabase Auth
 - **Route Protection**: Middleware-based protection for admin routes (`/dashboard/*`)
-- **Session Management**: Secure session handling via Supabase with automatic refresh
+- **Session Management**: JWT tokens stored in cookies, validated on each request
+- **Challenge Handling**: `NEW_PASSWORD_REQUIRED` challenge handled at login — forced password change on first login
 
 **Authentication Flow:**
 1. User submits credentials to `/login` page
-2. `AuthContext` calls `supabase.auth.signInWithPassword()`
-3. Supabase validates credentials and returns JWT session
-4. Session stored in browser cookies (managed by Supabase)
-5. Middleware checks session on protected routes
-6. Unauthenticated users redirected to `/login` with return URL
-7. Already-authenticated users on `/login` redirected to `/dashboard`
+2. API calls Cognito `InitiateAuthCommand`
+3. If `NEW_PASSWORD_REQUIRED` challenge returned, user is prompted for new password
+4. On success, Cognito returns access/ID/refresh tokens
+5. Tokens stored in browser cookies
+6. Middleware validates token on protected routes
+7. Unauthenticated users redirected to `/login`
 
 **Protected Routes:**
-- `/dashboard/*` - Requires authenticated session
-- `/api/faqs/*` (POST, PUT, DELETE) - Requires authenticated session via RLS
+- `/dashboard/*` — Requires authenticated session
 
 ### Environment Security
 
-- **Environment Variables**: All secrets stored in `.env.local`
+- **Environment Variables**: All secrets stored in `.env.local` for dev; Amplify console for production
+- **Lambda Env Baking**: Vars explicitly listed in `next.config.js` `env` section are baked into the Lambda bundle at build time
 - **No Hardcoded Secrets**: All API keys and sensitive data externalized
+- **IAM Least Privilege**: `wedding-api-lambda` IAM user has only rds-data, secretsmanager, and cloudwatch-logs permissions
 
 ### Dependencies
 
 - **Up-to-date Packages**: All dependencies regularly updated
 - **Vulnerability Scanning**: `npm audit` shows 0 vulnerabilities
 
-### 5. Row Level Security (RLS)
-
-- **What**: PostgreSQL RLS policies to control database access
-- **Why**: Defense-in-depth security layer beyond API validation
-- **Location**: `supabase/migrations/20260106222120_secure_rls_policies.sql`
-- **Implementation**:
-
-| Table | Public SELECT | Public INSERT | Public UPDATE | Public DELETE |
-|-------|--------------|---------------|---------------|---------------|
-| invitation | ✅ | ❌ | ❌ | ❌ |
-| RSVPs | ✅ | ❌ | ✅ | ❌ |
-| invitees | ✅ | ❌ | ✅ | ❌ |
-| FAQs | ✅ | ❌ | ❌ | ❌ |
-
-**Policy Names:**
-- `invitation_public_select` / `invitation_authenticated_all`
-- `rsvps_public_select` / `rsvps_public_update` / `rsvps_authenticated_all`
-- `invitees_public_select` / `invitees_public_update` / `invitees_authenticated_all`
-- `faqs_public_select` / `faqs_authenticated_insert` / `faqs_authenticated_update` / `faqs_authenticated_delete`
-
-**Security Model:**
-- Public users can READ all data (acceptable for private wedding site)
-- Public users can UPDATE RSVPs/invitees (API validates RSVP code first)
-- Only authenticated users (admins) can INSERT/DELETE any data
-- FAQs are read-only for public users; full CRUD for admins
-
-### 6. API-Level Protections
+### 5. API-Level Protections
 
 - **What**: Server-side validation before database operations
-- **Location**: `src/app/api/rsvp/[code]/route.ts`
 - **Protections**:
     - RSVP code validation (6-character code required)
     - Invitee ownership validation (prevents cross-invitation updates)
-    - Authentication required for FAQ management
+    - Authentication required for FAQ management and dashboard
 
 ## ⚠️ Known Limitations & Accepted Risks
 
-### Anon Key Exposure
+### Over-Permissioned Admin IAM User
 
-The Supabase anon key is exposed to browsers via `NEXT_PUBLIC_SUPABASE_ANON_KEY`. This is necessary for client-side Supabase features and is an accepted trade-off:
-
-**What this means:**
-- Users could theoretically read all RSVP data via direct Supabase queries
-- RLS prevents direct INSERT/DELETE but allows SELECT/UPDATE
-
-**Why this is acceptable:**
-- Guest list is not highly sensitive information
-- Only invited guests receive the site URL
-- No financial or PII data beyond names is stored
-- API validates RSVP codes before allowing updates
-
-**Mitigations in place:**
-- RLS blocks INSERT/DELETE operations
-- API validates invitee ownership before updates
-- FAQs are read-only for public users
+The `wedding-deploy` IAM user has `AdministratorAccess`. This is flagged for reduction to only the permissions needed for Amplify CLI operations. Current risk is low since the keys are only used locally.
 
 ## 📊 Data Handling & Retention
 
@@ -149,11 +108,11 @@ The Supabase anon key is exposed to browsers via `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 ### Data Retention Policy
 - **RSVP Data**: Retained until wedding completion + 6 months for follow-up
 - **Analytics Data**: Subject to PostHog retention settings
-- **Session Data**: Automatically expires per Supabase defaults
+- **Application Logs**: CloudWatch `/wedding/app` log group — 90-day retention
 
 ### Data Access
 - Guest data accessible only via valid RSVP code or admin dashboard
-- No data sharing with third parties beyond hosting providers (Vercel, Supabase)
+- No data sharing with third parties beyond AWS (hosting, DB, auth) and PostHog (analytics)
 - PostHog analytics configured with privacy-respecting defaults
 
 ## 🇪🇺 GDPR Compliance Notes
@@ -178,28 +137,18 @@ This is a private wedding website with limited data collection:
 
 ### Security Incident Procedures
 
-1. **Detection**: Monitor for unusual activity in Supabase logs and Vercel analytics
-2. **Containment**: Disable affected RSVP codes or rotate API keys if needed
+1. **Detection**: Monitor CloudWatch logs at `/wedding/app` for unusual activity
+2. **Containment**: Rotate IAM keys or disable Cognito user if needed
 3. **Assessment**: Determine scope and impact of incident
 4. **Notification**: Inform affected parties if personal data compromised
-5. **Recovery**: Restore from database backups if necessary
+5. **Recovery**: Restore from Aurora automated backups if necessary
 6. **Review**: Document incident and update security measures
 
 ### Emergency Actions
-- **Rotate Supabase Keys**: Via Supabase Dashboard > Settings > API
-- **Disable Public Access**: Update RLS policies to restrict SELECT
-- **Reset Admin Passwords**: Via Supabase Dashboard > Authentication
-
-## 🛡️ Additional Recommendations
-
-For production deployment, consider:
-
-1. ~~**Database Security**: Enable Row Level Security (RLS) policies in Supabase~~ ✅ Done
-2. **HTTPS Only**: Ensure all traffic uses HTTPS
-3. **Domain Validation**: Implement CORS policies for specific domains
-4. **Monitoring**: Add security monitoring and alerting
-5. **Backup Strategy**: Regular database backups
-6. **Access Logging**: Monitor admin access patterns
+- **Rotate IAM Keys**: AWS Console > IAM > Users > `wedding-api-lambda` > Security credentials
+- **Rotate Cognito Client Secret**: Cognito console > App clients
+- **Disable Admin Access**: Cognito console > Users > Disable user
+- **Check Logs**: CloudWatch > Log groups > `/wedding/app`
 
 ## 📝 Security Checklist
 
@@ -211,10 +160,11 @@ For production deployment, consider:
 - [x] Validate all user inputs
 - [x] Use environment variables for secrets
 - [x] Keep dependencies updated
-- [x] Implement proper authentication
+- [x] Implement proper authentication (Cognito)
 - [x] Protect admin routes
-- [x] Enable Row Level Security (RLS) policies
-- [x] Add invitee ownership validation
+- [x] Handle NEW_PASSWORD_REQUIRED Cognito challenge
+- [x] CloudWatch structured logging for API errors
+- [ ] Scope down `wedding-deploy` IAM from AdministratorAccess
 
 ## 🚨 Security Contact
 
@@ -222,5 +172,5 @@ For security issues or concerns, please contact the website administrator.
 
 ---
 
-Last updated: January 10, 2026
-Risk Level: **LOW** - Suitable for personal wedding website with basic admin functionality.
+Last updated: June 2026
+Risk Level: **LOW** — Suitable for personal wedding website with basic admin functionality.
