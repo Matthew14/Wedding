@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/utils/db/client";
 import { requireAuth } from "@/utils/auth/requireAuth";
+import * as logger from "@/utils/logger";
 
 export async function GET(request: NextRequest) {
     const auth = await requireAuth(request);
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
         });
     } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        console.error("Error in GET /api/dashboard/summary:", error);
+        await logger.error("GET /api/dashboard/summary", "DB query failed", error);
         return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
