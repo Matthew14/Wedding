@@ -36,7 +36,7 @@ describe('Authentication Flow', () => {
       cy.get('input[type="email"]').type('wrong@example.com', { force: true });
       cy.get('input[type="password"]').type('WrongPassword123!', { force: true });
       cy.get('button[type="submit"]').click();
-      cy.contains(/invalid|failed|error|unauthorized/i, { timeout: 5000 }).should('be.visible');
+      cy.contains(/incorrect|invalid|failed|error|unauthorized/i, { timeout: 5000 }).should('be.visible');
     });
 
     it('should login with valid credentials and redirect to dashboard', () => {

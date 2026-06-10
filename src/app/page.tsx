@@ -36,7 +36,7 @@ export default function HomePage() {
                                 width: "min(400px, 80vw)",
                                 height: "min(400px, 80vw)",
                                 borderRadius: "50%",
-                                overflow: "hidden",
+                                overflow: "clip",
                                 border: "3px solid #8b7355",
                                 boxShadow: "0 12px 48px rgba(139, 115, 85, 0.25), 0 0 0 8px rgba(255, 255, 255, 0.9)",
                                 position: "relative",
