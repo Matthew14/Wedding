@@ -1,11 +1,14 @@
 import { RDSDataClient, ExecuteStatementCommand, type Field } from "@aws-sdk/client-rds-data";
 
+const lambdaKeyId = process.env["LAMBDA_AWS_KEY_ID"];
+const lambdaSecret = process.env["LAMBDA_AWS_SECRET"];
+
 const client = new RDSDataClient({
-    region: process.env.AWS_REGION ?? "eu-west-1",
-    ...(process.env.LAMBDA_AWS_KEY_ID && {
+    region: process.env["AWS_REGION"] ?? "eu-west-1",
+    ...(lambdaKeyId && lambdaSecret && {
         credentials: {
-            accessKeyId: process.env.LAMBDA_AWS_KEY_ID,
-            secretAccessKey: process.env.LAMBDA_AWS_SECRET!,
+            accessKeyId: lambdaKeyId,
+            secretAccessKey: lambdaSecret,
         },
     }),
 });
@@ -44,9 +47,9 @@ const db = {
         const { sql: transformedSql, parameters } = toRdsParams(sql, params);
         const result = await client.send(
             new ExecuteStatementCommand({
-                resourceArn: process.env.AURORA_CLUSTER_ARN!,
-                secretArn: process.env.AURORA_SECRET_ARN!,
-                database: process.env.DB_NAME ?? "wedding",
+                resourceArn: process.env["AURORA_CLUSTER_ARN"]!,
+                secretArn: process.env["AURORA_SECRET_ARN"]!,
+                database: process.env["DB_NAME"] ?? "wedding",
                 sql: transformedSql,
                 parameters,
                 formatRecordsAs: "JSON",

@@ -69,7 +69,8 @@ export async function GET(request: NextRequest) {
             },
         });
     } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
         console.error("Error in GET /api/dashboard/summary:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
