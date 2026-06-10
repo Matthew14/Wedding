@@ -72,10 +72,10 @@ jobs:
         COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
         COGNITO_CLIENT_ID: ${{ secrets.COGNITO_CLIENT_ID }}
         COGNITO_CLIENT_SECRET: ${{ secrets.COGNITO_CLIENT_SECRET }}
-        AURORA_CLUSTER_ARN: arn:aws:rds:eu-west-1:000000000000:cluster:ci-stub
-        AURORA_SECRET_ARN: arn:aws:secretsmanager:eu-west-1:000000000000:secret:ci-stub
-        LAMBDA_AWS_KEY_ID: ci-stub
-        LAMBDA_AWS_SECRET: ci-stub
+        AURORA_CLUSTER_ARN: ${{ secrets.AURORA_CLUSTER_ARN }}
+        AURORA_SECRET_ARN: ${{ secrets.AURORA_SECRET_ARN }}
+        LAMBDA_AWS_KEY_ID: ${{ secrets.LAMBDA_AWS_KEY_ID }}
+        LAMBDA_AWS_SECRET: ${{ secrets.LAMBDA_AWS_SECRET }}
         NEXT_PUBLIC_CLOUDFRONT_URL: ""
 
     - name: Write auth fixture
