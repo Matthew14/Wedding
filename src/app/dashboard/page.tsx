@@ -1,7 +1,7 @@
 "use client";
 
-import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress, Button } from "@mantine/core";
-import { IconExternalLink } from "@tabler/icons-react";
+import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress, Button, Alert } from "@mantine/core";
+import { IconExternalLink, IconAlertCircle } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 
 interface SummaryData {
@@ -18,12 +18,17 @@ export default function DashboardPage() {
         guests: { total: 0, coming: 0, notComing: 0, undecided: 0 },
         villa: { stayingYes: 0, stayingNo: 0, undecided: 0 },
     });
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     useEffect(() => {
         fetch("/api/dashboard/summary")
-            .then(r => r.json())
+            .then(async r => {
+                const data = await r.json();
+                if (!r.ok) throw new Error(data.error ?? `Request failed (${r.status})`);
+                return data;
+            })
             .then(data => { if (data.summary) setSummary(data.summary); })
-            .catch(err => console.error("Failed to fetch summary:", err));
+            .catch(err => setFetchError(err instanceof Error ? err.message : "Failed to load data"));
     }, []);
 
     return (
@@ -56,6 +61,12 @@ export default function DashboardPage() {
                         Planning Sheet
                     </Button>
                 </Group>
+
+                {fetchError && (
+                    <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light" mb="lg">
+                        Failed to load summary: {fetchError}
+                    </Alert>
+                )}
 
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
                     <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
