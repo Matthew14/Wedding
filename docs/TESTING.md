@@ -1,6 +1,8 @@
 # Testing Guide
 
-This project uses comprehensive testing at multiple levels: unit tests and end-to-end tests.
+This project uses unit and integration tests with Vitest.
+
+> **Note**: End-to-end (Cypress) tests were removed pending a rewrite of the suite. Until that lands, automated coverage is unit/integration only.
 
 ## Unit Testing Stack
 
@@ -9,16 +11,6 @@ This project uses comprehensive testing at multiple levels: unit tests and end-t
 - **Test Environment**: jsdom for browser-like testing environment
 - **Mocking**: Vitest's built-in mocking capabilities
 - **Coverage**: v8 coverage provider
-
-## E2E Testing Stack
-
-- **Test Framework**: [Cypress](https://www.cypress.io/) — Modern E2E testing framework
-- **Auth**: Real Cognito user pool (`ci@matthewoneill.com`) — credentials in GitHub secrets
-- **Test Server**: Next.js production build served with `next start` on port 3907
-- **Custom Commands**: Authentication helpers and no-op database reset
-- **CI/CD**: Automated testing in GitHub Actions
-
-For detailed E2E testing documentation, see [cypress/README.md](cypress/README.md).
 
 ## Test Organization
 
@@ -48,23 +40,6 @@ src/
 │           └── page.test.tsx
 ```
 
-### E2E Tests
-
-E2E tests are organised in the `cypress/` directory:
-
-```
-cypress/
-├── e2e/
-│   ├── auth.cy.ts          # Authentication flow tests
-│   └── accessibility.cy.ts # Accessibility (a11y) tests
-├── fixtures/               # Test data (auth-data.json written by CI)
-├── support/
-│   ├── commands.ts         # Custom Cypress commands
-│   ├── database.ts         # Database reset (no-op — Aurora in private VPC)
-│   └── e2e.ts              # Support file (auto-loaded, includes cypress-axe)
-└── tsconfig.json
-```
-
 ## Running Tests
 
 ### Unit Tests
@@ -81,22 +56,6 @@ npm run test:coverage
 
 # Run tests with UI
 npm run test:ui
-```
-
-### E2E Tests
-
-```bash
-# Run E2E tests (automated — builds, starts server, runs Cypress, stops)
-npm run test:e2e
-
-# Open Cypress in interactive mode
-npm run cypress:open
-
-# Run Cypress tests in headless mode
-npm run cypress:run
-
-# Run Cypress tests with browser visible
-npm run cypress:headed
 ```
 
 ## Test Configuration
@@ -166,7 +125,7 @@ it("handles sign in", async () => {
 
 ### AWS / Database
 
-In unit tests, the Aurora Data API client and Cognito auth are mocked at the module level. E2E tests use a real Cognito user (`ci@matthewoneill.com`) and do not hit the database directly — the database reset command (`cy.resetDb()`) is a no-op since Aurora runs in a private VPC.
+In unit tests, the Aurora Data API client and Cognito auth are mocked at the module level.
 
 ### Next.js Features
 
@@ -241,9 +200,8 @@ it('handles button click', async () => {
 Tests run automatically on:
 
 - Git commits (pre-commit hook — unit tests only)
-- Pull requests and pushes to `main`/`develop` — full CI suite (lint, unit, build, e2e, type-check)
+- Pull requests and pushes to `main`/`develop` — full CI suite (lint, unit, build, type-check)
 
-The GitHub Actions workflow runs three jobs:
+The GitHub Actions workflow runs two jobs:
 - **test**: lint + unit tests + build (Node 20 & 22)
-- **e2e**: build with real Cognito secrets, run Cypress against `next start`
 - **type-check**: `tsc --noEmit`

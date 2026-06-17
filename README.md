@@ -13,7 +13,7 @@ Rebecca & Matthew's Wedding Website — built with Next.js 15, TypeScript, Manti
 - **Responsive Design**: Mobile-first approach with custom styling and smooth animations
 - **SEO Optimized**: Proper meta tags, Open Graph data, and social sharing
 - **Custom Styling**: Beautiful brown/gold color scheme with hover effects and smooth transitions
-- **Testing**: Comprehensive unit testing with Vitest and React Testing Library, E2E testing with Cypress
+- **Testing**: Comprehensive unit testing with Vitest and React Testing Library
 
 ## Tech Stack
 
@@ -27,7 +27,7 @@ Rebecca & Matthew's Wedding Website — built with Next.js 15, TypeScript, Manti
 - **Styling**: Custom CSS with Mantine integration
 - **Icons**: Tabler Icons
 - **Fonts**: Geist Sans & Geist Mono
-- **Testing**: Vitest with React Testing Library (unit tests), Cypress (E2E tests)
+- **Testing**: Vitest with React Testing Library (unit tests)
 
 ## Getting Started
 
@@ -145,12 +145,14 @@ See `docs/AWS_RESOURCES.md` for full resource inventory.
 ✅ **Complete**: Admin dashboard with FAQ editor and invitation management
 ✅ **Complete**: Authentication system (Cognito) with protected routes
 ✅ **Complete**: Comprehensive unit testing with Vitest and React Testing Library
-✅ **Complete**: E2E testing with Cypress in CI
 ⏳ **Planned**: Photo gallery section to showcase photos
+⏳ **Planned**: End-to-end test suite (the previous Cypress suite was removed pending a rewrite)
 
 ## Testing
 
-This project includes comprehensive testing at multiple levels. See [docs/TESTING.md](docs/TESTING.md) for unit testing and [cypress/README.md](cypress/README.md) for E2E testing.
+This project uses unit and integration tests with Vitest. See [docs/TESTING.md](docs/TESTING.md) for the full guide.
+
+> **Note**: End-to-end (Cypress) tests have been removed for now and will be rewritten as a new suite.
 
 ### Running Unit Tests
 
@@ -168,26 +170,11 @@ npm run test:coverage
 npm run test:ui
 ```
 
-### Running E2E Tests
-
-```bash
-# Run E2E tests (automated — builds, starts server, runs Cypress, stops)
-npm run test:e2e
-
-# Open Cypress in interactive mode
-npm run cypress:open
-
-# Run Cypress tests in headless mode
-npm run cypress:run
-```
-
 ## Additional Documentation
 
 - **[docs/AWS_RESOURCES.md](docs/AWS_RESOURCES.md)**: AWS resource inventory and cost estimates
 - **[docs/RSVP_SYSTEM_README.md](docs/RSVP_SYSTEM_README.md)**: Detailed documentation for the RSVP system
 - **[docs/TESTING.md](docs/TESTING.md)**: Comprehensive unit testing guide and best practices
-- **[cypress/README.md](cypress/README.md)**: E2E testing setup, configuration, and test coverage
-- **[docs/E2E_TEST_REVIEW.md](docs/E2E_TEST_REVIEW.md)**: Detailed review of E2E test logic and quality
 - **[docs/SECURITY.md](docs/SECURITY.md)**: Security implementation and best practices
 - **[AGENTS.md](AGENTS.md)**: Information about automated PR review bots and agents
 
