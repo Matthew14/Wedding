@@ -2,9 +2,12 @@
 
 import { Container, Anchor } from "@mantine/core";
 import Link from "next/link";
+import { useGalleryFlag } from "@/hooks/useGalleryFlag";
 import classes from "./Navigation.module.css";
 
 export function Navigation() {
+    const galleryFlag = useGalleryFlag();
+
     return (
         <header className={classes.header} role="banner">
             <a href="#main-content" className="skip-link">
@@ -27,20 +30,22 @@ export function Navigation() {
                 >
                     Rebecca & Matthew
                 </Anchor>
-                <Anchor
-                    component={Link}
-                    href="/gallery"
-                    size="sm"
-                    fw={400}
-                    style={{
-                        color: "var(--gold-dark)",
-                        textDecoration: "none",
-                        letterSpacing: "0.05em",
-                        transition: "opacity 0.2s",
-                    }}
-                >
-                    Gallery
-                </Anchor>
+                {galleryFlag === "on" && (
+                    <Anchor
+                        component={Link}
+                        href="/gallery"
+                        size="sm"
+                        fw={400}
+                        style={{
+                            color: "var(--gold-dark)",
+                            textDecoration: "none",
+                            letterSpacing: "0.05em",
+                            transition: "opacity 0.2s",
+                        }}
+                    >
+                        Gallery
+                    </Anchor>
+                )}
             </Container>
         </header>
     );
