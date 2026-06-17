@@ -6,7 +6,11 @@ const isProduction = process.env.NODE_ENV === "production";
 const posthogUrls = isProduction ? " https://eu.i.posthog.com https://eu-assets.i.posthog.com" : "";
 
 const cloudfrontDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_URL ?? "";
-const cloudfrontCsp = cloudfrontDomain ? ` ${cloudfrontDomain}` : "";
+// Use the origin (scheme://host:port), not the full URL. The value may include a
+// path (e.g. the bucket path in local LocalStack URLs), and a CSP source with a
+// trailing path only matches that exact path — which blocks nested object keys.
+const cloudfrontUrl = cloudfrontDomain ? new URL(cloudfrontDomain) : null;
+const cloudfrontCsp = cloudfrontUrl ? ` ${cloudfrontUrl.origin}` : "";
 
 const awsRegion = process.env.AWS_REGION ?? "eu-west-1";
 const cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID ?? "";
@@ -26,8 +30,12 @@ const nextConfig = {
         S3_PHOTOS_BUCKET: process.env.S3_PHOTOS_BUCKET ?? "",
     },
     images: {
-        remotePatterns: cloudfrontDomain
-            ? [{ protocol: "https", hostname: new URL(cloudfrontDomain).hostname }]
+        remotePatterns: cloudfrontUrl
+            ? [{
+                protocol: cloudfrontUrl.protocol.replace(":", ""),
+                hostname: cloudfrontUrl.hostname,
+                ...(cloudfrontUrl.port && { port: cloudfrontUrl.port }),
+            }]
             : [],
     },
     experimental: {

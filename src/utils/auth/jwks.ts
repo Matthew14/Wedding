@@ -10,15 +10,22 @@ function getUserPoolId(): string {
     return id;
 }
 
+// The token issuer. Production uses the real Cognito URL; local dev against
+// LocalStack sets COGNITO_ISSUER (e.g. http://localhost:4566/<poolId>) so JWT
+// verification matches the `iss` claim LocalStack stamps into its tokens.
+function getIssuer(): string {
+    const override = process.env.COGNITO_ISSUER;
+    if (override) return override.replace(/\/$/, "");
+    return `https://cognito-idp.${region}.amazonaws.com/${getUserPoolId()}`;
+}
+
 export function getJWKS(): ReturnType<typeof createRemoteJWKSet> {
     if (!_jwks) {
-        _jwks = createRemoteJWKSet(
-            new URL(`https://cognito-idp.${region}.amazonaws.com/${getUserPoolId()}/.well-known/jwks.json`)
-        );
+        _jwks = createRemoteJWKSet(new URL(`${getIssuer()}/.well-known/jwks.json`));
     }
     return _jwks;
 }
 
 export function getJWTIssuer(): string {
-    return `https://cognito-idp.${region}.amazonaws.com/${getUserPoolId()}`;
+    return getIssuer();
 }

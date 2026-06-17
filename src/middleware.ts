@@ -1,20 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { jwtVerify, createRemoteJWKSet } from "jose";
-
-const region = process.env.AWS_REGION ?? "eu-west-1";
-
-let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
-
-function getJWKS() {
-    const userPoolId = process.env.COGNITO_USER_POOL_ID;
-    if (!userPoolId) throw new Error("COGNITO_USER_POOL_ID environment variable is required");
-    if (!_jwks) {
-        _jwks = createRemoteJWKSet(
-            new URL(`https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`)
-        );
-    }
-    return _jwks;
-}
+import { jwtVerify } from "jose";
+import { getJWKS, getJWTIssuer } from "@/utils/auth/jwks";
 
 async function isAuthenticated(request: NextRequest): Promise<boolean> {
     const token = request.cookies.get("wedding_session")?.value;
@@ -23,11 +9,9 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
     const audience = process.env.COGNITO_CLIENT_ID;
     if (!audience) throw new Error("COGNITO_CLIENT_ID environment variable is required");
 
-    const userPoolId = process.env.COGNITO_USER_POOL_ID!;
-    const issuer = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
-
     try {
-        await jwtVerify(token, getJWKS(), { issuer, audience });
+        // Shared issuer/JWKS helper honours COGNITO_ISSUER for local (LocalStack) dev.
+        await jwtVerify(token, getJWKS(), { issuer: getJWTIssuer(), audience });
         return true;
     } catch {
         return false;

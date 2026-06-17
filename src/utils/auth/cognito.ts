@@ -7,6 +7,8 @@ import {
 
 const client = new CognitoIdentityProviderClient({
     region: process.env.AWS_REGION ?? "eu-west-1",
+    // AWS_ENDPOINT_URL points at LocalStack Cognito in local dev.
+    ...(process.env.AWS_ENDPOINT_URL && { endpoint: process.env.AWS_ENDPOINT_URL }),
 });
 
 export interface CognitoTokens {

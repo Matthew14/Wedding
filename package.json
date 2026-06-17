@@ -3,7 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e .env.local -- next dev",
+    "dev": "dotenv -e .env.localstack -- next dev -p 3022",
+    "localstack:up": "docker compose up -d localstack",
+    "localstack:down": "docker compose down",
+    "localstack:bootstrap": "bash scripts/localstack/bootstrap.sh",
+    "localstack:process": "dotenv -e .env.localstack -- node scripts/localstack/process-photos.mjs",
+    "localstack:import": "dotenv -e .env.localstack -- node scripts/localstack/import-photos.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

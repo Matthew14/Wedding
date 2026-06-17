@@ -1,0 +1,24 @@
+# LocalStack for local development of the AWS-backed features (S3, RDS Data API,
+# Cognito). Requires a LocalStack Base+ subscription — set LOCALSTACK_AUTH_TOKEN
+# in your shell or a local .env file before `docker compose up`.
+#
+#   export LOCALSTACK_AUTH_TOKEN=ls-...
+#   npm run localstack:up
+#   npm run localstack:bootstrap
+#   npm run dev:local
+services:
+  localstack:
+    image: localstack/localstack-pro:latest
+    container_name: wedding-localstack
+    ports:
+      - "4566:4566" # edge gateway (all services)
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?LOCALSTACK_AUTH_TOKEN must be set (LocalStack Base+ token)}
+      - DEBUG=${LOCALSTACK_DEBUG:-0}
+      # Persist state across restarts so you don't have to re-bootstrap every time.
+      # Note: RDS persistence is "limited support" on LocalStack — if the DB looks
+      # empty after a restart, re-run `npm run localstack:bootstrap`.
+      - PERSISTENCE=1
+    volumes:
+      - "./.localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"

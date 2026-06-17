@@ -174,6 +174,7 @@ npm run test:ui
 
 - **[docs/AWS_RESOURCES.md](docs/AWS_RESOURCES.md)**: AWS resource inventory and cost estimates
 - **[docs/RSVP_SYSTEM_README.md](docs/RSVP_SYSTEM_README.md)**: Detailed documentation for the RSVP system
+- **[docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md)**: Running the full stack locally with LocalStack (S3, RDS Data API, Cognito)
 - **[docs/TESTING.md](docs/TESTING.md)**: Comprehensive unit testing guide and best practices
 - **[docs/SECURITY.md](docs/SECURITY.md)**: Security implementation and best practices
 - **[AGENTS.md](AGENTS.md)**: Information about automated PR review bots and agents

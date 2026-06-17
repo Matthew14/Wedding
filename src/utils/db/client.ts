@@ -3,8 +3,12 @@ import { RDSDataClient, ExecuteStatementCommand, type Field } from "@aws-sdk/cli
 const lambdaKeyId = process.env["LAMBDA_AWS_KEY_ID"];
 const lambdaSecret = process.env["LAMBDA_AWS_SECRET"];
 
+// AWS_ENDPOINT_URL points the RDS Data API client at LocalStack in local dev.
+const endpoint = process.env["AWS_ENDPOINT_URL"];
+
 const client = new RDSDataClient({
     region: process.env["AWS_REGION"] ?? "eu-west-1",
+    ...(endpoint && { endpoint }),
     ...(lambdaKeyId && lambdaSecret && {
         credentials: {
             accessKeyId: lambdaKeyId,
@@ -39,6 +43,18 @@ export interface QueryResult<T = Record<string, unknown>> {
     rows: T[];
 }
 
+// Convert an RDS Data API Field back to a plain JS value (used only for the
+// legacy `records` fallback path — see query() below).
+function fieldToValue(field: Field): unknown {
+    if (field.isNull) return null;
+    if (field.stringValue !== undefined) return field.stringValue;
+    if (field.longValue !== undefined) return field.longValue;
+    if (field.doubleValue !== undefined) return field.doubleValue;
+    if (field.booleanValue !== undefined) return field.booleanValue;
+    if (field.blobValue !== undefined) return field.blobValue;
+    return null;
+}
+
 const db = {
     async query<T = Record<string, unknown>>(
         sql: string,
@@ -53,11 +69,30 @@ const db = {
                 sql: transformedSql,
                 parameters,
                 formatRecordsAs: "JSON",
+                includeResultMetadata: true,
             })
         );
-        const rows = result.formattedRecords
-            ? (JSON.parse(result.formattedRecords) as T[])
-            : [];
+
+        // Real Aurora returns JSON-formatted rows in `formattedRecords`. LocalStack
+        // populates this for SELECTs but falls back to the legacy `records` +
+        // `columnMetadata` shape for `INSERT ... RETURNING`, so reconstruct rows
+        // from those when `formattedRecords` is absent. On real Aurora this branch
+        // never runs.
+        let rows: T[];
+        if (result.formattedRecords) {
+            rows = JSON.parse(result.formattedRecords) as T[];
+        } else if (result.records) {
+            const names = (result.columnMetadata ?? []).map((c) => c.name ?? c.label ?? "");
+            rows = result.records.map((record) => {
+                const row: Record<string, unknown> = {};
+                record.forEach((field, i) => {
+                    row[names[i] ?? `col${i}`] = fieldToValue(field);
+                });
+                return row as T;
+            });
+        } else {
+            rows = [];
+        }
         return { rows };
     },
 };
