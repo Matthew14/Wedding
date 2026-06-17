@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     Container,
     Title,
@@ -47,6 +47,7 @@ export default function GalleryPage() {
     const [codeError, setCodeError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const sentinelRef = useRef<HTMLDivElement | null>(null);
     const LIMIT = 40;
 
     useEffect(() => {
@@ -96,6 +97,26 @@ export default function GalleryPage() {
         setPhotos([]);
         fetchPhotos(activeCategory, 1);
     }, [activeCategory, fetchPhotos]);
+
+    // Infinite scroll: load the next page when the sentinel scrolls into view.
+    // The effect re-runs on every relevant state change so the observer always
+    // closes over fresh values (and won't double-fire while a fetch is in flight).
+    useEffect(() => {
+        const el = sentinelRef.current;
+        if (!el || !hasMore || loading) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    const next = page + 1;
+                    setPage(next);
+                    fetchPhotos(activeCategory, next);
+                }
+            },
+            { rootMargin: "400px" }
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [hasMore, loading, page, activeCategory, fetchPhotos]);
 
     const handleCodeSubmit = () => {
         if (codeInput.trim().length !== 6) {
@@ -147,7 +168,8 @@ export default function GalleryPage() {
                     {!invitationCode && (
                         <Alert icon={<IconAlertCircle size={16} />} color="yellow" variant="light">
                             <Text size="sm" mb="xs">
-                                Enter your invitation code to download full-resolution photos.
+                                Enter your invitation code to download full-resolution photos. Or click the
+                                link we sent you.
                             </Text>
                             <Group gap="xs">
                                 <TextInput
@@ -199,27 +221,14 @@ export default function GalleryPage() {
                         />
                     )}
 
-                    {hasMore && !loading && photos.length > 0 && (
-                        <Center>
-                            <Button
-                                variant="subtle"
-                                color="gray"
-                                onClick={() => {
-                                    const next = page + 1;
-                                    setPage(next);
-                                    fetchPhotos(activeCategory, next);
-                                }}
-                            >
-                                Load more
-                            </Button>
-                        </Center>
-                    )}
-
                     {loading && photos.length > 0 && (
                         <Center py="md">
                             <Loader size="sm" color="yellow" />
                         </Center>
                     )}
+
+                    {/* Infinite-scroll sentinel — observed to trigger the next page */}
+                    {hasMore && photos.length > 0 && <Box ref={sentinelRef} h={1} />}
                 </Stack>
             </Container>
 

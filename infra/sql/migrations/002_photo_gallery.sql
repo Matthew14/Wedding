@@ -37,9 +37,11 @@ CREATE INDEX photos_status_idx   ON photos(status);
 CREATE INDEX photos_category_idx ON photos(category_id);
 CREATE INDEX photos_code_idx     ON photos(invitation_code);
 
-INSERT INTO photo_categories (name, slug, event_day, sort_order) VALUES
-  ('Friday Arrivals', 'friday-arrivals', 'friday',   1),
-  ('Ceremony',        'ceremony',        'saturday', 2),
-  ('Reception',       'reception',       'saturday', 3),
-  ('After Party',     'after-party',     'saturday', 4),
-  ('Sunday Brunch',   'sunday-brunch',   'sunday',   5);
+INSERT INTO photo_categories (name, slug, sort_order) VALUES
+  ('Getting Ready',     'getting-ready',       1),
+  ('The Ceremony',      'the-ceremony',        2),
+  ('Drinks',            'drinks',              3),
+  ('Reception',         'reception',           4),
+  ('Party',             'party',               5),
+  ('Rebecca & Matthew', 'rebecca-and-matthew', 6),
+  ('Guest Photos',      'guest-photos',        7);

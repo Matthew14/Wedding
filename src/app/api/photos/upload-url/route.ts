@@ -9,6 +9,9 @@ import type { UploadUrlRequest, UploadUrlResponse } from "@/types/photos";
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/heic"] as const;
 const MAX_SIZE = 20 * 1024 * 1024; // 20 MB
 const RATE_LIMIT = 50;
+// Guest uploads are filed under their own category (and tab). Resolved at insert
+// time; if the category is missing the photo is left uncategorised.
+const GUEST_CATEGORY_SLUG = "guest-photos";
 const EXT_MAP: Record<string, string> = {
     "image/jpeg": "jpg",
     "image/png": "png",
@@ -66,10 +69,11 @@ export async function POST(request: NextRequest) {
         );
 
         const { rows: inserted } = await db.query<{ id: string }>(
-            `INSERT INTO photos (invitation_code, s3_key, file_name, size_bytes, status)
-             VALUES ($1, $2, $3, $4, 'pending')
+            `INSERT INTO photos (invitation_code, s3_key, file_name, size_bytes, status, category_id)
+             VALUES ($1, $2, $3, $4, 'pending',
+                     (SELECT id FROM photo_categories WHERE slug = $5))
              RETURNING id`,
-            [code, key, fileName, sizeBytes]
+            [code, key, fileName, sizeBytes, GUEST_CATEGORY_SLUG]
         );
 
         const response: UploadUrlResponse = {
