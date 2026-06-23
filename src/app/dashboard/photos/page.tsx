@@ -153,7 +153,6 @@ export default function PhotosModerationPage() {
                             categoryOptions={categoryOptions}
                             onApprove={(categoryId) => updatePhoto(photo.id, "approved", categoryId)}
                             onReject={() => updatePhoto(photo.id, "rejected")}
-                            showActions={activeStatus === "pending"}
                         />
                     ))}
                 </SimpleGrid>
@@ -167,15 +166,18 @@ function PhotoCard({
     categoryOptions,
     onApprove,
     onReject,
-    showActions,
 }: {
     photo: PhotoWithThumbnail;
     categoryOptions: { value: string; label: string }[];
     onApprove: (categoryId?: string) => void;
     onReject: () => void;
-    showActions: boolean;
 }) {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(photo.category_id);
+
+    // Status changes are allowed in both directions: a photo can be approved
+    // unless it already is, and rejected unless it already is.
+    const canApprove = photo.status !== "approved";
+    const canReject = photo.status !== "rejected";
 
     return (
         <Paper shadow="sm" radius="md" p="sm" withBorder>
@@ -221,39 +223,41 @@ function PhotoCard({
                     </Text>
                 </Stack>
 
-                {showActions && (
-                    <>
-                        <Select
-                            placeholder="Category (optional)"
-                            data={categoryOptions}
-                            value={selectedCategory}
-                            onChange={setSelectedCategory}
-                            size="xs"
-                            clearable
-                        />
-                        <Group gap="xs">
-                            <Button
-                                size="xs"
-                                color="green"
-                                leftSection={<IconCheck size={12} />}
-                                flex={1}
-                                onClick={() => onApprove(selectedCategory ?? undefined)}
-                            >
-                                Approve
-                            </Button>
-                            <Button
-                                size="xs"
-                                color="red"
-                                variant="outline"
-                                leftSection={<IconX size={12} />}
-                                flex={1}
-                                onClick={onReject}
-                            >
-                                Reject
-                            </Button>
-                        </Group>
-                    </>
+                {canApprove && (
+                    <Select
+                        placeholder="Category (optional)"
+                        data={categoryOptions}
+                        value={selectedCategory}
+                        onChange={setSelectedCategory}
+                        size="xs"
+                        clearable
+                    />
                 )}
+                <Group gap="xs">
+                    {canApprove && (
+                        <Button
+                            size="xs"
+                            color="green"
+                            leftSection={<IconCheck size={12} />}
+                            flex={1}
+                            onClick={() => onApprove(selectedCategory ?? undefined)}
+                        >
+                            Approve
+                        </Button>
+                    )}
+                    {canReject && (
+                        <Button
+                            size="xs"
+                            color="red"
+                            variant="outline"
+                            leftSection={<IconX size={12} />}
+                            flex={1}
+                            onClick={onReject}
+                        >
+                            Reject
+                        </Button>
+                    )}
+                </Group>
             </Stack>
         </Paper>
     );
