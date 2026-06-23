@@ -7,6 +7,16 @@ import type { Readable } from "stream";
 const s3 = new S3Client({});
 const rds = new RDSDataClient({});
 
+// Upper bound on the original file we will buffer into memory. The upload-url
+// API caps guest uploads at 20 MB; we allow a small margin and refuse anything
+// larger so a single oversized object cannot OOM-crash the function.
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+
+// The S3 OBJECT_CREATED event can race ahead of the API route's INSERT INTO
+// photos commit, in which case the UPDATE below matches 0 rows. Retry a few
+// times with exponential backoff before giving up.
+const MAX_UPDATE_ATTEMPTS = 5;
+
 export async function handler(event: S3Event): Promise<void> {
     for (const record of event.Records) {
         const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
@@ -28,7 +38,12 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
     const uuid = fileName.substring(0, fileName.lastIndexOf("."));
 
     const obj = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-    const buffer = await streamToBuffer(obj.Body as Readable);
+    if (obj.ContentLength != null && obj.ContentLength > MAX_IMAGE_BYTES) {
+        throw new Error(
+            `Object ${key} is ${obj.ContentLength} bytes, exceeds ${MAX_IMAGE_BYTES} limit`
+        );
+    }
+    const buffer = await streamToBuffer(obj.Body as Readable, MAX_IMAGE_BYTES);
 
     const image = sharp(buffer).rotate(); // auto-rotate using EXIF orientation
     const metadata = await image.metadata();
@@ -51,32 +66,67 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
         })
     );
 
-    await rds.send(
-        new ExecuteStatementCommand({
-            resourceArn: process.env.AURORA_CLUSTER_ARN!,
-            secretArn: process.env.AURORA_SECRET_ARN!,
-            database: process.env.DB_NAME ?? "wedding",
-            sql: `UPDATE photos
-                  SET thumbnail_key = :thumb,
-                      width = :w,
-                      height = :h,
-                      taken_at = :taken
-                  WHERE s3_key = :key`,
-            parameters: [
-                { name: "thumb", value: { stringValue: thumbKey } },
-                { name: "w", value: { longValue: info.width } },
-                { name: "h", value: { longValue: info.height } },
-                { name: "taken", value: takenAt ? { stringValue: takenAt } : { isNull: true } },
-                { name: "key", value: { stringValue: key } },
-            ],
-        })
+    await updatePhotoRecord(key, thumbKey, info.width, info.height, takenAt);
+}
+
+// Run the thumbnail UPDATE, retrying when it matches 0 rows. A 0-row result
+// means the photos row has not been committed yet (S3 event won the race), so
+// we back off and retry rather than silently leaving thumbnail_key NULL.
+async function updatePhotoRecord(
+    key: string,
+    thumbKey: string,
+    width: number,
+    height: number,
+    takenAt: string | null
+): Promise<void> {
+    for (let attempt = 1; attempt <= MAX_UPDATE_ATTEMPTS; attempt++) {
+        const result = await rds.send(
+            new ExecuteStatementCommand({
+                resourceArn: process.env.AURORA_CLUSTER_ARN!,
+                secretArn: process.env.AURORA_SECRET_ARN!,
+                database: process.env.DB_NAME ?? "wedding",
+                sql: `UPDATE photos
+                      SET thumbnail_key = :thumb,
+                          width = :w,
+                          height = :h,
+                          taken_at = :taken
+                      WHERE s3_key = :key`,
+                parameters: [
+                    { name: "thumb", value: { stringValue: thumbKey } },
+                    { name: "w", value: { longValue: width } },
+                    { name: "h", value: { longValue: height } },
+                    { name: "taken", value: takenAt ? { stringValue: takenAt } : { isNull: true } },
+                    { name: "key", value: { stringValue: key } },
+                ],
+            })
+        );
+
+        if ((result.numberOfRecordsUpdated ?? 0) > 0) return;
+
+        if (attempt < MAX_UPDATE_ATTEMPTS) {
+            const delayMs = 250 * 2 ** (attempt - 1); // 250ms, 500ms, 1s, 2s
+            await new Promise((r) => setTimeout(r, delayMs));
+        }
+    }
+
+    throw new Error(
+        `No photos row found for s3_key ${key} after ${MAX_UPDATE_ATTEMPTS} attempts`
     );
 }
 
-async function streamToBuffer(stream: Readable): Promise<Buffer> {
+async function streamToBuffer(stream: Readable, maxBytes: number): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
         const chunks: Buffer[] = [];
-        stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+        let total = 0;
+        stream.on("data", (chunk: Buffer) => {
+            total += chunk.length;
+            if (total > maxBytes) {
+                stream.destroy();
+                reject(new Error(`Stream exceeds ${maxBytes} byte limit`));
+                return;
+            }
+            chunks.push(chunk);
+        });
         stream.on("end", () => resolve(Buffer.concat(chunks)));
         stream.on("error", reject);
     });
