@@ -19,7 +19,7 @@ Global test setup file that:
 Testing utilities that provide:
 
 - Custom render function with all providers (Mantine, Auth)
-- Mocked Supabase client with consistent behavior
+- Mocked data layer (Aurora RDS Data API client) with consistent behavior
 - Re-exports of all React Testing Library utilities
 
 ## Usage
@@ -37,7 +37,7 @@ expect(screen.getByText('Hello')).toBeInTheDocument()
 
 ## Mocking Strategy
 
-- **Supabase**: Mocked at the client level for consistency
+- **Database**: Aurora RDS Data API client mocked at the module level (`getDb`)
 - **Next.js Router**: Mocked in setup with basic navigation functions
 - **Window APIs**: window.matchMedia mocked for Mantine components
 - **Environment Variables**: Test-specific values provided

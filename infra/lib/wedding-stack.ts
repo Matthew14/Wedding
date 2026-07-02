@@ -1,5 +1,7 @@
+import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
@@ -8,6 +10,9 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as rekognition from 'aws-cdk-lib/aws-rekognition';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { EventType } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
 export class WeddingStack extends cdk.Stack {
@@ -97,6 +102,31 @@ export class WeddingStack extends cdk.Stack {
       defaultDatabaseName: 'wedding',
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
+
+    // ── photo-processor Lambda ───────────────────────────────────────────────
+    const photoProcessor = new NodejsFunction(this, 'PhotoProcessor', {
+      entry: path.join(__dirname, '../lambdas/photo-processor/index.ts'),
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      timeout: cdk.Duration.minutes(2),
+      memorySize: 512,
+      bundling: { nodeModules: ['sharp'] },
+      environment: {
+        AURORA_CLUSTER_ARN: auroraCluster.clusterArn,
+        AURORA_SECRET_ARN: dbSecret.secretArn,
+        DB_NAME: 'wedding',
+        S3_BUCKET: photosBucket.bucketName,
+      },
+    });
+    photosBucket.addEventNotification(
+      EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(photoProcessor),
+      { prefix: 'uploads/original/' }
+    );
+    photosBucket.grantReadWrite(photoProcessor);
+    dbSecret.grantRead(photoProcessor);
+    auroraCluster.grantDataApiAccess(photoProcessor);
 
     // ── Cognito User Pool ─────────────────────────────────────────────────────
     const userPool = new cognito.UserPool(this, 'AdminUserPool', {

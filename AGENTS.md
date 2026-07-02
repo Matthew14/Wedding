@@ -37,8 +37,8 @@ You are a full-stack TypeScript developer specialising in modern React applicati
 
 ### Testing
 - **Vitest**: 3.2.4 (unit tests)
-- **Cypress**: 15.7.1 (E2E tests)
 - **Testing Library**: React 16.3.0
+- _E2E (Cypress) suite removed pending a rewrite — see [#164](https://github.com/Matthew14/Wedding/issues/164)_
 
 ### Code Quality
 - **ESLint**: 9.17.0 with Next.js config
@@ -72,10 +72,6 @@ Wedding/
 │   │   ├── db/              # Aurora Data API client
 │   │   └── logger.ts        # CloudWatch structured logger
 │   └── test/                 # Test utilities
-├── cypress/                  # E2E tests
-│   ├── e2e/                 # Test specs
-│   ├── fixtures/            # Test data (auth-data.json written by CI)
-│   └── support/             # Custom commands
 ├── docs/                    # Documentation
 └── public/                  # Static assets
 ```
@@ -94,8 +90,6 @@ npm run lint                # Run ESLint
 npm test                    # Run unit tests in watch mode
 npm run test:run           # Run unit tests once
 npm run test:coverage      # Generate coverage report
-npm run cypress:open       # Open Cypress UI
-npm run test:e2e          # Run E2E tests (automated)
 ```
 
 ## How Env Vars Reach the Lambda
@@ -219,26 +213,6 @@ export async function GET() {
 
 ### Testing Patterns
 
-✅ **Good Example (E2E):**
-```tsx
-it('should prevent accepting invitation without selecting any invitees', () => {
-    cy.visit('/rsvp/TEST01');
-    cy.contains('John Doe', { timeout: 5000 }).should('be.visible');
-
-    cy.contains('Are you joining us?')
-        .parent()
-        .parent()
-        .find('input[type="radio"][value="yes"]')
-        .click({ force: true });
-
-    cy.contains('John Doe').parent().parent().find('input[type="checkbox"]').uncheck();
-    cy.contains('Jane Doe').parent().parent().find('input[type="checkbox"]').uncheck();
-
-    cy.get('button[type="submit"]').contains('Submit RSVP').click();
-    cy.url().should('include', '/rsvp/TEST01');
-});
-```
-
 ✅ **Good Example (Unit):**
 ```tsx
 import { render, screen } from '@/test/test-utils';
@@ -260,7 +234,7 @@ it('renders navigation links', () => {
 - **Include alt text** for images
 - **Use Mantine components** for UI (don't create custom equivalents)
 - **Use theme color** `#8b7355` for primary elements
-- **Write tests** for new features (both unit and E2E)
+- **Write unit tests** for new features
 - **Follow conventional commits** (`feat:`, `fix:`, `test:`, `docs:`)
 - **Use TypeScript** — no `any` types
 - **Validate forms** with Mantine's `useForm` hook
@@ -372,11 +346,11 @@ These bots provide feedback on code quality, potential bugs, and best practices.
 
 1. **Start Here**: Read `README.md` for setup instructions
 2. **Understand the RSVP Flow**: Check `docs/RSVP_SYSTEM_README.md`
-3. **Testing**: Review `docs/TESTING.md` and `cypress/README.md`
+3. **Testing**: Review `docs/TESTING.md`
 4. **Security**: See `docs/SECURITY.md` for implemented protections
 5. **Infrastructure**: See `docs/AWS_RESOURCES.md` for AWS resource details
 6. **Make Changes**: Always create a feature branch (`feat/`, `fix/`, `test/`)
-7. **Test Your Changes**: Run unit tests (`npm test`) and E2E tests (`npm run test:e2e`)
+7. **Test Your Changes**: Run unit tests (`npm test`)
 8. **Commit**: Follow conventional commits format
 9. **Push**: GitHub Actions will run CI checks
 
@@ -387,7 +361,7 @@ Before implementing a feature:
 - ✅ Does this need to work on mobile?
 - ✅ Is this accessible (keyboard navigation, screen readers)?
 - ✅ What happens if the API call fails?
-- ✅ Do I need unit tests, E2E tests, or both?
+- ✅ Have I covered this with unit tests?
 - ✅ Will this affect existing RSVPs in the database?
 - ✅ Is this change documented in the relevant README?
 - ✅ Does a new env var need to be added to `next.config.js` `env` section?

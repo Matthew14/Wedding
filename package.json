@@ -3,7 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e .env.local -- next dev",
+    "dev": "dotenv -e .env.localstack -- next dev -p 3022",
+    "localstack:up": "docker compose up -d localstack",
+    "localstack:down": "docker compose down",
+    "localstack:bootstrap": "bash scripts/localstack/bootstrap.sh",
+    "localstack:process": "dotenv -e .env.localstack -- node scripts/localstack/process-photos.mjs",
+    "localstack:import": "dotenv -e .env.localstack -- node scripts/localstack/import-photos.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -11,13 +16,6 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "cypress:open": "dotenv -e .env.test -- cypress open",
-    "cypress:run": "dotenv -e .env.test -- cypress run",
-    "cypress:headed": "dotenv -e .env.test -- cypress run --headed --browser chrome",
-    "cypress:a11y": "dotenv -e .env.test -- cypress run --spec 'cypress/e2e/accessibility.cy.ts'",
-    "test:a11y": "dotenv -e .env.test -- start-server-and-test 'npm run dev:test' http://localhost:3907 cypress:a11y",
-    "dev:test": "dotenv -e .env.test -- next dev -p 3907",
-    "test:e2e": "dotenv -e .env.test -- start-server-and-test 'npm run dev:test' http://localhost:3907 cypress:run",
     "prepare": "husky"
   },
   "dependencies": {
@@ -37,7 +35,9 @@
     "posthog-js": "^1.310.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "sharp": "^0.34.5"
+    "react-photo-album": "^3.6.0",
+    "sharp": "^0.34.5",
+    "yet-another-react-lightbox": "^3.32.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
@@ -54,10 +54,6 @@
     "@vitest/coverage-v8": "^4.1.8",
     "@vitest/ui": "^4.1.8",
     "autoprefixer": "^10.4.21",
-    "axe-core": "^4.11.0",
-    "cypress": "^15.17.0",
-    "cypress-axe": "^1.7.0",
-    "cypress-plugin-tab": "^1.0.5",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9.17.0",
     "eslint-config-next": "15.1.3",
@@ -65,7 +61,6 @@
     "jsdom": "^26.1.0",
     "pg": "^8.21.0",
     "postcss": "^8.5.10",
-    "start-server-and-test": "^2.1.3",
     "typescript": "^5.7.2",
     "vitest": "^4.1.8"
   },

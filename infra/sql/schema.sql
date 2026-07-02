@@ -57,3 +57,36 @@ CREATE TABLE IF NOT EXISTS faqs (
     answer     TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS photo_categories (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name           TEXT NOT NULL,
+    slug           TEXT UNIQUE NOT NULL,
+    description    TEXT,
+    event_day      TEXT CHECK (event_day IN ('friday', 'saturday', 'sunday')),
+    cover_photo_id UUID,
+    sort_order     INTEGER DEFAULT 0,
+    created_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS photos (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    invitation_code  VARCHAR(6) REFERENCES invitation_codes(code),
+    s3_key           TEXT NOT NULL,
+    thumbnail_key    TEXT,
+    file_name        TEXT NOT NULL,
+    width            INTEGER,
+    height           INTEGER,
+    size_bytes       BIGINT,
+    taken_at         TIMESTAMPTZ,
+    category_id      UUID REFERENCES photo_categories(id),
+    status           TEXT DEFAULT 'pending'
+                       CHECK (status IN ('pending', 'approved', 'rejected')),
+    uploaded_at      TIMESTAMPTZ DEFAULT NOW(),
+    approved_at      TIMESTAMPTZ,
+    approved_by      TEXT
+);
+
+CREATE INDEX IF NOT EXISTS photos_status_idx   ON photos(status);
+CREATE INDEX IF NOT EXISTS photos_category_idx ON photos(category_id);
+CREATE INDEX IF NOT EXISTS photos_code_idx     ON photos(invitation_code);

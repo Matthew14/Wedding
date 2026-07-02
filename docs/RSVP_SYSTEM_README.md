@@ -157,23 +157,9 @@ Enable console logging for detailed error information during development.
 
 ## Testing
 
-The RSVP system has comprehensive test coverage:
+The RSVP system has unit test coverage:
 
-### **E2E Tests** (`cypress/e2e/rsvp.cy.ts`)
-
-- Code entry and validation (valid/invalid codes)
-- Code formatting (uppercase conversion, length requirements)
-- Complete RSVP submission (accepting and declining)
-- Guest selection validation
-- Villa question conditional display
-- Form field validation
-- RSVP editing functionality
-- Database verification
-- Success page with query parameters
-- Direct link navigation
-- Error handling
-
-See [cypress/README.md](cypress/README.md) for detailed test documentation.
+> **Note**: End-to-end (Cypress) coverage for the RSVP flow was removed pending a rewrite of the e2e suite.
 
 ### **Unit Tests**
 
