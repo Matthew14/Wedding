@@ -337,6 +337,7 @@ const handleSubmit = async (values: FormData) => {
 
 This project uses external AI agents for PR review:
 
+- **Claude Code Review** (`.github/workflows/claude-code-review.yml`): reviews every non-draft, non-bot PR on open and on each push. Posts a single tracking comment that it updates in place, plus inline comments on specific lines. The action version is pinned; bump it deliberately.
 - **Codex (OpenAI)**: Automated code analysis on pull requests
 - **Cursor Bot**: AI-powered code review assistant
 
