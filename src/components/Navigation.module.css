@@ -1,8 +1,8 @@
 .header {
-    position: fixed;
+    /* Sticky (not fixed) so the header occupies flow space and pages
+       don't need to compensate with their own top padding. */
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(12px);
