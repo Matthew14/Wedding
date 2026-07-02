@@ -43,6 +43,12 @@ export function Navigation() {
         return null;
     }
 
+    // Keep the homepage headerless for guests until the gallery feature
+    // flag is flipped; a logged-in admin always gets the nav.
+    if (pathname === "/" && galleryFlag !== "on" && status !== "authenticated") {
+        return null;
+    }
+
     return (
         <header className={classes.header} role="banner">
             <a href="#main-content" className="skip-link">

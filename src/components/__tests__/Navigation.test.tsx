@@ -10,6 +10,10 @@ vi.mock("../Navigation.module.css", () => ({
 }));
 
 const route = vi.hoisted(() => ({ pathname: "/" }));
+const galleryFlag = vi.hoisted(() => ({ value: "on" as "on" | "off" | "loading" }));
+vi.mock("@/hooks/useGalleryFlag", () => ({
+    useGalleryFlag: () => galleryFlag.value,
+}));
 vi.mock("next/navigation", () => ({
     useRouter: () => ({
         push: vi.fn(),
@@ -45,6 +49,7 @@ describe("Navigation", () => {
         vi.stubGlobal("fetch", mockFetch);
         stubSession(false);
         route.pathname = "/";
+        galleryFlag.value = "on";
     });
 
     afterEach(() => {
@@ -96,6 +101,29 @@ describe("Navigation", () => {
         const dashboard = await screen.findByRole("link", { name: "Dashboard" });
         expect(dashboard).toHaveAttribute("href", "/dashboard");
         expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
+    });
+
+    it("hides on the homepage when the gallery flag is off and logged out", async () => {
+        galleryFlag.value = "off";
+        render(<Navigation />);
+        await waitFor(() => expect(mockFetch).toHaveBeenCalledWith("/api/auth/me"));
+        expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+    });
+
+    it("shows on the homepage when the gallery flag is off but logged in", async () => {
+        galleryFlag.value = "off";
+        stubSession(true);
+        render(<Navigation />);
+        expect(await screen.findByRole("banner")).toBeInTheDocument();
+        expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
+        expect(screen.queryByRole("link", { name: "Gallery" })).not.toBeInTheDocument();
+    });
+
+    it("shows on non-home pages even when the gallery flag is off", () => {
+        galleryFlag.value = "off";
+        route.pathname = "/rsvp";
+        render(<Navigation />);
+        expect(screen.getByRole("banner")).toBeInTheDocument();
     });
 
     it("renders nothing on dashboard routes (dashboard has its own header)", () => {
