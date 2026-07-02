@@ -7,6 +7,7 @@ import { PostHogProvider } from "@/components/PostHogProvider";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Footer } from "@/components/Footer";
+import { Navigation } from "@/components/Navigation";
 import { Suspense } from "react";
 
 const geist = Geist({
@@ -110,6 +111,7 @@ export default function RootLayout({
                             <Suspense fallback={null}>
                                 <PageViewTracker />
                             </Suspense>
+                            <Navigation />
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                                 {children}
                             </div>

@@ -9,6 +9,20 @@ vi.mock("../Navigation.module.css", () => ({
     },
 }));
 
+const route = vi.hoisted(() => ({ pathname: "/" }));
+vi.mock("next/navigation", () => ({
+    useRouter: () => ({
+        push: vi.fn(),
+        replace: vi.fn(),
+        back: vi.fn(),
+        forward: vi.fn(),
+        refresh: vi.fn(),
+        prefetch: vi.fn(),
+    }),
+    usePathname: () => route.pathname,
+    useSearchParams: () => new URLSearchParams(),
+}));
+
 import { Navigation } from "../Navigation";
 
 const mockFetch = vi.fn();
@@ -30,6 +44,7 @@ describe("Navigation", () => {
     beforeEach(() => {
         vi.stubGlobal("fetch", mockFetch);
         stubSession(false);
+        route.pathname = "/";
     });
 
     afterEach(() => {
@@ -81,6 +96,13 @@ describe("Navigation", () => {
         const dashboard = await screen.findByRole("link", { name: "Dashboard" });
         expect(dashboard).toHaveAttribute("href", "/dashboard");
         expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
+    });
+
+    it("renders nothing on dashboard routes (dashboard has its own header)", () => {
+        stubSession(true);
+        route.pathname = "/dashboard/photos";
+        render(<Navigation />);
+        expect(screen.queryByRole("banner")).not.toBeInTheDocument();
     });
 
     it("keeps the buttons and shows an error when logout fails", async () => {

@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { Container, Title, Text, Button, Stack, Paper } from '@mantine/core';
 import { IconError404 } from '@tabler/icons-react';
 import Link from 'next/link';
-import { Navigation } from '@/components/Navigation';
 import { useTracking, SiteEvents } from '@/hooks';
 
 export default function NotFound() {
@@ -20,9 +19,8 @@ export default function NotFound() {
 
     return (
         <>
-            <Navigation />
             <main id="main-content">
-                <Container size="sm" py="xl" style={{ paddingTop: 120 }}>
+                <Container size="sm" py="xl" style={{ paddingTop: 64 }}>
                     <Paper shadow="md" radius="lg" p="xl">
                         <Stack gap="xl" align="center">
                             <IconError404 size={100} color="var(--gold-dark)" stroke={1.5} />

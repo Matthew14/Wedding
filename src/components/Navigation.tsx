@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Container, Anchor, Button, Group, Text } from "@mantine/core";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useGalleryFlag } from "@/hooks/useGalleryFlag";
 import { useSession } from "@/hooks/useSession";
 import classes from "./Navigation.module.css";
@@ -19,6 +19,7 @@ export function Navigation() {
     const galleryFlag = useGalleryFlag();
     const { status, refresh } = useSession();
     const router = useRouter();
+    const pathname = usePathname();
     const [loggingOut, setLoggingOut] = useState(false);
     const [logoutError, setLogoutError] = useState<string | null>(null);
 
@@ -36,6 +37,11 @@ export function Navigation() {
             setLoggingOut(false);
         }
     };
+
+    // The dashboard has its own header (see src/app/dashboard/layout.tsx).
+    if (pathname?.startsWith("/dashboard")) {
+        return null;
+    }
 
     return (
         <header className={classes.header} role="banner">
