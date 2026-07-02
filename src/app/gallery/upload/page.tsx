@@ -29,7 +29,18 @@ interface FileUploadState {
 
 const MAX_FILES = 10;
 const MAX_SIZE = 20 * 1024 * 1024;
-const ALLOWED = ["image/jpeg", "image/png", "image/heic"];
+const ALLOWED = ["image/jpeg", "image/png", "image/heic", "image/heif"];
+
+// Some browsers report an empty MIME type for HEIC/HEIF files, so fall back
+// to the file extension. The result is also used as the S3 Content-Type,
+// which must match between the presign request and the actual upload.
+function effectiveType(file: File): string {
+    if (file.type) return file.type;
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".heic")) return "image/heic";
+    if (name.endsWith(".heif")) return "image/heif";
+    return "";
+}
 
 export default function UploadPage() {
     const router = useRouter();
@@ -72,7 +83,7 @@ export default function UploadPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = Array.from(e.target.files ?? []);
         const valid = selected.filter((f) => {
-            if (!ALLOWED.includes(f.type)) return false;
+            if (!ALLOWED.includes(effectiveType(f))) return false;
             if (f.size > MAX_SIZE) return false;
             return true;
         });
@@ -88,76 +99,76 @@ export default function UploadPage() {
         setFiles((prev) => prev.filter((_, i) => i !== index));
     };
 
+    // Resolves to true only if the file made it to S3; never rejects.
     const uploadFile = useCallback(
-        (index: number, file: File): Promise<void> => {
-            return new Promise<void>(async (resolve) => {
-                try {
-                    setFiles((prev) =>
-                        prev.map((f, i) => (i === index ? { ...f, status: "uploading" } : f))
-                    );
+        async (index: number, file: File): Promise<boolean> => {
+            try {
+                setFiles((prev) =>
+                    prev.map((f, i) => (i === index ? { ...f, status: "uploading" } : f))
+                );
 
-                    const urlRes = await fetch("/api/photos/upload-url", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            code,
-                            fileName: file.name,
-                            contentType: file.type,
-                            sizeBytes: file.size,
-                        }),
-                    });
+                const contentType = effectiveType(file);
+                const urlRes = await fetch("/api/photos/upload-url", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        code,
+                        fileName: file.name,
+                        contentType,
+                        sizeBytes: file.size,
+                    }),
+                });
 
-                    if (!urlRes.ok) {
-                        const data = await urlRes.json();
-                        setFiles((prev) =>
-                            prev.map((f, i) =>
-                                i === index ? { ...f, status: "error", error: data.error ?? "Upload failed" } : f
-                            )
-                        );
-                        resolve();
-                        return;
-                    }
-
-                    const { uploadUrl }: UploadUrlResponse = await urlRes.json();
-
-                    await new Promise<void>((res2, rej) => {
-                        const xhr = new XMLHttpRequest();
-                        xhr.upload.addEventListener("progress", (ev) => {
-                            if (ev.lengthComputable) {
-                                const pct = Math.round((ev.loaded / ev.total) * 100);
-                                setFiles((prev) =>
-                                    prev.map((f, i) => (i === index ? { ...f, progress: pct } : f))
-                                );
-                            }
-                        });
-                        xhr.addEventListener("load", () => {
-                            if (xhr.status >= 200 && xhr.status < 300) {
-                                setFiles((prev) =>
-                                    prev.map((f, i) =>
-                                        i === index ? { ...f, status: "done", progress: 100 } : f
-                                    )
-                                );
-                                res2();
-                            } else {
-                                rej(new Error(`S3 upload failed: ${xhr.status}`));
-                            }
-                        });
-                        xhr.addEventListener("error", () => rej(new Error("Network error")));
-                        xhr.open("PUT", uploadUrl);
-                        xhr.setRequestHeader("Content-Type", file.type);
-                        xhr.send(file);
-                    });
-                } catch (err) {
+                if (!urlRes.ok) {
+                    const data = await urlRes.json();
                     setFiles((prev) =>
                         prev.map((f, i) =>
-                            i === index
-                                ? { ...f, status: "error", error: err instanceof Error ? err.message : "Upload failed" }
-                                : f
+                            i === index ? { ...f, status: "error", error: data.error ?? "Upload failed" } : f
                         )
                     );
+                    return false;
                 }
-                resolve();
-            });
+
+                const { uploadUrl }: UploadUrlResponse = await urlRes.json();
+
+                await new Promise<void>((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.upload.addEventListener("progress", (ev) => {
+                        if (ev.lengthComputable) {
+                            const pct = Math.round((ev.loaded / ev.total) * 100);
+                            setFiles((prev) =>
+                                prev.map((f, i) => (i === index ? { ...f, progress: pct } : f))
+                            );
+                        }
+                    });
+                    xhr.addEventListener("load", () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            setFiles((prev) =>
+                                prev.map((f, i) =>
+                                    i === index ? { ...f, status: "done", progress: 100 } : f
+                                )
+                            );
+                            resolve();
+                        } else {
+                            reject(new Error(`S3 upload failed: ${xhr.status}`));
+                        }
+                    });
+                    xhr.addEventListener("error", () => reject(new Error("Network error")));
+                    xhr.open("PUT", uploadUrl);
+                    xhr.setRequestHeader("Content-Type", contentType);
+                    xhr.send(file);
+                });
+                return true;
+            } catch (err) {
+                setFiles((prev) =>
+                    prev.map((f, i) =>
+                        i === index
+                            ? { ...f, status: "error", error: err instanceof Error ? err.message : "Upload failed" }
+                            : f
+                    )
+                );
+                return false;
+            }
         },
         [code]
     );
@@ -168,10 +179,14 @@ export default function UploadPage() {
         const pending = files
             .map((f, i) => ({ f, i }))
             .filter(({ f }) => f.status === "pending");
-        await Promise.all(pending.map(({ f, i }) => uploadFile(i, f.file)));
+        const results = await Promise.all(pending.map(({ f, i }) => uploadFile(i, f.file)));
         setUploading(false);
-        setAllDone(true);
-        setTimeout(() => router.push("/gallery"), 2000);
+        // Only celebrate and redirect if at least one file actually made it;
+        // failed files stay listed with their per-file error messages.
+        if (results.some(Boolean)) {
+            setAllDone(true);
+            setTimeout(() => router.push("/gallery"), 2000);
+        }
     };
 
     return (
@@ -229,7 +244,7 @@ export default function UploadPage() {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image/jpeg,image/png,image/heic"
+                                accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
                                 multiple
                                 style={{ display: "none" }}
                                 onChange={handleFileChange}

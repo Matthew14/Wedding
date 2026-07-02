@@ -40,6 +40,11 @@ const mockPhoto = {
 describe("GET /api/photos", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // Default to an unauthenticated (public) caller
+        mockRequireAuth.mockResolvedValue({
+            success: false,
+            response: new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
+        });
     });
 
     it("returns approved photos by default", async () => {
@@ -54,6 +59,38 @@ describe("GET /api/photos", () => {
         const [sql, params] = mockQuery.mock.calls[0];
         expect(sql).toContain("status");
         expect(params[0]).toBe("approved");
+    });
+
+    it("does not expose sensitive fields to public callers", async () => {
+        mockQuery.mockResolvedValue({ rows: [mockPhoto] });
+        const req = new NextRequest("http://localhost/api/photos");
+        const res = await GET(req);
+        const data = await res.json();
+        const photo = data.photos[0];
+        expect(photo).not.toHaveProperty("invitation_code");
+        expect(photo).not.toHaveProperty("s3_key");
+        expect(photo).not.toHaveProperty("thumbnail_key");
+        expect(photo).not.toHaveProperty("approved_by");
+        expect(photo).not.toHaveProperty("approved_at");
+        expect(photo).not.toHaveProperty("size_bytes");
+        // Fields the gallery needs are still present
+        expect(photo.id).toBe("photo-1");
+        expect(photo.file_name).toBe("photo.jpg");
+        expect(photo.width).toBe(1200);
+        expect(photo.height).toBe(800);
+        expect(photo.thumbnail_url).toBe("https://cdn/uploads/thumbnail/ABC123/uuid.jpg");
+    });
+
+    it("returns full rows to authenticated admins", async () => {
+        mockRequireAuth.mockResolvedValue({ success: true, payload: { email: "admin@test.com" } });
+        mockQuery.mockResolvedValue({ rows: [mockPhoto] });
+        const req = new NextRequest("http://localhost/api/photos?status=approved");
+        const res = await GET(req);
+        const data = await res.json();
+        const photo = data.photos[0];
+        expect(photo.invitation_code).toBe("ABC123");
+        expect(photo.s3_key).toBe("uploads/original/ABC123/uuid.jpg");
+        expect(photo.approved_by).toBe("admin@test.com");
     });
 
     it("filters by category slug", async () => {

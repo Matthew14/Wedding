@@ -100,6 +100,20 @@ describe("POST /api/photos/upload-url", () => {
         expect(data.key).toMatch(/^uploads\/original\/ABC123\//);
     });
 
+    it("accepts image/heif uploads", async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ code: "ABC123" }] })  // code valid
+            .mockResolvedValueOnce({ rows: [{ count: 0 }] })         // under rate limit
+            .mockResolvedValueOnce({ rows: [{ id: "photo-uuid-2" }] }); // insert
+
+        const res = await POST(
+            makeRequest({ code: "ABC123", fileName: "photo.heif", contentType: "image/heif", sizeBytes: 500 })
+        );
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data.key).toMatch(/\.heif$/);
+    });
+
     it("handles database errors gracefully", async () => {
         mockQuery.mockRejectedValue(new Error("DB connection failed"));
         const res = await POST(

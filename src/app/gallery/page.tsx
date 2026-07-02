@@ -21,7 +21,7 @@ import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
 import Download from "yet-another-react-lightbox/plugins/download";
 import "yet-another-react-lightbox/styles.css";
-import type { Photo, PhotoCategory } from "@/types/photos";
+import type { PublicPhoto, PhotoCategory } from "@/types/photos";
 import Link from "next/link";
 
 interface GalleryPhoto {
@@ -65,14 +65,13 @@ export default function GalleryPage() {
                 const res = await fetch(`/api/photos?${params}`);
                 if (!res.ok) throw new Error("Failed to load photos");
                 const data = await res.json();
-                type ApiPhoto = Photo & { thumbnail_url: string | null };
-                const mapped: GalleryPhoto[] = (data.photos as ApiPhoto[]).map((p) => ({
+                const mapped: GalleryPhoto[] = (data.photos as PublicPhoto[]).map((p) => ({
                     src: p.thumbnail_url ?? "",
                     width: p.width ?? FALLBACK_ASPECT.width,
                     height: p.height ?? FALLBACK_ASPECT.height,
                     alt: p.file_name,
                     id: p.id,
-                    key: p.s3_key,
+                    key: p.id,
                 }));
                 setPhotos((prev) => (pg === 1 ? mapped : [...prev, ...mapped]));
                 setHasMore(mapped.length === LIMIT);
