@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "../../test/test-utils";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { render, screen, waitFor } from "../../test/test-utils";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("../Navigation.module.css", () => ({
     default: {
@@ -10,7 +11,32 @@ vi.mock("../Navigation.module.css", () => ({
 
 import { Navigation } from "../Navigation";
 
+const mockFetch = vi.fn();
+
+function stubSession(loggedIn: boolean) {
+    mockFetch.mockImplementation((url: string) => {
+        if (url === "/api/auth/me") {
+            return Promise.resolve(new Response(null, { status: loggedIn ? 200 : 401 }));
+        }
+        if (url === "/api/auth/logout") {
+            loggedIn = false;
+            return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+        }
+        return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+    });
+}
+
 describe("Navigation", () => {
+    beforeEach(() => {
+        vi.stubGlobal("fetch", mockFetch);
+        stubSession(false);
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        mockFetch.mockReset();
+    });
+
     it("renders wedding title linking to home", () => {
         render(<Navigation />);
         const link = screen.getByRole("link", { name: "Rebecca & Matthew" });
@@ -40,5 +66,34 @@ describe("Navigation", () => {
     it("does not render mobile menu button", () => {
         render(<Navigation />);
         expect(screen.queryByRole("button", { name: /navigation menu/i })).not.toBeInTheDocument();
+    });
+
+    it("hides Dashboard and Logout when logged out", async () => {
+        render(<Navigation />);
+        await waitFor(() => expect(mockFetch).toHaveBeenCalledWith("/api/auth/me"));
+        expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Logout" })).not.toBeInTheDocument();
+    });
+
+    it("shows Dashboard and Logout when logged in", async () => {
+        stubSession(true);
+        render(<Navigation />);
+        const dashboard = await screen.findByRole("link", { name: "Dashboard" });
+        expect(dashboard).toHaveAttribute("href", "/dashboard");
+        expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
+    });
+
+    it("removes Dashboard and Logout after logging out", async () => {
+        stubSession(true);
+        render(<Navigation />);
+        const logout = await screen.findByRole("button", { name: "Logout" });
+
+        await userEvent.click(logout);
+
+        await waitFor(() => {
+            expect(mockFetch).toHaveBeenCalledWith("/api/auth/logout", { method: "POST" });
+            expect(screen.queryByRole("link", { name: "Dashboard" })).not.toBeInTheDocument();
+            expect(screen.queryByRole("button", { name: "Logout" })).not.toBeInTheDocument();
+        });
     });
 });

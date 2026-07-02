@@ -1,12 +1,36 @@
 "use client";
 
-import { Container, Anchor } from "@mantine/core";
+import { useState } from "react";
+import { Container, Anchor, Button, Group } from "@mantine/core";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useGalleryFlag } from "@/hooks/useGalleryFlag";
+import { useSession } from "@/hooks/useSession";
 import classes from "./Navigation.module.css";
+
+const navLinkStyle = {
+    color: "var(--gold-dark)",
+    textDecoration: "none",
+    letterSpacing: "0.05em",
+    transition: "opacity 0.2s",
+} as const;
 
 export function Navigation() {
     const galleryFlag = useGalleryFlag();
+    const { status, refresh } = useSession();
+    const router = useRouter();
+    const [loggingOut, setLoggingOut] = useState(false);
+
+    const handleLogout = async () => {
+        setLoggingOut(true);
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            await refresh();
+            router.refresh();
+        } finally {
+            setLoggingOut(false);
+        }
+    };
 
     return (
         <header className={classes.header} role="banner">
@@ -30,22 +54,29 @@ export function Navigation() {
                 >
                     Rebecca & Matthew
                 </Anchor>
-                {galleryFlag === "on" && (
-                    <Anchor
-                        component={Link}
-                        href="/gallery"
-                        size="sm"
-                        fw={400}
-                        style={{
-                            color: "var(--gold-dark)",
-                            textDecoration: "none",
-                            letterSpacing: "0.05em",
-                            transition: "opacity 0.2s",
-                        }}
-                    >
-                        Gallery
-                    </Anchor>
-                )}
+                <Group gap="md" wrap="nowrap">
+                    {galleryFlag === "on" && (
+                        <Anchor component={Link} href="/gallery" size="sm" fw={400} style={navLinkStyle}>
+                            Gallery
+                        </Anchor>
+                    )}
+                    {status === "authenticated" && (
+                        <>
+                            <Anchor component={Link} href="/dashboard" size="sm" fw={400} style={navLinkStyle}>
+                                Dashboard
+                            </Anchor>
+                            <Button
+                                variant="subtle"
+                                color="gray"
+                                size="compact-sm"
+                                onClick={handleLogout}
+                                loading={loggingOut}
+                            >
+                                Logout
+                            </Button>
+                        </>
+                    )}
+                </Group>
             </Container>
         </header>
     );
