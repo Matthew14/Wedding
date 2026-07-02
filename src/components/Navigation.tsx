@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Container, Anchor, Button, Group } from "@mantine/core";
+import { Container, Anchor, Button, Group, Text } from "@mantine/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useGalleryFlag } from "@/hooks/useGalleryFlag";
@@ -20,13 +20,18 @@ export function Navigation() {
     const { status, refresh } = useSession();
     const router = useRouter();
     const [loggingOut, setLoggingOut] = useState(false);
+    const [logoutError, setLogoutError] = useState<string | null>(null);
 
     const handleLogout = async () => {
         setLoggingOut(true);
+        setLogoutError(null);
         try {
-            await fetch("/api/auth/logout", { method: "POST" });
+            const res = await fetch("/api/auth/logout", { method: "POST" });
+            if (!res.ok) throw new Error(`Logout failed: ${res.status}`);
             await refresh();
             router.refresh();
+        } catch {
+            setLogoutError("Logout failed — please try again");
         } finally {
             setLoggingOut(false);
         }
@@ -62,6 +67,11 @@ export function Navigation() {
                     )}
                     {status === "authenticated" && (
                         <>
+                            {logoutError && (
+                                <Text size="xs" c="red" role="alert">
+                                    {logoutError}
+                                </Text>
+                            )}
                             <Anchor component={Link} href="/dashboard" size="sm" fw={400} style={navLinkStyle}>
                                 Dashboard
                             </Anchor>

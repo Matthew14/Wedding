@@ -19,7 +19,9 @@ export function useSession(): { status: SessionStatus; refresh: () => Promise<vo
             const res = await fetch("/api/auth/me");
             setStatus(res.ok ? "authenticated" : "unauthenticated");
         } catch {
-            setStatus("unauthenticated");
+            // Network blip, not a 401: don't drop an established session.
+            // Only fail closed while the initial check is unresolved.
+            setStatus((prev) => (prev === "authenticated" ? prev : "unauthenticated"));
         }
     }, []);
 

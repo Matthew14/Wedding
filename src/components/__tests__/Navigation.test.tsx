@@ -83,6 +83,26 @@ describe("Navigation", () => {
         expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
     });
 
+    it("keeps the buttons and shows an error when logout fails", async () => {
+        mockFetch.mockImplementation((url: string) => {
+            if (url === "/api/auth/me") {
+                return Promise.resolve(new Response(null, { status: 200 }));
+            }
+            if (url === "/api/auth/logout") {
+                return Promise.resolve(new Response(null, { status: 500 }));
+            }
+            return Promise.reject(new Error(`Unexpected fetch: ${url}`));
+        });
+        render(<Navigation />);
+        const logout = await screen.findByRole("button", { name: "Logout" });
+
+        await userEvent.click(logout);
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Logout failed — please try again");
+        expect(screen.getByRole("link", { name: "Dashboard" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
+    });
+
     it("removes Dashboard and Logout after logging out", async () => {
         stubSession(true);
         render(<Navigation />);
