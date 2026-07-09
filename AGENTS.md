@@ -29,7 +29,7 @@ You are a full-stack TypeScript developer specialising in modern React applicati
 - **Color Scheme**: Brown/gold (`#8b7355`)
 
 ### Backend & Data
-- **Aurora Serverless v2**: PostgreSQL via RDS Data API (no connection pooling needed)
+- **DynamoDB**: On-demand tables via the AWS SDK Document Client (no connection pooling needed)
 - **AWS Cognito**: Admin authentication
 - **AWS Amplify**: Hosting (WEB_COMPUTE — Lambda-based SSR)
 - **CloudFront + S3**: Wedding photo CDN
@@ -54,7 +54,6 @@ Wedding/
 │   │   ├── api/               # API routes
 │   │   │   ├── auth/         # Login/logout
 │   │   │   ├── dashboard/    # Dashboard summary
-│   │   │   ├── faqs/         # FAQ management
 │   │   │   └── rsvp/         # RSVP endpoints
 │   │   ├── dashboard/        # Admin dashboard (protected)
 │   │   ├── rsvp/             # RSVP flow pages
@@ -69,7 +68,7 @@ Wedding/
 │   ├── types/                # TypeScript definitions
 │   ├── utils/                # Utility functions
 │   │   ├── auth/            # Cognito sign-in helpers
-│   │   ├── db/              # Aurora Data API client
+│   │   ├── db/              # DynamoDB Document Client + typed repositories
 │   │   └── logger.ts        # CloudWatch structured logger
 │   └── test/                 # Test utilities
 ├── docs/                    # Documentation
@@ -96,7 +95,7 @@ npm run test:coverage      # Generate coverage report
 
 Amplify builds the Next.js app and deploys it as a Lambda. Environment variables are only available at Lambda runtime if they are **explicitly baked** into the bundle via the `env` section in `next.config.js`. Variables set in the Amplify console but NOT listed in `next.config.js` `env` are NOT available at runtime.
 
-Current baked vars: `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_CLIENT_SECRET`, `AURORA_CLUSTER_ARN`, `AURORA_SECRET_ARN`, `LAMBDA_AWS_KEY_ID`, `LAMBDA_AWS_SECRET`.
+Current baked vars: `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, `COGNITO_CLIENT_SECRET`, `DDB_ARCHIVE_TABLE`, `DDB_PHOTOS_TABLE`, `DDB_CATEGORIES_TABLE`, `LAMBDA_AWS_KEY_ID`, `LAMBDA_AWS_SECRET`.
 
 ## Code Style Guide
 
@@ -187,15 +186,15 @@ export const useRSVPForm = () => {
 ✅ **Good Example:**
 ```tsx
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/utils/db/client";
+import { listCategories } from "@/utils/db/categories";
 import * as logger from "@/utils/logger";
 
 export async function GET(request: NextRequest) {
     try {
-        const result = await query("SELECT * FROM faqs ORDER BY id");
-        return NextResponse.json(result.records);
+        const categories = await listCategories();
+        return NextResponse.json(categories);
     } catch (error) {
-        await logger.error("GET /api/faqs", "DB query failed", error);
+        await logger.error("GET /api/gallery/categories", "DB query failed", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -206,7 +205,7 @@ export async function GET(request: NextRequest) {
 // Missing error handling
 // No logging
 export async function GET() {
-    const data = await query("SELECT * FROM faqs");
+    const data = await listCategories();
     return NextResponse.json(data);
 }
 ```
@@ -245,7 +244,7 @@ it('renders navigation links', () => {
 
 ### ⚠️ Ask First
 
-- **Database schema changes** (migrations required)
+- **DynamoDB table or index changes** (CDK deploy required)
 - **Breaking API changes** (affects existing RSVPs)
 - **New dependencies** (check bundle size impact)
 - **Authentication flow changes** (security implications)
@@ -270,19 +269,18 @@ it('renders navigation links', () => {
 
 ## Database Context
 
-The site uses **Aurora Serverless v2** accessed via the **RDS Data API**. There is no direct TCP connection — all queries go through the AWS Data API endpoint using IAM credentials.
+The site uses **DynamoDB** (on-demand billing) accessed via the AWS SDK **Document Client** using IAM credentials. `src/utils/db/dynamo.ts` holds the client singleton and table name constants; typed repositories live in `src/utils/db/archive.ts`, `src/utils/db/photos.ts`, and `src/utils/db/categories.ts`.
 
 ### Key Tables
 
-- **RSVPs**: Invitation codes and responses (`short_url`, `accepted`, `staying_villa`, etc.)
-- **invitees**: Guest information linked to invitations (`first_name`, `last_name`, `coming`)
-- **invitations**: Main invitation records with UUIDs
-- **FAQs**: Frequently asked questions for the website
+- **wedding-archive**: Frozen post-wedding data in a single-table design — PK/SK pairs `CODE#<code>/META`, `INVITATION#<id>/META`, `INVITATION#<id>/RSVP#<id>`, `INVITATION#<id>/INVITEE#<id>`. Code validation is a `GetItem`; dashboard reads scan all ~137 items.
+- **wedding-photos**: PK `id` (uuid). GSIs: `byStatus` (status + uploaded_at), `byCode` (invitation_code + uploaded_at, for rate limiting), `byS3Key` (s3_key, used by the photo-processor Lambda). Point-in-time recovery enabled.
+- **wedding-photo-categories**: PK `id`. ~7 items.
 
 ### Environment Variables (development `.env.local`)
 
 - `COGNITO_USER_POOL_ID` / `COGNITO_CLIENT_ID` / `COGNITO_CLIENT_SECRET`
-- `AURORA_CLUSTER_ARN` / `AURORA_SECRET_ARN`
+- `DDB_ARCHIVE_TABLE` / `DDB_PHOTOS_TABLE` / `DDB_CATEGORIES_TABLE` (defaults match the production table names)
 - `LAMBDA_AWS_KEY_ID` / `LAMBDA_AWS_SECRET`
 - Never commit `.env.local` (gitignored)
 
@@ -369,4 +367,4 @@ Before implementing a feature:
 
 ---
 
-**Last Updated**: June 2026
+**Last Updated**: July 2026

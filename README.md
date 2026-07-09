@@ -7,9 +7,8 @@ Rebecca & Matthew's Wedding Website — built with Next.js 15, TypeScript, Manti
 - **Homepage**: Elegant hero section with couple's wedding photo
 - **Location**: Complete venue details for Gran Villa Rosa with integrated Google Maps, travel information, and parking details
 - **Schedule**: Comprehensive 3-day wedding timeline with detailed activities for each day
-- **FAQs**: Frequently asked questions with expandable accordion interface and admin editor
 - **RSVP System**: Complete RSVP form system with unique invitation codes, guest management, form validation, and response tracking
-- **Admin Dashboard**: Secure dashboard for managing FAQs, invitations, and RSVP responses
+- **Admin Dashboard**: Secure dashboard for managing invitations and RSVP responses
 - **Responsive Design**: Mobile-first approach with custom styling and smooth animations
 - **SEO Optimized**: Proper meta tags, Open Graph data, and social sharing
 - **Custom Styling**: Beautiful brown/gold color scheme with hover effects and smooth transitions
@@ -20,7 +19,7 @@ Rebecca & Matthew's Wedding Website — built with Next.js 15, TypeScript, Manti
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **UI Library**: Mantine Components v7.15.2
-- **Database**: Aurora Serverless v2 (PostgreSQL) via RDS Data API
+- **Database**: DynamoDB (on-demand billing)
 - **Auth**: AWS Cognito
 - **Hosting**: AWS Amplify (WEB_COMPUTE)
 - **Photos CDN**: CloudFront → S3
@@ -46,7 +45,7 @@ Rebecca & Matthew's Wedding Website — built with Next.js 15, TypeScript, Manti
 
    You'll need:
    - Cognito user pool ID, client ID, and client secret
-   - Aurora cluster ARN and secret ARN
+   - DynamoDB table names (`DDB_ARCHIVE_TABLE`, `DDB_PHOTOS_TABLE`, `DDB_CATEGORIES_TABLE`) — defaults match the production tables
    - IAM access keys for the `wedding-api-lambda` user
 
 3. **Run development server**:
@@ -66,12 +65,9 @@ Wedding/
 │   │   ├── api/            # API routes
 │   │   │   ├── auth/      # Login/logout endpoints
 │   │   │   ├── dashboard/ # Dashboard summary endpoint
-│   │   │   ├── faqs/      # FAQ API endpoints
 │   │   │   └── rsvp/      # RSVP API endpoints
 │   │   ├── dashboard/     # Admin dashboard (protected)
-│   │   │   ├── faq-editor/ # FAQ management
 │   │   │   └── invitations/ # Invitation management
-│   │   ├── faqs/          # FAQs page with accordion interface
 │   │   ├── location/      # Location page with Google Maps & venue details
 │   │   ├── login/         # Admin login page
 │   │   ├── rsvp/          # RSVP pages (entry, form, success)
@@ -89,7 +85,7 @@ Wedding/
 │   ├── types/             # TypeScript type definitions
 │   └── utils/             # Utility functions
 │       ├── auth/          # Cognito auth helpers
-│       ├── db/            # Aurora Data API client
+│       ├── db/            # DynamoDB client + typed repositories
 │       └── logger.ts      # CloudWatch structured logger
 ├── public/
 │   ├── favicon.ico        # Custom wedding favicon
@@ -109,7 +105,6 @@ Wedding/
 - **Color Scheme**: Modify the brown/gold theme (`#8b7355`) in `globals.css` and component styles
 - **Wedding Details**: Update venue information, dates, and timeline in respective page components
 - **Google Maps**: The location page includes Gran Villa Rosa map integration — update coordinates if needed
-- **FAQs**: Manage questions and answers through the admin dashboard at `/dashboard/faq-editor`
 - **Schedule**: Customize the 3-day timeline with your specific activities and timing
 
 ## Infrastructure
@@ -117,7 +112,7 @@ Wedding/
 All resources run in AWS account `084032333902`, region `eu-west-1`:
 
 - **Amplify**: Hosts the Next.js app with auto-deploy on push to `main`
-- **Aurora Serverless v2**: PostgreSQL database accessed via RDS Data API
+- **DynamoDB**: On-demand tables (`wedding-archive`, `wedding-photos`, `wedding-photo-categories`)
 - **Cognito**: Admin user authentication
 - **CloudFront + S3**: Wedding photo CDN
 - **CloudWatch**: Application logs at `/wedding/app` (90-day retention)
@@ -129,20 +124,19 @@ See `docs/AWS_RESOURCES.md` for full resource inventory.
 - **Homepage** (`/`): Wedding photo and thank-you message
 - **Location** (`/location`): Full venue details for Gran Villa Rosa with embedded Google Maps
 - **Schedule** (`/schedule`): Detailed 3-day wedding timeline
-- **FAQs** (`/faqs`): Frequently asked questions, managed through admin dashboard
 - **RSVP** (`/rsvp`): RSVP entry page where guests enter their invitation code
 - **RSVP Form** (`/rsvp/[code]`): Dynamic RSVP form with attendance confirmation, dietary restrictions, song requests
 - **RSVP Success** (`/rsvp/success`): Confirmation page after successful RSVP submission
 - **Login** (`/login`): Admin login page for dashboard access
-- **Dashboard** (`/dashboard`): Admin dashboard for managing FAQs and invitations (protected route)
+- **Dashboard** (`/dashboard`): Admin dashboard for managing invitations (protected route)
 
 ## Development Status
 
 ✅ **Complete**: Homepage, Location, Schedule pages with full content and styling
 ✅ **Complete**: Responsive navigation, custom styling, and animations
-✅ **Complete**: Database connection (Aurora via RDS Data API)
+✅ **Complete**: Database connection (DynamoDB)
 ✅ **Complete**: RSVP system with invitation codes, form submission, and response tracking
-✅ **Complete**: Admin dashboard with FAQ editor and invitation management
+✅ **Complete**: Admin dashboard with invitation management
 ✅ **Complete**: Authentication system (Cognito) with protected routes
 ✅ **Complete**: Comprehensive unit testing with Vitest and React Testing Library
 ⏳ **Planned**: Photo gallery section to showcase photos
@@ -174,7 +168,7 @@ npm run test:ui
 
 - **[docs/AWS_RESOURCES.md](docs/AWS_RESOURCES.md)**: AWS resource inventory and cost estimates
 - **[docs/RSVP_SYSTEM_README.md](docs/RSVP_SYSTEM_README.md)**: Detailed documentation for the RSVP system
-- **[docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md)**: Running the full stack locally with LocalStack (S3, RDS Data API, Cognito)
+- **[docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md)**: Running the full stack locally with LocalStack (S3, DynamoDB, Cognito)
 - **[docs/TESTING.md](docs/TESTING.md)**: Comprehensive unit testing guide and best practices
 - **[docs/SECURITY.md](docs/SECURITY.md)**: Security implementation and best practices
 - **[AGENTS.md](AGENTS.md)**: Information about automated PR review bots and agents

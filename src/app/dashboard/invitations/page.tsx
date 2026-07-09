@@ -55,7 +55,7 @@ export default function InvitationsPage() {
                         fontFamily: "serif",
                     }}
                 >
-                    Invitation Codes
+                    Photo Gallery Codes
                 </Title>
                 <Text size="lg" style={{ color: "#6c757d" }}>
                     Photo upload access codes for each invitation
@@ -78,7 +78,7 @@ export default function InvitationsPage() {
                             <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Invitation</Table.Th>
                             <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Side</Table.Th>
                             <Table.Th style={{ fontWeight: 600, color: "#495057" }}>Guests</Table.Th>
-                            <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Copy Link</Table.Th>
+                            <Table.Th style={{ textAlign: "center", fontWeight: 600, color: "#495057" }}>Copy Gallery Link</Table.Th>
                         </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>

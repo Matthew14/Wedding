@@ -15,18 +15,29 @@ Region: **eu-west-1** (Ireland) unless noted
 
 ## Database
 
-### Aurora Serverless v2 — `weddingstack-auroracluster23d869c0-hexv7uynpwda`
-**What it is:** A PostgreSQL database that scales automatically with usage.  
-**What it does:** Stores all the wedding data — RSVPs, invitation codes, guest lists, FAQ entries, and the archived historical records (`rsvp_archive`, `invitee_archive`). The dashboard reads from this database to show the "At a Glance" stats. Scales down to minimal capacity when idle to keep costs low.
+### DynamoDB — `wedding-archive`
+**What it is:** A serverless NoSQL table (on-demand billing) holding the frozen post-wedding data.  
+**What it does:** Stores the archived invitations, invitation codes, RSVPs, and guest records in a single-table design. Invitation code validation is a single `GetItem`; the dashboard's "At a Glance" stats scan all ~137 items. On-demand billing means it costs nothing when idle.
 
-Tables:
-| Table | Purpose |
-|---|---|
-| `invitations` | One row per invitation group (family/couple) |
-| `invitation_codes` | The unique codes guests used to access their RSVP |
-| `rsvp_archive` | Frozen final RSVP responses |
-| `invitee_archive` | Frozen final guest attendance records |
-| `faqs` | Content for the FAQ section of the website |
+Item layout (PK / SK):
+| PK | SK | Purpose |
+|---|---|---|
+| `CODE#<code>` | `META` | The unique codes guests used to access their RSVP |
+| `INVITATION#<id>` | `META` | One item per invitation group (family/couple) |
+| `INVITATION#<id>` | `RSVP#<id>` | Frozen final RSVP responses |
+| `INVITATION#<id>` | `INVITEE#<id>` | Frozen final guest attendance records |
+
+### DynamoDB — `wedding-photos`
+**What it is:** A serverless NoSQL table (on-demand billing) for the photo gallery metadata.  
+**What it does:** One item per photo, keyed by `id` (uuid). Three global secondary indexes: `byStatus` (status + uploaded_at, full projection) drives the gallery and moderation views, `byCode` (invitation_code + uploaded_at, keys only) supports per-code upload rate limiting, and `byS3Key` (s3_key, keys only) lets the photo-processor Lambda find the item for an uploaded object. Point-in-time recovery is enabled.
+
+### DynamoDB — `wedding-photo-categories`
+**What it is:** A tiny serverless NoSQL table (on-demand billing).  
+**What it does:** Stores the ~7 photo gallery categories, keyed by `id`.
+
+### Aurora Serverless v2 — `weddingstack-auroracluster23d869c0-hexv7uynpwda` ⚠️ pending decommission ([#150](https://github.com/Matthew14/Wedding/issues/150))
+**What it is:** The PostgreSQL database the site used before migrating to DynamoDB.  
+**What it does:** Nothing anymore — the app reads exclusively from DynamoDB. Its data was loaded into `wedding-archive` with the one-off `scripts/migrate-archive-to-dynamodb.mjs` script. The cluster is kept temporarily while the cutover is verified and will be removed in a follow-up PR. A manual snapshot (`pre-dynamodb-migration-2026-07-09`) and a verified local backup exist.
 
 ---
 
@@ -56,9 +67,9 @@ Tables:
 
 ## Secrets
 
-### Secrets Manager — `wedding/db-credentials`
-**What it is:** A secure vault for the database password.  
-**What it does:** Stores the Aurora username and password. The app retrieves it at runtime rather than hardcoding it anywhere. Rotated automatically by AWS.
+### Secrets Manager — `wedding/db-credentials` ⚠️ pending decommission ([#150](https://github.com/Matthew14/Wedding/issues/150))
+**What it is:** A secure vault for the old Aurora database password.  
+**What it does:** Nothing anymore — DynamoDB uses IAM credentials, not a stored password. Will be removed together with the Aurora cluster.
 
 ### Secrets Manager — `wedding/cognito-client-secret`
 **What it is:** A secure vault for the Cognito app client secret.  
@@ -68,9 +79,9 @@ Tables:
 
 ## Networking
 
-### VPC — `WeddingVpc` (10.0.0.0/16)
+### VPC — `WeddingVpc` (10.0.0.0/16) ⚠️ pending decommission ([#150](https://github.com/Matthew14/Wedding/issues/150))
 **What it is:** A private, isolated network inside AWS.  
-**What it does:** The Aurora database lives inside this VPC with no direct internet access. This means the database can't be reached from the internet at all — only AWS services with the right permissions (via the Data API) can talk to it.
+**What it does:** Only exists to house the old Aurora database — DynamoDB doesn't need a VPC. Will be removed together with the Aurora cluster.
 
 ### Default VPC (172.31.0.0/16)
 **What it is:** An empty network AWS creates automatically in every account.  
@@ -87,7 +98,7 @@ Tables:
 
 ### IAM User — `wedding-api-lambda`
 **What it is:** A minimal-permission user for the live website to access the database.  
-**What it does:** The Amplify Lambda (which runs the server-side code on the live site) uses this user's credentials to call the Aurora Data API. It has permission to do exactly two things: query Aurora and read the DB secret. Nothing else.
+**What it does:** The Amplify Lambda (which runs the server-side code on the live site) uses this user's credentials to call DynamoDB. A scoped managed policy (attached via CDK) allows exactly `GetItem`, `BatchGetItem`, `Query`, `Scan`, `PutItem`, and `UpdateItem` on the three wedding tables and the photos indexes. Nothing else.
 
 ### IAM Role — `amplify-wedding-ssr-role`
 **What it is:** A role for Amplify's deployment and runtime service.  
@@ -103,7 +114,7 @@ Tables:
 
 ### CloudFormation Stack — `WeddingStack`
 **What it is:** The record of everything CDK has deployed.  
-**What it does:** AWS CloudFormation tracks the Aurora cluster, VPC, Cognito pool, S3 bucket, CloudFront, and Rekognition collection as a single managed unit. If you run `cdk deploy` it updates this stack. If you run `cdk destroy` it tears all of it down cleanly.
+**What it does:** AWS CloudFormation tracks the DynamoDB tables, Cognito pool, S3 bucket, CloudFront, Rekognition collection, and (until decommissioned) the Aurora cluster and VPC as a single managed unit. If you run `cdk deploy` it updates this stack. If you run `cdk destroy` it tears all of it down cleanly.
 
 ### CloudFormation Stack — `CDKToolkit`
 **What it is:** CDK's own bootstrapping stack.  
@@ -123,7 +134,8 @@ Tables:
 
 | Service | ~Monthly Cost |
 |---|---|
-| Aurora Serverless v2 (0.5 ACU min) | ~$0.55 |
+| DynamoDB (on-demand) | Cents |
+| Aurora Serverless v2 (pending decommission, #150) | ~$0.55 |
 | Amplify Hosting | ~$0.01/build + $0.15/GB served |
 | CloudFront | Free tier / cents |
 | S3 | Cents |

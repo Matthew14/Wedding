@@ -5,14 +5,15 @@
 //     GETTING READY/  THE CEREMONY/  COCKTAIL/  RECEPTION/  PARTY/  R&M/
 //
 // For each image it uploads the original to S3, generates a 1200px thumbnail
-// (EXIF stripped), and inserts an APPROVED photos row mapped to the matching
+// (EXIF stripped), and inserts an APPROVED photos item mapped to the matching
 // category. Re-running skips files already imported (by file_name + category).
 //
 // Usage: npm run localstack:import -- /path/to/photos
 //        npm run localstack:import -- /path/to/photos "GETTING READY"   # one folder
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { RDSDataClient, ExecuteStatementCommand } from "@aws-sdk/client-rds-data";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import sharp from "sharp";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join, extname, basename } from "node:path";
@@ -21,9 +22,8 @@ import { randomUUID } from "node:crypto";
 const region = process.env.AWS_REGION ?? "eu-west-1";
 const endpoint = process.env.AWS_ENDPOINT_URL;
 const bucket = process.env.S3_PHOTOS_BUCKET;
-const resourceArn = process.env.AURORA_CLUSTER_ARN;
-const secretArn = process.env.AURORA_SECRET_ARN;
-const database = process.env.DB_NAME ?? "wedding";
+const photosTable = process.env.DDB_PHOTOS_TABLE ?? "wedding-photos";
+const categoriesTable = process.env.DDB_CATEGORIES_TABLE ?? "wedding-photo-categories";
 
 const rootDir = process.argv[2];
 const onlyFolder = process.argv[3]; // optional: import a single subfolder
@@ -33,7 +33,9 @@ if (!rootDir) {
 }
 
 const s3 = new S3Client({ region, endpoint, forcePathStyle: true });
-const rds = new RDSDataClient({ region, endpoint });
+const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({ region, endpoint }), {
+    marshallOptions: { removeUndefinedValues: true },
+});
 
 const IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".heic"]);
 
@@ -52,19 +54,6 @@ const FOLDER_TO_SLUG = {
 
 const norm = (s) => s.trim().toLowerCase();
 
-async function exec(sql, parameters = []) {
-    const res = await rds.send(
-        new ExecuteStatementCommand({ resourceArn, secretArn, database, sql, parameters, formatRecordsAs: "JSON", includeResultMetadata: true })
-    );
-    if (res.formattedRecords) return JSON.parse(res.formattedRecords);
-    if (res.records) {
-        const names = (res.columnMetadata ?? []).map((c) => c.name);
-        const val = (f) => (f.isNull ? null : f.stringValue ?? f.longValue ?? null);
-        return res.records.map((r) => Object.fromEntries(r.map((f, i) => [names[i], val(f)])));
-    }
-    return [];
-}
-
 // EXIF DateTimeOriginal -> ISO 8601 (best-effort, same heuristic as the Lambda).
 function extractTakenAt(exif) {
     if (!exif) return null;
@@ -75,8 +64,14 @@ function extractTakenAt(exif) {
 }
 
 // Resolve category slug -> id (null for unmapped folders).
-const cats = await exec("SELECT id, slug FROM photo_categories");
-const slugToId = Object.fromEntries(cats.map((c) => [c.slug, c.id]));
+const catScan = await docClient.send(new ScanCommand({ TableName: categoriesTable }));
+const slugToId = Object.fromEntries((catScan.Items ?? []).map((c) => [c.slug, c.id]));
+
+// Skip-detection index: file_name + category of everything already imported.
+const photoScan = await docClient.send(new ScanCommand({ TableName: photosTable }));
+const alreadyImported = new Set(
+    (photoScan.Items ?? []).map((p) => `${p.file_name}::${p.category_id ?? ""}`)
+);
 
 const entries = await readdir(rootDir, { withFileTypes: true });
 const folders = entries
@@ -103,15 +98,7 @@ for (const folder of folders) {
     for (const file of files) {
         const filePath = join(rootDir, folder, file);
         try {
-            // skip if already imported into this category
-            const existing = await exec(
-                "SELECT id FROM photos WHERE file_name = :fn AND category_id IS NOT DISTINCT FROM :cid",
-                [
-                    { name: "fn", value: { stringValue: file } },
-                    { name: "cid", value: categoryId ? { stringValue: categoryId } : { isNull: true } },
-                ]
-            );
-            if (existing.length > 0) { skipped++; continue; }
+            if (alreadyImported.has(`${file}::${categoryId ?? ""}`)) { skipped++; continue; }
 
             const buffer = await readFile(filePath);
             const sizeBytes = (await stat(filePath)).size;
@@ -135,19 +122,28 @@ for (const folder of folders) {
                 .toBuffer({ resolveWithObject: true });
             await s3.send(new PutObjectCommand({ Bucket: bucket, Key: thumbKey, Body: data, ContentType: "image/jpeg" }));
 
-            await exec(
-                `INSERT INTO photos (invitation_code, s3_key, thumbnail_key, file_name, width, height, size_bytes, taken_at, category_id, status, approved_at, approved_by)
-                 VALUES (NULL, :key, :thumb, :fn, :w, :h, :size, :taken, :cid, 'approved', NOW(), 'import')`,
-                [
-                    { name: "key", value: { stringValue: key } },
-                    { name: "thumb", value: { stringValue: thumbKey } },
-                    { name: "fn", value: { stringValue: file } },
-                    { name: "w", value: { longValue: info.width } },
-                    { name: "h", value: { longValue: info.height } },
-                    { name: "size", value: { longValue: sizeBytes } },
-                    { name: "taken", value: takenAt ? { stringValue: takenAt } : { isNull: true } },
-                    { name: "cid", value: categoryId ? { stringValue: categoryId } : { isNull: true } },
-                ]
+            // NOTE: invitation_code is omitted entirely (not null) for imported
+            // photos — it's the byCode GSI partition key, and DynamoDB rejects
+            // items whose GSI key attribute has the wrong type.
+            await docClient.send(
+                new PutCommand({
+                    TableName: photosTable,
+                    Item: {
+                        id: uuid,
+                        s3_key: key,
+                        thumbnail_key: thumbKey,
+                        file_name: file,
+                        width: info.width,
+                        height: info.height,
+                        size_bytes: sizeBytes,
+                        taken_at: takenAt,
+                        category_id: categoryId,
+                        status: "approved",
+                        uploaded_at: new Date().toISOString(),
+                        approved_at: new Date().toISOString(),
+                        approved_by: "import",
+                    },
+                })
             );
             imported++;
             if (imported % 25 === 0) console.log(`  …${imported} imported`);

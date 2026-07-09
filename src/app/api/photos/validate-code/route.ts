@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/utils/db/client";
+import { isValidInvitationCode } from "@/utils/db/archive";
 
 export async function POST(request: NextRequest) {
     try {
@@ -8,13 +8,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "code is required" }, { status: 400 });
         }
 
-        const db = getDb();
-        const { rows } = await db.query<{ code: string }>(
-            "SELECT code FROM invitation_codes WHERE code = $1",
-            [code.trim().toUpperCase()]
-        );
-
-        if (rows.length === 0) {
+        const valid = await isValidInvitationCode(code.trim().toUpperCase());
+        if (!valid) {
             return NextResponse.json({ valid: false, error: "Invalid invitation code" });
         }
 

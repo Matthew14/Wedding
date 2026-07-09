@@ -2,11 +2,23 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "../route";
 
-const mockQuery = vi.fn();
+const mockIsValidInvitationCode = vi.fn();
+const mockCountUploadsSince = vi.fn();
+const mockCreatePhoto = vi.fn();
+const mockGetCategoryBySlug = vi.fn();
 const mockGetSignedUrl = vi.fn();
 
-vi.mock("@/utils/db/client", () => ({
-    getDb: () => ({ query: mockQuery }),
+vi.mock("@/utils/db/archive", () => ({
+    isValidInvitationCode: (...args: unknown[]) => mockIsValidInvitationCode(...args),
+}));
+
+vi.mock("@/utils/db/photos", () => ({
+    createPhoto: (...args: unknown[]) => mockCreatePhoto(...args),
+    countUploadsSince: (...args: unknown[]) => mockCountUploadsSince(...args),
+}));
+
+vi.mock("@/utils/db/categories", () => ({
+    getCategoryBySlug: (...args: unknown[]) => mockGetCategoryBySlug(...args),
 }));
 
 vi.mock("@/utils/storage", () => ({
@@ -37,6 +49,14 @@ describe("POST /api/photos/upload-url", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGetSignedUrl.mockResolvedValue("https://s3-presigned-url");
+        mockIsValidInvitationCode.mockResolvedValue(true);
+        mockCountUploadsSince.mockResolvedValue(0);
+        mockGetCategoryBySlug.mockResolvedValue({ id: "cat-guest", slug: "guest-photos" });
+        mockCreatePhoto.mockImplementation(async (input: { s3_key: string }) => ({
+            id: "photo-uuid-1",
+            ...input,
+            status: "pending",
+        }));
     });
 
     it("returns 400 for missing fields", async () => {
@@ -65,7 +85,7 @@ describe("POST /api/photos/upload-url", () => {
     });
 
     it("returns 400 for invalid invitation code", async () => {
-        mockQuery.mockResolvedValueOnce({ rows: [] }); // code lookup returns nothing
+        mockIsValidInvitationCode.mockResolvedValue(false);
         const res = await POST(
             makeRequest({ code: "XXXXXX", fileName: "photo.jpg", contentType: "image/jpeg", sizeBytes: 500 })
         );
@@ -75,9 +95,7 @@ describe("POST /api/photos/upload-url", () => {
     });
 
     it("returns 429 when rate limit exceeded", async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [{ code: "ABC123" }] }) // code valid
-            .mockResolvedValueOnce({ rows: [{ count: 50 }] });      // rate limit hit
+        mockCountUploadsSince.mockResolvedValue(50);
         const res = await POST(
             makeRequest({ code: "ABC123", fileName: "photo.jpg", contentType: "image/jpeg", sizeBytes: 500 })
         );
@@ -85,11 +103,6 @@ describe("POST /api/photos/upload-url", () => {
     });
 
     it("returns upload URL for valid request", async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [{ code: "ABC123" }] })  // code valid
-            .mockResolvedValueOnce({ rows: [{ count: 0 }] })         // under rate limit
-            .mockResolvedValueOnce({ rows: [{ id: "photo-uuid-1" }] }); // insert
-
         const res = await POST(
             makeRequest({ code: "ABC123", fileName: "photo.jpg", contentType: "image/jpeg", sizeBytes: 500 })
         );
@@ -98,14 +111,24 @@ describe("POST /api/photos/upload-url", () => {
         expect(data.uploadUrl).toBe("https://s3-presigned-url");
         expect(data.photoId).toBe("photo-uuid-1");
         expect(data.key).toMatch(/^uploads\/original\/ABC123\//);
+        // The photo lands in the guest-photos category
+        expect(mockCreatePhoto).toHaveBeenCalledWith(
+            expect.objectContaining({ invitation_code: "ABC123", category_id: "cat-guest" })
+        );
+    });
+
+    it("creates the photo uncategorised when the guest category is missing", async () => {
+        mockGetCategoryBySlug.mockResolvedValue(null);
+        const res = await POST(
+            makeRequest({ code: "ABC123", fileName: "photo.jpg", contentType: "image/jpeg", sizeBytes: 500 })
+        );
+        expect(res.status).toBe(200);
+        expect(mockCreatePhoto).toHaveBeenCalledWith(
+            expect.objectContaining({ category_id: null })
+        );
     });
 
     it("accepts image/heif uploads", async () => {
-        mockQuery
-            .mockResolvedValueOnce({ rows: [{ code: "ABC123" }] })  // code valid
-            .mockResolvedValueOnce({ rows: [{ count: 0 }] })         // under rate limit
-            .mockResolvedValueOnce({ rows: [{ id: "photo-uuid-2" }] }); // insert
-
         const res = await POST(
             makeRequest({ code: "ABC123", fileName: "photo.heif", contentType: "image/heif", sizeBytes: 500 })
         );
@@ -115,7 +138,7 @@ describe("POST /api/photos/upload-url", () => {
     });
 
     it("handles database errors gracefully", async () => {
-        mockQuery.mockRejectedValue(new Error("DB connection failed"));
+        mockIsValidInvitationCode.mockRejectedValue(new Error("DB connection failed"));
         const res = await POST(
             makeRequest({ code: "ABC123", fileName: "photo.jpg", contentType: "image/jpeg", sizeBytes: 500 })
         );
