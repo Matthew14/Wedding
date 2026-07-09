@@ -30,11 +30,12 @@ src/
 │       └── AuthContext.test.tsx
 ├── app/
 │   ├── api/
-│   │   ├── faqs/
-│   │   │   ├── route.ts
-│   │   │   └── __tests__/
-│   │   │       └── route.test.ts
-│   └── faqs/
+│   │   ├── gallery/
+│   │   │   └── categories/
+│   │   │       ├── route.ts
+│   │   │       └── __tests__/
+│   │   │           └── route.test.ts
+│   └── gallery/
 │       ├── page.tsx
 │       └── __tests__/
 │           └── page.test.tsx
@@ -100,8 +101,8 @@ import { describe, it, expect, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET } from "../route";
 
-it("returns FAQs successfully", async () => {
-    const request = new NextRequest("http://localhost:3000/api/faqs");
+it("returns categories successfully", async () => {
+    const request = new NextRequest("http://localhost:3000/api/gallery/categories");
     const response = await GET(request);
     expect(response.status).toBe(200);
 });
@@ -125,7 +126,7 @@ it("handles sign in", async () => {
 
 ### AWS / Database
 
-In unit tests, the Aurora Data API client and Cognito auth are mocked at the module level.
+In unit tests, the DynamoDB Document Client (and the typed repositories built on it) and Cognito auth are mocked at the module level.
 
 ### Next.js Features
 

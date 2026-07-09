@@ -30,9 +30,9 @@ This document outlines the security measures implemented in the wedding website.
 - **Why**: Prevents XSS attacks by escaping potentially dangerous characters
 - **Implementation**:
     - React automatically escapes all text content rendered in JSX
-    - FAQ data is displayed as plain text (no `dangerouslySetInnerHTML`)
-    - Input validation and trimming in API routes (`src/app/api/faqs/`)
-    - Admin-only access for FAQ creation/editing through authentication
+    - User-submitted content is displayed as plain text (no `dangerouslySetInnerHTML`)
+    - Input validation and trimming in API routes (`src/app/api/`)
+    - Admin-only access for content management through authentication
 
 ### 4. Rate Limiting
 
@@ -43,7 +43,6 @@ This document outlines the security measures implemented in the wedding website.
     - `/api/rsvp/validate/[code]` — 5 requests/minute (strictest, prevents code guessing)
     - `/api/rsvp/[code]` — 20 requests/minute (RSVP form submission)
     - `/api/invitation/[slug]` — 30 requests/minute (invitation lookup)
-    - `/api/generate-faq-id` — 10 requests/minute (OpenAI cost protection)
 - **Implementation**: In-memory rate limiter with per-IP tracking and validation
 - **Security Features**:
     - IP format validation prevents header spoofing attacks
@@ -76,7 +75,7 @@ This document outlines the security measures implemented in the wedding website.
 - **Environment Variables**: All secrets stored in `.env.local` for dev; Amplify console for production
 - **Lambda Env Baking**: Vars explicitly listed in `next.config.js` `env` section are baked into the Lambda bundle at build time
 - **No Hardcoded Secrets**: All API keys and sensitive data externalized
-- **IAM Least Privilege**: `wedding-api-lambda` IAM user has only rds-data, secretsmanager, and cloudwatch-logs permissions
+- **IAM Least Privilege**: `wedding-api-lambda` IAM user has only a scoped DynamoDB managed policy (`GetItem`/`BatchGetItem`/`Query`/`Scan`/`PutItem`/`UpdateItem` on the three wedding tables and photos indexes, attached via CDK) and cloudwatch-logs permissions
 
 ### Dependencies
 
@@ -89,7 +88,7 @@ This document outlines the security measures implemented in the wedding website.
 - **Protections**:
     - RSVP code validation (6-character code required)
     - Invitee ownership validation (prevents cross-invitation updates)
-    - Authentication required for FAQ management and dashboard
+    - Authentication required for the dashboard
 
 ## ⚠️ Known Limitations & Accepted Risks
 
@@ -141,7 +140,7 @@ This is a private wedding website with limited data collection:
 2. **Containment**: Rotate IAM keys or disable Cognito user if needed
 3. **Assessment**: Determine scope and impact of incident
 4. **Notification**: Inform affected parties if personal data compromised
-5. **Recovery**: Restore from Aurora automated backups if necessary
+5. **Recovery**: Restore from DynamoDB point-in-time recovery (photos table) or the verified archive backup if necessary
 6. **Review**: Document incident and update security measures
 
 ### Emergency Actions
@@ -172,5 +171,5 @@ For security issues or concerns, please contact the website administrator.
 
 ---
 
-Last updated: June 2026
+Last updated: July 2026
 Risk Level: **LOW** — Suitable for personal wedding website with basic admin functionality.
