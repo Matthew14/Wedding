@@ -161,6 +161,17 @@ export class WeddingStack extends cdk.Stack {
     new iam.ManagedPolicy(this, 'DynamoAccessPolicy', {
       users: [iam.User.fromUserName(this, 'ApiUser', 'wedding-api-lambda')],
       statements: [
+        // The archive is the frozen wedding dataset — nothing in the app
+        // writes to it, so keep the grant read-only.
+        new iam.PolicyStatement({
+          actions: [
+            'dynamodb:GetItem',
+            'dynamodb:BatchGetItem',
+            'dynamodb:Query',
+            'dynamodb:Scan',
+          ],
+          resources: [archiveTable.tableArn],
+        }),
         new iam.PolicyStatement({
           actions: [
             'dynamodb:GetItem',
@@ -171,7 +182,6 @@ export class WeddingStack extends cdk.Stack {
             'dynamodb:UpdateItem',
           ],
           resources: [
-            archiveTable.tableArn,
             photosTable.tableArn,
             `${photosTable.tableArn}/index/*`,
             categoriesTable.tableArn,
