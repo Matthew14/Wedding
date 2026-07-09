@@ -5,6 +5,7 @@ import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
@@ -103,6 +104,82 @@ export class WeddingStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    // ── DynamoDB (#150 — replaces Aurora; cluster stays until cutover is verified) ──
+    // Frozen wedding data (invitations, codes, RSVP/invitee archive) in one
+    // table. Code validation is a GetItem on CODE#<code>; the dashboard reads
+    // the whole dataset (~141 items) with a Scan, so no GSIs are needed.
+    //   CODE#<code>       / META          — invitation code
+    //   INVITATION#<id>   / META          — invitation
+    //   INVITATION#<id>   / RSVP#<id>     — archived RSVP
+    //   INVITATION#<id>   / INVITEE#<id>  — archived invitee
+    const archiveTable = new dynamodb.Table(this, 'ArchiveTable', {
+      tableName: 'wedding-archive',
+      partitionKey: { name: 'PK', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'SK', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    const photosTable = new dynamodb.Table(this, 'PhotosTable', {
+      tableName: 'wedding-photos',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+    // Gallery/moderation listing: photos of a status, newest first.
+    photosTable.addGlobalSecondaryIndex({
+      indexName: 'byStatus',
+      partitionKey: { name: 'status', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'uploaded_at', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+    // Upload rate limiting: count a code's uploads in the last hour.
+    photosTable.addGlobalSecondaryIndex({
+      indexName: 'byCode',
+      partitionKey: { name: 'invitation_code', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'uploaded_at', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.KEYS_ONLY,
+    });
+    // photo-processor: find the photo row for an uploaded S3 object.
+    photosTable.addGlobalSecondaryIndex({
+      indexName: 'byS3Key',
+      partitionKey: { name: 's3_key', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.KEYS_ONLY,
+    });
+
+    const categoriesTable = new dynamodb.Table(this, 'PhotoCategoriesTable', {
+      tableName: 'wedding-photo-categories',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // The Next.js SSR runtime authenticates as the pre-existing
+    // `wedding-api-lambda` IAM user (Amplify bakes its keys into the bundle),
+    // so grant it table access via an attached managed policy.
+    new iam.ManagedPolicy(this, 'DynamoAccessPolicy', {
+      users: [iam.User.fromUserName(this, 'ApiUser', 'wedding-api-lambda')],
+      statements: [
+        new iam.PolicyStatement({
+          actions: [
+            'dynamodb:GetItem',
+            'dynamodb:BatchGetItem',
+            'dynamodb:Query',
+            'dynamodb:Scan',
+            'dynamodb:PutItem',
+            'dynamodb:UpdateItem',
+          ],
+          resources: [
+            archiveTable.tableArn,
+            photosTable.tableArn,
+            `${photosTable.tableArn}/index/*`,
+            categoriesTable.tableArn,
+          ],
+        }),
+      ],
+    });
+
     // ── photo-processor Lambda ───────────────────────────────────────────────
     const photoProcessor = new NodejsFunction(this, 'PhotoProcessor', {
       entry: path.join(__dirname, '../lambdas/photo-processor/index.ts'),
@@ -111,11 +188,18 @@ export class WeddingStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.minutes(2),
       memorySize: 512,
-      bundling: { nodeModules: ['sharp'] },
+      bundling: {
+        nodeModules: ['sharp'],
+        // sharp ships per-platform binaries; force npm to stage the Lambda's
+        // platform (linux/arm64) rather than the machine running `cdk deploy`.
+        environment: {
+          npm_config_os: 'linux',
+          npm_config_cpu: 'arm64',
+          npm_config_libc: 'glibc',
+        },
+      },
       environment: {
-        AURORA_CLUSTER_ARN: auroraCluster.clusterArn,
-        AURORA_SECRET_ARN: dbSecret.secretArn,
-        DB_NAME: 'wedding',
+        PHOTOS_TABLE: photosTable.tableName,
         S3_BUCKET: photosBucket.bucketName,
       },
     });
@@ -125,8 +209,7 @@ export class WeddingStack extends cdk.Stack {
       { prefix: 'uploads/original/' }
     );
     photosBucket.grantReadWrite(photoProcessor);
-    dbSecret.grantRead(photoProcessor);
-    auroraCluster.grantDataApiAccess(photoProcessor);
+    photosTable.grantReadWriteData(photoProcessor);
 
     // ── Cognito User Pool ─────────────────────────────────────────────────────
     const userPool = new cognito.UserPool(this, 'AdminUserPool', {
@@ -199,6 +282,21 @@ export class WeddingStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'DbSecretArn', {
       value: dbSecret.secretArn,
       description: 'DB credentials secret ARN',
+    });
+
+    new cdk.CfnOutput(this, 'ArchiveTableName', {
+      value: archiveTable.tableName,
+      description: 'DynamoDB archive table (DDB_ARCHIVE_TABLE)',
+    });
+
+    new cdk.CfnOutput(this, 'PhotosTableName', {
+      value: photosTable.tableName,
+      description: 'DynamoDB photos table (DDB_PHOTOS_TABLE)',
+    });
+
+    new cdk.CfnOutput(this, 'PhotoCategoriesTableName', {
+      value: categoriesTable.tableName,
+      description: 'DynamoDB photo categories table (DDB_CATEGORIES_TABLE)',
     });
 
     new cdk.CfnOutput(this, 'PhotosBucketName', {
