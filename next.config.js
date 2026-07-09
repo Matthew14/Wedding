@@ -2,8 +2,11 @@
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// Only include PostHog in production
-const posthogUrls = isProduction ? " https://eu.i.posthog.com https://eu-assets.i.posthog.com" : "";
+// Only include PostHog in production. When NEXT_PUBLIC_POSTHOG_HOST is set the
+// SDK talks to our reverse proxy instead of eu.i.posthog.com, so allow that
+// origin too — the direct hosts stay listed as a fallback.
+const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST ? ` ${new URL(process.env.NEXT_PUBLIC_POSTHOG_HOST).origin}` : "";
+const posthogUrls = isProduction ? `${posthogHost} https://eu.i.posthog.com https://eu-assets.i.posthog.com` : "";
 
 const cloudfrontDomain = process.env.NEXT_PUBLIC_CLOUDFRONT_URL ?? "";
 // Use the origin (scheme://host:port), not the full URL. The value may include a
