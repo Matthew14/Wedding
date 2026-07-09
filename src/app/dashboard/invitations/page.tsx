@@ -36,7 +36,7 @@ export default function InvitationsPage() {
     }, []);
 
     const handleCopy = async (code: string) => {
-        const url = `${window.location.origin}/photos?code=${code}`;
+        const url = `${window.location.origin}/gallery?code=${code}`;
         await navigator.clipboard.writeText(url);
         setCopied(code);
         setTimeout(() => setCopied(null), 2000);

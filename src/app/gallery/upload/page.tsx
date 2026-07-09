@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
 import {
     Container,
     Title,
@@ -16,6 +16,7 @@ import {
     Paper,
     SimpleGrid,
     ActionIcon,
+    ThemeIcon,
 } from "@mantine/core";
 import { IconAlertCircle, IconUpload, IconX, IconCheck } from "@tabler/icons-react";
 import type { UploadUrlResponse } from "@/types/photos";
@@ -31,6 +32,12 @@ const MAX_FILES = 10;
 const MAX_SIZE = 20 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/heic", "image/heif"];
 
+// "Matthew", "Matthew and Jim", "Matthew, Jim and Sarah" — no Oxford comma.
+function formatNames(names: string[]): string {
+    if (names.length <= 1) return names[0] ?? "";
+    return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
 // Some browsers report an empty MIME type for HEIC/HEIF files, so fall back
 // to the file extension. The result is also used as the S3 Content-Type,
 // which must match between the presign request and the actual upload.
@@ -43,7 +50,6 @@ function effectiveType(file: File): string {
 }
 
 export default function UploadPage() {
-    const router = useRouter();
     const [code, setCode] = useState<string>(() => {
         if (typeof window !== "undefined") {
             return localStorage.getItem("invitation_code") ?? "";
@@ -53,10 +59,33 @@ export default function UploadPage() {
     const [codeInput, setCodeInput] = useState(code);
     const [codeValidated, setCodeValidated] = useState(!!code);
     const [codeError, setCodeError] = useState<string | null>(null);
+    const [names, setNames] = useState<string[]>([]);
     const [files, setFiles] = useState<FileUploadState[]>([]);
     const [uploading, setUploading] = useState(false);
     const [allDone, setAllDone] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // A code inherited from localStorage (personal link or a previous visit)
+    // was never validated here — look it up to greet by name, and fall back
+    // to code entry if it's no longer valid.
+    useEffect(() => {
+        if (!code) return;
+        fetch("/api/photos/validate-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code }),
+        })
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.valid) {
+                    setNames(data.names ?? []);
+                } else {
+                    setCodeValidated(false);
+                    setNames([]);
+                }
+            })
+            .catch(() => {}); // greeting falls back to the code itself
+    }, [code]);
 
     const validateCode = async () => {
         const trimmed = codeInput.trim().toUpperCase();
@@ -76,6 +105,7 @@ export default function UploadPage() {
         }
         localStorage.setItem("invitation_code", trimmed);
         setCode(trimmed);
+        setNames(data.names ?? []);
         setCodeValidated(true);
         setCodeError(null);
     };
@@ -181,12 +211,22 @@ export default function UploadPage() {
             .filter(({ f }) => f.status === "pending");
         const results = await Promise.all(pending.map(({ f, i }) => uploadFile(i, f.file)));
         setUploading(false);
-        // Only celebrate and redirect if at least one file actually made it;
+        // Only celebrate if at least one file actually made it; otherwise the
         // failed files stay listed with their per-file error messages.
         if (results.some(Boolean)) {
             setAllDone(true);
-            setTimeout(() => router.push("/gallery"), 2000);
         }
+    };
+
+    // Back from the success screen: drop uploaded files, reset any failed
+    // ones so they can be retried.
+    const resetForMoreUploads = () => {
+        setFiles((prev) =>
+            prev
+                .filter((f) => f.status !== "done")
+                .map((f) => ({ file: f.file, progress: 0, status: "pending" as const }))
+        );
+        setAllDone(false);
     };
 
     return (
@@ -210,7 +250,51 @@ export default function UploadPage() {
                         </Text>
                     </Box>
 
-                    {!codeValidated ? (
+                    {allDone ? (
+                        <Paper p="xl" radius="md" withBorder>
+                            <Stack gap="md" align="center" style={{ textAlign: "center" }}>
+                                <ThemeIcon size={56} radius="xl" color="green" variant="light">
+                                    <IconCheck size={32} />
+                                </ThemeIcon>
+                                <Title
+                                    order={2}
+                                    style={{
+                                        fontFamily: "var(--font-playfair), serif",
+                                        fontWeight: 300,
+                                        color: "var(--gold-dark)",
+                                    }}
+                                >
+                                    Thank you!
+                                </Title>
+                                <Text c="dimmed">
+                                    Your {files.filter((f) => f.status === "done").length === 1
+                                        ? "photo has"
+                                        : "photos have"}{" "}
+                                    been uploaded. Matthew and Becca will review and approve them
+                                    shortly — they&apos;ll appear in the gallery once approved.
+                                </Text>
+                                {files.some((f) => f.status === "error") && (
+                                    <Alert
+                                        icon={<IconAlertCircle size={16} />}
+                                        color="orange"
+                                        variant="light"
+                                    >
+                                        {files.filter((f) => f.status === "error").length} photo
+                                        {files.filter((f) => f.status === "error").length !== 1 && "s"}{" "}
+                                        failed to upload — you can retry below.
+                                    </Alert>
+                                )}
+                                <Group gap="sm">
+                                    <Button color="yellow" onClick={resetForMoreUploads}>
+                                        Upload more photos
+                                    </Button>
+                                    <Button component={Link} href="/gallery" variant="light" color="yellow">
+                                        View the gallery
+                                    </Button>
+                                </Group>
+                            </Stack>
+                        </Paper>
+                    ) : !codeValidated ? (
                         <Paper p="lg" radius="md" withBorder>
                             <Stack gap="sm">
                                 <Text fw={500}>Your invitation code</Text>
@@ -234,7 +318,7 @@ export default function UploadPage() {
                         <Stack gap="md">
                             <Group justify="space-between" align="center">
                                 <Text size="sm" c="dimmed">
-                                    Uploading as <strong>{code}</strong>
+                                    Uploading as <strong>{names.length > 0 ? formatNames(names) : code}</strong>
                                 </Text>
                                 <Button size="xs" variant="subtle" color="gray" onClick={() => setCodeValidated(false)}>
                                     Change code
@@ -299,18 +383,11 @@ export default function UploadPage() {
                                 </SimpleGrid>
                             )}
 
-                            {allDone && (
-                                <Alert icon={<IconCheck size={16} />} color="green" variant="light">
-                                    Photos uploaded! Redirecting to gallery…
-                                </Alert>
-                            )}
-
                             {files.filter((f) => f.status === "pending").length > 0 && (
                                 <Button
                                     color="yellow"
                                     onClick={handleUpload}
                                     loading={uploading}
-                                    disabled={allDone}
                                 >
                                     Upload {files.filter((f) => f.status === "pending").length} photo
                                     {files.filter((f) => f.status === "pending").length !== 1 ? "s" : ""}

@@ -15,8 +15,9 @@ import {
     SimpleGrid,
     Badge,
     Anchor,
+    ActionIcon,
 } from "@mantine/core";
-import { IconAlertCircle, IconPlus } from "@tabler/icons-react";
+import { IconAlertCircle, IconPlus, IconPencil } from "@tabler/icons-react";
 import Link from "next/link";
 import type { PhotoCategory } from "@/types/photos";
 
@@ -40,6 +41,13 @@ export default function CategoriesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
 
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editSortOrder, setEditSortOrder] = useState<number | string>(0);
+    const [saving, setSaving] = useState(false);
+    const [editError, setEditError] = useState<string | null>(null);
+
     const fetchCategories = async () => {
         setLoading(true);
         try {
@@ -61,6 +69,44 @@ export default function CategoriesPage() {
         setName(value);
         if (!slug || slug === slugify(name)) {
             setSlug(slugify(value));
+        }
+    };
+
+    const startEditing = (category: PhotoCategory) => {
+        setEditingId(category.id);
+        setEditName(category.name);
+        setEditDescription(category.description ?? "");
+        setEditSortOrder(category.sort_order);
+        setEditError(null);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editName.trim()) {
+            setEditError("Name is required");
+            return;
+        }
+        setSaving(true);
+        setEditError(null);
+        try {
+            const res = await fetch(`/api/gallery/categories/${editingId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: editName.trim(),
+                    description: editDescription.trim() || null,
+                    sort_order: Number(editSortOrder) || 0,
+                }),
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error ?? "Failed to update category");
+            }
+            setEditingId(null);
+            fetchCategories();
+        } catch (err) {
+            setEditError(err instanceof Error ? err.message : "Failed to update category");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -188,27 +234,82 @@ export default function CategoriesPage() {
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
                     {categories.map((c) => (
                         <Paper key={c.id} shadow="sm" radius="md" p="md" withBorder>
-                            <Stack gap="xs">
-                                <Group justify="space-between">
-                                    <Text fw={500}>{c.name}</Text>
-                                    <Text size="xs" c="dimmed">
-                                        #{c.sort_order}
+                            {editingId === c.id ? (
+                                <Stack gap="xs">
+                                    {editError && (
+                                        <Alert icon={<IconAlertCircle size={14} />} color="red" variant="light" py="xs">
+                                            {editError}
+                                        </Alert>
+                                    )}
+                                    <TextInput
+                                        label="Name"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.currentTarget.value)}
+                                        required
+                                    />
+                                    <TextInput
+                                        label="Description"
+                                        value={editDescription}
+                                        onChange={(e) => setEditDescription(e.currentTarget.value)}
+                                    />
+                                    <NumberInput
+                                        label="Sort order"
+                                        value={editSortOrder}
+                                        onChange={setEditSortOrder}
+                                        min={0}
+                                    />
+                                    <Text size="xs" c="dimmed" ff="monospace">
+                                        {c.slug} (fixed)
                                     </Text>
-                                </Group>
-                                <Text size="xs" c="dimmed" ff="monospace">
-                                    {c.slug}
-                                </Text>
-                                {c.event_day && (
-                                    <Badge size="xs" variant="light" color="yellow" tt="capitalize">
-                                        {c.event_day}
-                                    </Badge>
-                                )}
-                                {c.description && (
-                                    <Text size="xs" c="dimmed">
-                                        {c.description}
+                                    <Group gap="xs" justify="flex-end">
+                                        <Button
+                                            size="xs"
+                                            variant="subtle"
+                                            color="gray"
+                                            onClick={() => setEditingId(null)}
+                                            disabled={saving}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button size="xs" color="yellow" onClick={handleSaveEdit} loading={saving}>
+                                            Save
+                                        </Button>
+                                    </Group>
+                                </Stack>
+                            ) : (
+                                <Stack gap="xs">
+                                    <Group justify="space-between">
+                                        <Text fw={500}>{c.name}</Text>
+                                        <Group gap={4}>
+                                            <Text size="xs" c="dimmed">
+                                                #{c.sort_order}
+                                            </Text>
+                                            <ActionIcon
+                                                size="sm"
+                                                variant="subtle"
+                                                color="gray"
+                                                aria-label={`Edit ${c.name}`}
+                                                onClick={() => startEditing(c)}
+                                            >
+                                                <IconPencil size={14} />
+                                            </ActionIcon>
+                                        </Group>
+                                    </Group>
+                                    <Text size="xs" c="dimmed" ff="monospace">
+                                        {c.slug}
                                     </Text>
-                                )}
-                            </Stack>
+                                    {c.event_day && (
+                                        <Badge size="xs" variant="light" color="yellow" tt="capitalize">
+                                            {c.event_day}
+                                        </Badge>
+                                    )}
+                                    {c.description && (
+                                        <Text size="xs" c="dimmed">
+                                            {c.description}
+                                        </Text>
+                                    )}
+                                </Stack>
+                            )}
                         </Paper>
                     ))}
                 </SimpleGrid>

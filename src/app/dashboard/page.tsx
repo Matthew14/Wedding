@@ -1,34 +1,43 @@
 "use client";
 
-import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Progress, Button, Alert } from "@mantine/core";
-import { IconExternalLink, IconAlertCircle } from "@tabler/icons-react";
+import { Title, Text, Group, Stack, Paper, Box, SimpleGrid, Button, Alert, Badge } from "@mantine/core";
+import { IconExternalLink, IconAlertCircle, IconPhoto } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface SummaryData {
     invitations: { total: number; sent: number };
     rsvps: { total: number; received: number; accepted: number; declined: number };
     guests: { total: number; coming: number; notComing: number; undecided: number };
-    villa: { stayingYes: number; stayingNo: number; undecided: number };
+}
+
+interface PhotoSummaryData {
+    approved: number;
+    pending: number;
+    rejected: number;
+    total: number;
+    recentUploads: number;
+    byCategory: { id: string | null; name: string; count: number }[];
 }
 
 export default function DashboardPage() {
-    const [summary, setSummary] = useState<SummaryData>({
-        invitations: { total: 0, sent: 0 },
-        rsvps: { total: 0, received: 0, accepted: 0, declined: 0 },
-        guests: { total: 0, coming: 0, notComing: 0, undecided: 0 },
-        villa: { stayingYes: 0, stayingNo: 0, undecided: 0 },
-    });
+    const [summary, setSummary] = useState<SummaryData | null>(null);
+    const [photoSummary, setPhotoSummary] = useState<PhotoSummaryData | null>(null);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("/api/dashboard/summary")
-            .then(async r => {
-                const data = await r.json();
-                if (!r.ok) throw new Error(data.error ?? `Request failed (${r.status})`);
-                return data;
-            })
-            .then(data => { if (data.summary) setSummary(data.summary); })
-            .catch(err => setFetchError(err instanceof Error ? err.message : "Failed to load data"));
+        const load = async (url: string) => {
+            const r = await fetch(url);
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error ?? `Request failed (${r.status})`);
+            return data;
+        };
+        load("/api/dashboard/photo-summary")
+            .then((data) => { if (data.summary) setPhotoSummary(data.summary); })
+            .catch((err) => setFetchError(err instanceof Error ? err.message : "Failed to load data"));
+        load("/api/dashboard/summary")
+            .then((data) => { if (data.summary) setSummary(data.summary); })
+            .catch((err) => setFetchError(err instanceof Error ? err.message : "Failed to load data"));
     }, []);
 
     return (
@@ -69,139 +78,125 @@ export default function DashboardPage() {
                 )}
 
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
-                    <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
+                    <Paper
+                        shadow="md"
+                        radius="lg"
+                        p="lg"
+                        style={{
+                            backgroundColor:
+                                photoSummary && photoSummary.pending > 0 ? "#fffbeb" : "#ffffff",
+                        }}
+                    >
                         <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
-                            Invitations
+                            Pending Approvals
                         </Text>
-                        <Group justify="space-between" mb="xs">
-                            <Text size="sm" c="dimmed">Sent</Text>
-                            <Text fw={500}>{summary.invitations.sent} / {summary.invitations.total}</Text>
-                        </Group>
-                        <Progress
-                            value={
-                                summary.invitations.total > 0
-                                    ? (summary.invitations.sent / summary.invitations.total) * 100
-                                    : 0
-                            }
-                            color="#8b7355"
-                            size="lg"
-                            radius="md"
-                        />
+                        <Text
+                            fw={700}
+                            style={{
+                                fontSize: "3rem",
+                                lineHeight: 1,
+                                color:
+                                    photoSummary && photoSummary.pending > 0 ? "#d97706" : "#22c55e",
+                            }}
+                        >
+                            {photoSummary?.pending ?? "—"}
+                        </Text>
+                        <Text size="sm" c="dimmed" mt="xs">
+                            {photoSummary?.pending === 0
+                                ? "All caught up"
+                                : "guest photos waiting for review"}
+                        </Text>
+                        <Button
+                            component={Link}
+                            href="/dashboard/photos"
+                            variant="light"
+                            color="yellow"
+                            size="sm"
+                            mt="md"
+                            leftSection={<IconPhoto size={16} />}
+                        >
+                            Review photos
+                        </Button>
                     </Paper>
 
                     <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
                         <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
-                            RSVPs
+                            Gallery
                         </Text>
-                        <Group justify="space-between" mb="xs">
-                            <Text size="sm" c="dimmed">Received</Text>
-                            <Text fw={500}>{summary.rsvps.received} / {summary.rsvps.total}</Text>
-                        </Group>
-                        <Progress
-                            value={
-                                summary.rsvps.total > 0
-                                    ? (summary.rsvps.received / summary.rsvps.total) * 100
-                                    : 0
-                            }
-                            color="#3b82f6"
-                            size="lg"
-                            radius="md"
-                            mb="md"
-                        />
-                        <Group gap="lg">
+                        <Group gap="xl">
                             <Box>
-                                <Text size="xs" c="dimmed">Accepted</Text>
-                                <Text fw={600} style={{ color: "#22c55e" }}>{summary.rsvps.accepted}</Text>
+                                <Text size="xs" c="dimmed">Total</Text>
+                                <Text fw={600} size="xl">{photoSummary?.total ?? "—"}</Text>
                             </Box>
                             <Box>
-                                <Text size="xs" c="dimmed">Declined</Text>
-                                <Text fw={600} style={{ color: "#ef4444" }}>{summary.rsvps.declined}</Text>
+                                <Text size="xs" c="dimmed">Approved</Text>
+                                <Text fw={600} size="xl" style={{ color: "#22c55e" }}>
+                                    {photoSummary?.approved ?? "—"}
+                                </Text>
+                            </Box>
+                            <Box>
+                                <Text size="xs" c="dimmed">Rejected</Text>
+                                <Text fw={600} size="xl" style={{ color: "#ef4444" }}>
+                                    {photoSummary?.rejected ?? "—"}
+                                </Text>
                             </Box>
                         </Group>
-                    </Paper>
-
-                    <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
-                        <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
-                            Guests
-                        </Text>
-                        <Group justify="space-between" mb="xs">
-                            <Text size="sm" c="dimmed">Confirmed</Text>
-                            <Text fw={500}>{summary.guests.coming} / {summary.guests.total}</Text>
-                        </Group>
-                        <Progress.Root size="lg" radius="md">
-                            <Progress.Section
-                                value={
-                                    summary.guests.total > 0
-                                        ? (summary.guests.coming / summary.guests.total) * 100
-                                        : 0
-                                }
-                                color="#22c55e"
-                            />
-                            <Progress.Section
-                                value={
-                                    summary.guests.total > 0
-                                        ? (summary.guests.notComing / summary.guests.total) * 100
-                                        : 0
-                                }
-                                color="#ef4444"
-                            />
-                        </Progress.Root>
-                        <Group gap="lg" mt="md">
-                            <Box>
-                                <Text size="xs" c="dimmed">Coming</Text>
-                                <Text fw={600} style={{ color: "#22c55e" }}>{summary.guests.coming}</Text>
-                            </Box>
-                            <Box>
-                                <Text size="xs" c="dimmed">Not Coming</Text>
-                                <Text fw={600} style={{ color: "#ef4444" }}>{summary.guests.notComing}</Text>
-                            </Box>
-                            <Box>
-                                <Text size="xs" c="dimmed">Undecided</Text>
-                                <Text fw={600} style={{ color: "#9ca3af" }}>{summary.guests.undecided}</Text>
-                            </Box>
+                        <Group gap="xs" mt="md">
+                            <Badge variant="light" color="blue">
+                                {photoSummary?.recentUploads ?? 0} upload
+                                {photoSummary?.recentUploads !== 1 && "s"} in the last 7 days
+                            </Badge>
                         </Group>
                     </Paper>
 
                     <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
                         <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
-                            Villa Accommodation
+                            Photos by Category
                         </Text>
-                        <Group justify="space-between" mb="xs">
-                            <Text size="sm" c="dimmed">Staying at Villa</Text>
-                            <Text fw={500}>{summary.villa.stayingYes} parties</Text>
-                        </Group>
-                        <Progress.Root size="lg" radius="md">
-                            <Progress.Section
-                                value={
-                                    summary.rsvps.total > 0
-                                        ? (summary.villa.stayingYes / summary.rsvps.total) * 100
-                                        : 0
-                                }
-                                color="#8b7355"
-                            />
-                            <Progress.Section
-                                value={
-                                    summary.rsvps.total > 0
-                                        ? (summary.villa.stayingNo / summary.rsvps.total) * 100
-                                        : 0
-                                }
-                                color="#6c757d"
-                            />
-                        </Progress.Root>
-                        <Group gap="lg" mt="md">
-                            <Box>
-                                <Text size="xs" c="dimmed">Yes</Text>
-                                <Text fw={600} style={{ color: "#8b7355" }}>{summary.villa.stayingYes}</Text>
-                            </Box>
-                            <Box>
-                                <Text size="xs" c="dimmed">No</Text>
-                                <Text fw={600} style={{ color: "#6c757d" }}>{summary.villa.stayingNo}</Text>
-                            </Box>
-                            <Box>
-                                <Text size="xs" c="dimmed">Undecided</Text>
-                                <Text fw={600} style={{ color: "#9ca3af" }}>{summary.villa.undecided}</Text>
-                            </Box>
-                        </Group>
+                        {photoSummary && photoSummary.byCategory.length > 0 ? (
+                            <Stack gap={6}>
+                                {photoSummary.byCategory.map((c) => (
+                                    <Group key={c.id ?? "uncategorised"} justify="space-between">
+                                        <Text size="sm" c="dimmed">{c.name}</Text>
+                                        <Text size="sm" fw={600}>{c.count}</Text>
+                                    </Group>
+                                ))}
+                            </Stack>
+                        ) : (
+                            <Text size="sm" c="dimmed">No categories yet</Text>
+                        )}
+                    </Paper>
+
+                    <Paper shadow="md" radius="lg" p="lg" style={{ backgroundColor: "#ffffff" }}>
+                        <Text fw={600} size="lg" mb="md" style={{ color: "#495057" }}>
+                            The Big Day
+                        </Text>
+                        <Stack gap={6}>
+                            <Group justify="space-between">
+                                <Text size="sm" c="dimmed">Invitations sent</Text>
+                                <Text size="sm" fw={600}>
+                                    {summary ? `${summary.invitations.sent} / ${summary.invitations.total}` : "—"}
+                                </Text>
+                            </Group>
+                            <Group justify="space-between">
+                                <Text size="sm" c="dimmed">RSVPs accepted</Text>
+                                <Text size="sm" fw={600} style={{ color: "#22c55e" }}>
+                                    {summary?.rsvps.accepted ?? "—"}
+                                </Text>
+                            </Group>
+                            <Group justify="space-between">
+                                <Text size="sm" c="dimmed">RSVPs declined</Text>
+                                <Text size="sm" fw={600} style={{ color: "#ef4444" }}>
+                                    {summary?.rsvps.declined ?? "—"}
+                                </Text>
+                            </Group>
+                            <Group justify="space-between">
+                                <Text size="sm" c="dimmed">Guests who joined us</Text>
+                                <Text size="sm" fw={600}>
+                                    {summary ? `${summary.guests.coming} / ${summary.guests.total}` : "—"}
+                                </Text>
+                            </Group>
+                        </Stack>
                     </Paper>
                 </SimpleGrid>
             </Box>

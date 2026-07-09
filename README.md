@@ -139,7 +139,7 @@ See `docs/AWS_RESOURCES.md` for full resource inventory.
 ✅ **Complete**: Admin dashboard with invitation management
 ✅ **Complete**: Authentication system (Cognito) with protected routes
 ✅ **Complete**: Comprehensive unit testing with Vitest and React Testing Library
-⏳ **Planned**: Photo gallery section to showcase photos
+✅ **Complete**: Photo gallery with guest uploads, moderation, categories, and personal invitation links
 ⏳ **Planned**: End-to-end test suite (the previous Cypress suite was removed pending a rewrite)
 
 ## Testing

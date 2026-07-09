@@ -83,6 +83,37 @@ export async function listPhotosByStatus(status: Photo["status"]): Promise<Photo
     return photos;
 }
 
+// Count of photos with the given status via the byStatus GSI, optionally
+// restricted to uploads after the given ISO timestamp. Select: COUNT — no
+// items are materialised.
+export async function countPhotosByStatus(
+    status: Photo["status"],
+    sinceIso?: string
+): Promise<number> {
+    let count = 0;
+    let lastKey: Record<string, unknown> | undefined;
+    do {
+        const result = await docClient.send(
+            new QueryCommand({
+                TableName: PHOTOS_TABLE,
+                IndexName: "byStatus",
+                KeyConditionExpression: sinceIso
+                    ? "#status = :status AND uploaded_at > :since"
+                    : "#status = :status",
+                ExpressionAttributeNames: { "#status": "status" },
+                ExpressionAttributeValues: sinceIso
+                    ? { ":status": status, ":since": sinceIso }
+                    : { ":status": status },
+                Select: "COUNT",
+                ExclusiveStartKey: lastKey,
+            })
+        );
+        count += result.Count ?? 0;
+        lastKey = result.LastEvaluatedKey;
+    } while (lastKey);
+    return count;
+}
+
 export interface ModerationUpdate {
     status: "approved" | "rejected";
     categoryId?: string | null;

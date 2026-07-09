@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     Container,
     Title,
@@ -8,7 +9,6 @@ import {
     Tabs,
     Stack,
     Box,
-    TextInput,
     Button,
     Alert,
     Group,
@@ -35,7 +35,18 @@ interface GalleryPhoto {
 
 const FALLBACK_ASPECT = { width: 4, height: 3 };
 
+// useSearchParams requires a Suspense boundary in App Router client pages.
 export default function GalleryPage() {
+    return (
+        <Suspense fallback={null}>
+            <Gallery />
+        </Suspense>
+    );
+}
+
+function Gallery() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
     const [categories, setCategories] = useState<PhotoCategory[]>([]);
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -43,17 +54,24 @@ export default function GalleryPage() {
     const [error, setError] = useState<string | null>(null);
     const [lightboxIndex, setLightboxIndex] = useState(-1);
     const [invitationCode, setInvitationCode] = useState<string>("");
-    const [codeInput, setCodeInput] = useState("");
-    const [codeError, setCodeError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
     const LIMIT = 40;
 
+    // Personal links carry ?code=XXXXXX. Store it (last link visited wins),
+    // then strip the param so copy-pasting the address doesn't share the code.
     useEffect(() => {
+        const urlCode = searchParams.get("code")?.trim().toUpperCase();
+        if (urlCode && /^[A-Z0-9]{6}$/.test(urlCode)) {
+            localStorage.setItem("invitation_code", urlCode);
+            setInvitationCode(urlCode);
+            router.replace("/gallery", { scroll: false });
+            return;
+        }
         const stored = localStorage.getItem("invitation_code");
         if (stored) setInvitationCode(stored);
-    }, []);
+    }, [searchParams, router]);
 
     const fetchPhotos = useCallback(
         async (category: string | null, pg: number) => {
@@ -117,16 +135,6 @@ export default function GalleryPage() {
         return () => observer.disconnect();
     }, [hasMore, loading, page, activeCategory, fetchPhotos]);
 
-    const handleCodeSubmit = () => {
-        if (codeInput.trim().length !== 6) {
-            setCodeError("Please enter your 6-character invitation code");
-            return;
-        }
-        localStorage.setItem("invitation_code", codeInput.trim().toUpperCase());
-        setInvitationCode(codeInput.trim().toUpperCase());
-        setCodeError(null);
-    };
-
     const lightboxSlides = photos.map((p) => ({
         src: p.src,
         width: p.width,
@@ -165,26 +173,10 @@ export default function GalleryPage() {
                     </Group>
 
                     {!invitationCode && (
-                        <Alert icon={<IconAlertCircle size={16} />} color="yellow" variant="light">
-                            <Text size="sm" mb="xs">
-                                Enter your invitation code to download full-resolution photos. Or click the
-                                link we sent you.
-                            </Text>
-                            <Group gap="xs">
-                                <TextInput
-                                    placeholder="e.g. ABC123"
-                                    value={codeInput}
-                                    onChange={(e) => setCodeInput(e.currentTarget.value.toUpperCase())}
-                                    maxLength={6}
-                                    size="xs"
-                                    error={codeError}
-                                    styles={{ input: { textTransform: "uppercase", width: 120 } }}
-                                />
-                                <Button size="xs" variant="filled" color="yellow" onClick={handleCodeSubmit}>
-                                    Save
-                                </Button>
-                            </Group>
-                        </Alert>
+                        <Text size="sm" c="dimmed">
+                            You&apos;re viewing the public gallery. If we sent you a personalised link,
+                            open it to unlock full-resolution downloads.
+                        </Text>
                     )}
 
                     {error && (
@@ -236,7 +228,7 @@ export default function GalleryPage() {
                 close={() => setLightboxIndex(-1)}
                 slides={lightboxSlides}
                 index={lightboxIndex}
-                plugins={[Download]}
+                plugins={invitationCode ? [Download] : []}
                 render={{
                     iconDownload: () => <IconDownload size={20} />,
                 }}
