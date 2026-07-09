@@ -11,6 +11,7 @@
 // Idempotent: puts overwrite by key, so re-running converges.
 //
 // Usage: AWS_PROFILE=wedding node scripts/migrate-archive-to-dynamodb.mjs <backup-tables-dir>
+// Set AWS_ENDPOINT_URL to load the archive into LocalStack instead of prod.
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, BatchWriteCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
@@ -23,9 +24,13 @@ if (!dir) {
     process.exit(1);
 }
 
+const endpoint = process.env.AWS_ENDPOINT_URL;
 const TABLE = process.env.DDB_ARCHIVE_TABLE ?? "wedding-archive";
 const docClient = DynamoDBDocumentClient.from(
-    new DynamoDBClient({ region: process.env.AWS_REGION ?? "eu-west-1" }),
+    new DynamoDBClient({
+        region: process.env.AWS_REGION ?? "eu-west-1",
+        ...(endpoint && { endpoint }),
+    }),
     { marshallOptions: { removeUndefinedValues: true } }
 );
 
