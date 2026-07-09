@@ -12,9 +12,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [signingOut, setSigningOut] = useState(false);
 
     useEffect(() => {
-        if (pathname.includes("/dashboard/faq-editor")) {
-            setActiveTab("faq-editor");
-        } else if (pathname.includes("/dashboard/invitations")) {
+        if (pathname.includes("/dashboard/invitations")) {
             setActiveTab("invitations");
         } else if (pathname.includes("/dashboard/photos")) {
             setActiveTab("photos");
@@ -24,9 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }, [pathname]);
 
     const handleTabChange = (value: string | null) => {
-        if (value === "faq-editor") {
-            router.push("/dashboard/faq-editor");
-        } else if (value === "invitations") {
+        if (value === "invitations") {
             router.push("/dashboard/invitations");
         } else if (value === "photos") {
             router.push("/dashboard/photos");
@@ -113,7 +109,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                         <Tabs.List>
                             <Tabs.Tab value="overview">Overview</Tabs.Tab>
-                            <Tabs.Tab value="faq-editor">FAQ Editor</Tabs.Tab>
                             <Tabs.Tab value="invitations">Invitations</Tabs.Tab>
                             <Tabs.Tab value="photos">Photos</Tabs.Tab>
                         </Tabs.List>

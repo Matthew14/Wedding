@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/utils/db/client";
+import { updatePhotoModeration } from "@/utils/db/photos";
 import { requireAuth } from "@/utils/auth/requireAuth";
 
 interface PatchBody {
@@ -25,23 +25,17 @@ export async function PATCH(
 
         const approvedBy = (auth.payload.email as string | undefined) ?? null;
 
-        const db = getDb();
-        const { rows } = await db.query<{ id: string }>(
-            `UPDATE photos
-             SET status = $1,
-                 category_id = COALESCE($2::uuid, category_id),
-                 approved_at = CASE WHEN $1 = 'approved' THEN NOW() ELSE approved_at END,
-                 approved_by = CASE WHEN $1 = 'approved' THEN $3 ELSE approved_by END
-             WHERE id = $4
-             RETURNING id`,
-            [status, categoryId ?? null, approvedBy, id]
-        );
+        const found = await updatePhotoModeration(id, {
+            status,
+            categoryId: categoryId ?? null,
+            approvedBy,
+        });
 
-        if (rows.length === 0) {
+        if (!found) {
             return NextResponse.json({ error: "Photo not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ id: rows[0].id, status });
+        return NextResponse.json({ id, status });
     } catch (error) {
         console.error("Error in PATCH /api/photos/[id]:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

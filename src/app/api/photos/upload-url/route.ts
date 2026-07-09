@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
-import { getDb } from "@/utils/db/client";
+import { isValidInvitationCode } from "@/utils/db/archive";
+import { createPhoto, countUploadsSince } from "@/utils/db/photos";
+import { getCategoryBySlug } from "@/utils/db/categories";
 import { getS3, BUCKET } from "@/utils/storage";
 import type { UploadUrlRequest, UploadUrlResponse } from "@/types/photos";
 
@@ -36,21 +38,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "File exceeds 20 MB limit" }, { status: 400 });
         }
 
-        const db = getDb();
-
-        const { rows: codeRows } = await db.query<{ code: string }>(
-            "SELECT code FROM invitation_codes WHERE code = $1",
-            [code]
-        );
-        if (codeRows.length === 0) {
+        const codeValid = await isValidInvitationCode(code);
+        if (!codeValid) {
             return NextResponse.json({ error: "Invalid invitation code" }, { status: 400 });
         }
 
-        const { rows: rateRows } = await db.query<{ count: number }>(
-            "SELECT COUNT(*)::int AS count FROM photos WHERE invitation_code = $1 AND uploaded_at > NOW() - INTERVAL '1 hour'",
-            [code]
-        );
-        if ((rateRows[0]?.count ?? 0) >= RATE_LIMIT) {
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const recentUploads = await countUploadsSince(code, oneHourAgo);
+        if (recentUploads >= RATE_LIMIT) {
             return NextResponse.json({ error: "Upload limit reached. Try again later." }, { status: 429 });
         }
 
@@ -69,17 +64,18 @@ export async function POST(request: NextRequest) {
             { expiresIn: 300 }
         );
 
-        const { rows: inserted } = await db.query<{ id: string }>(
-            `INSERT INTO photos (invitation_code, s3_key, file_name, size_bytes, status, category_id)
-             VALUES ($1, $2, $3, $4, 'pending',
-                     (SELECT id FROM photo_categories WHERE slug = $5))
-             RETURNING id`,
-            [code, key, fileName, sizeBytes, GUEST_CATEGORY_SLUG]
-        );
+        const guestCategory = await getCategoryBySlug(GUEST_CATEGORY_SLUG);
+        const photo = await createPhoto({
+            invitation_code: code,
+            s3_key: key,
+            file_name: fileName,
+            size_bytes: sizeBytes,
+            category_id: guestCategory?.id ?? null,
+        });
 
         const response: UploadUrlResponse = {
             uploadUrl,
-            photoId: inserted[0].id,
+            photoId: photo.id,
             key,
         };
         return NextResponse.json(response);

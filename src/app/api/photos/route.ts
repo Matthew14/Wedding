@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/utils/db/client";
+import { listPhotosByStatus } from "@/utils/db/photos";
+import { listCategories } from "@/utils/db/categories";
 import { requireAuth } from "@/utils/auth/requireAuth";
 import { cdnUrl } from "@/utils/storage";
 import type { Photo, PublicPhoto } from "@/types/photos";
@@ -23,47 +24,29 @@ export async function GET(request: NextRequest) {
         const isAdmin = auth.success;
 
         const requestedStatus = searchParams.get("status");
-        let status = "approved";
+        let status: Photo["status"] = "approved";
         if (requestedStatus && ["pending", "approved", "rejected"].includes(requestedStatus)) {
             if (requestedStatus !== "approved" && !auth.success) {
                 return auth.response;
             }
-            status = requestedStatus;
+            status = requestedStatus as Photo["status"];
         }
 
-        const db = getDb();
+        const [allPhotos, categories] = await Promise.all([
+            listPhotosByStatus(status),
+            listCategories(),
+        ]);
+        const slugById = new Map(categories.map((c) => [c.id, c.slug]));
 
-        let sql: string;
-        let params: (string | number)[];
+        const matching: PhotoRow[] = allPhotos
+            .map((p) => ({
+                ...p,
+                category_slug: p.category_id ? (slugById.get(p.category_id) ?? null) : null,
+            }))
+            .filter((p) => !categorySlug || p.category_slug === categorySlug);
 
-        if (categorySlug) {
-            sql = `SELECT p.*, pc.slug AS category_slug
-                   FROM photos p
-                   LEFT JOIN photo_categories pc ON pc.id = p.category_id
-                   WHERE p.status = $1 AND pc.slug = $2
-                   ORDER BY p.uploaded_at DESC
-                   LIMIT $3 OFFSET $4`;
-            params = [status, categorySlug, limit, offset];
-        } else {
-            sql = `SELECT p.*, pc.slug AS category_slug
-                   FROM photos p
-                   LEFT JOIN photo_categories pc ON pc.id = p.category_id
-                   WHERE p.status = $1
-                   ORDER BY p.uploaded_at DESC
-                   LIMIT $2 OFFSET $3`;
-            params = [status, limit, offset];
-        }
-
-        const { rows } = await db.query<PhotoRow>(sql, params);
-
-        const countSql = categorySlug
-            ? `SELECT COUNT(*)::int AS total FROM photos p
-               LEFT JOIN photo_categories pc ON pc.id = p.category_id
-               WHERE p.status = $1 AND pc.slug = $2`
-            : `SELECT COUNT(*)::int AS total FROM photos WHERE status = $1`;
-        const countParams = categorySlug ? [status, categorySlug] : [status];
-        const { rows: countRows } = await db.query<{ total: number }>(countSql, countParams);
-        const total = countRows[0]?.total ?? 0;
+        const total = matching.length;
+        const rows = matching.slice(offset, offset + limit);
 
         const photos = rows.map((p) => {
             const thumbnail_url = p.thumbnail_key ? cdnUrl(p.thumbnail_key) : null;
@@ -71,7 +54,7 @@ export async function GET(request: NextRequest) {
                 return { ...p, thumbnail_url };
             }
             // Public allowlist — never expose invitation_code, s3_key,
-            // approved_by, or other internal columns to gallery visitors.
+            // approved_by, or other internal fields to gallery visitors.
             const publicPhoto: PublicPhoto = {
                 id: p.id,
                 thumbnail_url,

@@ -1,20 +1,23 @@
 import type { S3Event } from "aws-lambda";
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
-import { RDSDataClient, ExecuteStatementCommand } from "@aws-sdk/client-rds-data";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { Readable } from "stream";
 
 const s3 = new S3Client({});
-const rds = new RDSDataClient({});
+const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+
+const PHOTOS_TABLE = process.env.PHOTOS_TABLE ?? "wedding-photos";
 
 // Upper bound on the original file we will buffer into memory. The upload-url
 // API caps guest uploads at 20 MB; we allow a small margin and refuse anything
 // larger so a single oversized object cannot OOM-crash the function.
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 
-// The S3 OBJECT_CREATED event can race ahead of the API route's INSERT INTO
-// photos commit, in which case the UPDATE below matches 0 rows. Retry a few
-// times with exponential backoff before giving up.
+// The S3 OBJECT_CREATED event can race ahead of the API route's photo insert,
+// in which case the byS3Key lookup below finds nothing. Retry a few times with
+// exponential backoff before giving up.
 const MAX_UPDATE_ATTEMPTS = 5;
 
 export async function handler(event: S3Event): Promise<void> {
@@ -69,9 +72,10 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
     await updatePhotoRecord(key, thumbKey, info.width, info.height, takenAt);
 }
 
-// Run the thumbnail UPDATE, retrying when it matches 0 rows. A 0-row result
-// means the photos row has not been committed yet (S3 event won the race), so
-// we back off and retry rather than silently leaving thumbnail_key NULL.
+// Look up the photo id via the byS3Key GSI and backfill the thumbnail fields.
+// A missing item means the photo insert has not been written yet (the S3 event
+// won the race), so back off and retry rather than silently leaving
+// thumbnail_key null.
 async function updatePhotoRecord(
     key: string,
     thumbKey: string,
@@ -80,28 +84,33 @@ async function updatePhotoRecord(
     takenAt: string | null
 ): Promise<void> {
     for (let attempt = 1; attempt <= MAX_UPDATE_ATTEMPTS; attempt++) {
-        const result = await rds.send(
-            new ExecuteStatementCommand({
-                resourceArn: process.env.AURORA_CLUSTER_ARN!,
-                secretArn: process.env.AURORA_SECRET_ARN!,
-                database: process.env.DB_NAME ?? "wedding",
-                sql: `UPDATE photos
-                      SET thumbnail_key = :thumb,
-                          width = :w,
-                          height = :h,
-                          taken_at = :taken
-                      WHERE s3_key = :key`,
-                parameters: [
-                    { name: "thumb", value: { stringValue: thumbKey } },
-                    { name: "w", value: { longValue: width } },
-                    { name: "h", value: { longValue: height } },
-                    { name: "taken", value: takenAt ? { stringValue: takenAt } : { isNull: true } },
-                    { name: "key", value: { stringValue: key } },
-                ],
+        const lookup = await docClient.send(
+            new QueryCommand({
+                TableName: PHOTOS_TABLE,
+                IndexName: "byS3Key",
+                KeyConditionExpression: "s3_key = :key",
+                ExpressionAttributeValues: { ":key": key },
             })
         );
+        const id = (lookup.Items?.[0] as { id?: string } | undefined)?.id;
 
-        if ((result.numberOfRecordsUpdated ?? 0) > 0) return;
+        if (id) {
+            await docClient.send(
+                new UpdateCommand({
+                    TableName: PHOTOS_TABLE,
+                    Key: { id },
+                    UpdateExpression:
+                        "SET thumbnail_key = :thumb, width = :w, height = :h, taken_at = :taken",
+                    ExpressionAttributeValues: {
+                        ":thumb": thumbKey,
+                        ":w": width,
+                        ":h": height,
+                        ":taken": takenAt,
+                    },
+                })
+            );
+            return;
+        }
 
         if (attempt < MAX_UPDATE_ATTEMPTS) {
             const delayMs = 250 * 2 ** (attempt - 1); // 250ms, 500ms, 1s, 2s
@@ -110,7 +119,7 @@ async function updatePhotoRecord(
     }
 
     throw new Error(
-        `No photos row found for s3_key ${key} after ${MAX_UPDATE_ATTEMPTS} attempts`
+        `No photos item found for s3_key ${key} after ${MAX_UPDATE_ATTEMPTS} attempts`
     );
 }
 

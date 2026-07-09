@@ -2,11 +2,16 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET } from "../route";
 
-const mockQuery = vi.fn();
+const mockListPhotosByStatus = vi.fn();
+const mockListCategories = vi.fn();
 const mockRequireAuth = vi.fn();
 
-vi.mock("@/utils/db/client", () => ({
-    getDb: () => ({ query: mockQuery }),
+vi.mock("@/utils/db/photos", () => ({
+    listPhotosByStatus: (...args: unknown[]) => mockListPhotosByStatus(...args),
+}));
+
+vi.mock("@/utils/db/categories", () => ({
+    listCategories: (...args: unknown[]) => mockListCategories(...args),
 }));
 
 vi.mock("@/utils/storage", () => ({
@@ -30,16 +35,27 @@ const mockPhoto = {
     size_bytes: 500000,
     taken_at: null,
     category_id: null,
-    category_slug: null,
     status: "approved",
     uploaded_at: "2026-06-01T12:00:00Z",
     approved_at: "2026-06-02T10:00:00Z",
     approved_by: "admin@test.com",
 };
 
+const ceremonyCategory = {
+    id: "cat-ceremony",
+    name: "The Ceremony",
+    slug: "ceremony",
+    description: null,
+    event_day: "saturday",
+    cover_photo_id: null,
+    sort_order: 1,
+    created_at: "2026-05-01T00:00:00Z",
+};
+
 describe("GET /api/photos", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockListCategories.mockResolvedValue([ceremonyCategory]);
         // Default to an unauthenticated (public) caller
         mockRequireAuth.mockResolvedValue({
             success: false,
@@ -48,7 +64,7 @@ describe("GET /api/photos", () => {
     });
 
     it("returns approved photos by default", async () => {
-        mockQuery.mockResolvedValue({ rows: [mockPhoto] });
+        mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
         const req = new NextRequest("http://localhost/api/photos");
         const res = await GET(req);
         expect(res.status).toBe(200);
@@ -56,13 +72,11 @@ describe("GET /api/photos", () => {
         expect(data.photos).toHaveLength(1);
         expect(data.photos[0].thumbnail_url).toBe("https://cdn/uploads/thumbnail/ABC123/uuid.jpg");
         // Verify only approved was queried
-        const [sql, params] = mockQuery.mock.calls[0];
-        expect(sql).toContain("status");
-        expect(params[0]).toBe("approved");
+        expect(mockListPhotosByStatus).toHaveBeenCalledWith("approved");
     });
 
     it("does not expose sensitive fields to public callers", async () => {
-        mockQuery.mockResolvedValue({ rows: [mockPhoto] });
+        mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
         const req = new NextRequest("http://localhost/api/photos");
         const res = await GET(req);
         const data = await res.json();
@@ -83,7 +97,7 @@ describe("GET /api/photos", () => {
 
     it("returns full rows to authenticated admins", async () => {
         mockRequireAuth.mockResolvedValue({ success: true, payload: { email: "admin@test.com" } });
-        mockQuery.mockResolvedValue({ rows: [mockPhoto] });
+        mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
         const req = new NextRequest("http://localhost/api/photos?status=approved");
         const res = await GET(req);
         const data = await res.json();
@@ -94,24 +108,30 @@ describe("GET /api/photos", () => {
     });
 
     it("filters by category slug", async () => {
-        mockQuery.mockResolvedValue({ rows: [] });
+        mockListPhotosByStatus.mockResolvedValue([
+            { ...mockPhoto, id: "photo-1", category_id: "cat-ceremony" },
+            { ...mockPhoto, id: "photo-2", category_id: null },
+        ]);
         const req = new NextRequest("http://localhost/api/photos?category=ceremony");
-        await GET(req);
-        const [sql, params] = mockQuery.mock.calls[0];
-        expect(sql).toContain("pc.slug");
-        expect(params).toContain("ceremony");
+        const res = await GET(req);
+        const data = await res.json();
+        expect(data.photos).toHaveLength(1);
+        expect(data.photos[0].id).toBe("photo-1");
+        expect(data.photos[0].category_slug).toBe("ceremony");
+        expect(data.total).toBe(1);
     });
 
     it("respects page and limit params", async () => {
-        mockQuery.mockResolvedValue({ rows: [] });
+        const photos = Array.from({ length: 25 }, (_, i) => ({ ...mockPhoto, id: `photo-${i}` }));
+        mockListPhotosByStatus.mockResolvedValue(photos);
         const req = new NextRequest("http://localhost/api/photos?page=2&limit=10");
         const res = await GET(req);
         const data = await res.json();
         expect(data.page).toBe(2);
         expect(data.limit).toBe(10);
-        const [, params] = mockQuery.mock.calls[0];
-        expect(params).toContain(10); // limit
-        expect(params).toContain(10); // offset = (2-1)*10
+        expect(data.total).toBe(25);
+        expect(data.photos).toHaveLength(10);
+        expect(data.photos[0].id).toBe("photo-10"); // offset = (2-1)*10
     });
 
     it("requires auth for pending status", async () => {
@@ -125,7 +145,7 @@ describe("GET /api/photos", () => {
     });
 
     it("returns null thumbnail_url when thumbnail_key is null", async () => {
-        mockQuery.mockResolvedValue({ rows: [{ ...mockPhoto, thumbnail_key: null }] });
+        mockListPhotosByStatus.mockResolvedValue([{ ...mockPhoto, thumbnail_key: null }]);
         const req = new NextRequest("http://localhost/api/photos");
         const res = await GET(req);
         const data = await res.json();
@@ -133,7 +153,7 @@ describe("GET /api/photos", () => {
     });
 
     it("handles database errors", async () => {
-        mockQuery.mockRejectedValue(new Error("DB error"));
+        mockListPhotosByStatus.mockRejectedValue(new Error("DB error"));
         const req = new NextRequest("http://localhost/api/photos");
         const res = await GET(req);
         expect(res.status).toBe(500);

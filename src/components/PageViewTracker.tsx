@@ -21,7 +21,6 @@ export function PageViewTracker() {
         else if (pathname.startsWith('/rsvp/')) pageName = 'RSVP Form';
         else if (pathname === '/location') pageName = 'Location';
         else if (pathname === '/schedule') pageName = 'Schedule';
-        else if (pathname === '/faqs') pageName = 'FAQs';
         else if (pathname === '/login') pageName = 'Login';
         else if (pathname === '/dashboard') pageName = 'Dashboard';
         else if (pathname.startsWith('/dashboard/')) {
