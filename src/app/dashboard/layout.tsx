@@ -13,12 +13,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [pendingCount, setPendingCount] = useState(0);
 
     // Fetched once per dashboard visit — the layout wraps every dashboard
-    // page, so this must not refire on tab switches.
+    // page, so this must not refire on tab switches. Moderation actions
+    // dispatch "wedding:photos-moderated" so the badge doesn't go stale.
     useEffect(() => {
-        fetch("/api/dashboard/photo-summary")
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => setPendingCount(data?.summary?.pending ?? 0))
-            .catch(() => {}); // badge is best-effort
+        const fetchPendingCount = () => {
+            fetch("/api/dashboard/photo-summary")
+                .then((r) => (r.ok ? r.json() : null))
+                .then((data) => setPendingCount(data?.summary?.pending ?? 0))
+                .catch(() => {}); // badge is best-effort
+        };
+        fetchPendingCount();
+        window.addEventListener("wedding:photos-moderated", fetchPendingCount);
+        return () => window.removeEventListener("wedding:photos-moderated", fetchPendingCount);
     }, []);
 
     useEffect(() => {

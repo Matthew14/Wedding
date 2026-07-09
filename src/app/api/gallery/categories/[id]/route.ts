@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateCategory, type UpdateCategoryInput } from "@/utils/db/categories";
 import { requireAuth } from "@/utils/auth/requireAuth";
+import * as logger from "@/utils/logger";
 
 export async function PATCH(
     request: NextRequest,
@@ -51,7 +52,7 @@ export async function PATCH(
 
         return NextResponse.json({ category });
     } catch (error) {
-        console.error("Error in PATCH /api/gallery/categories/[id]:", error);
+        await logger.error("PATCH /api/gallery/categories/[id]", "DB update failed", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

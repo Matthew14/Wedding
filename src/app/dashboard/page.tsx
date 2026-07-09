@@ -143,8 +143,10 @@ export default function DashboardPage() {
                         </Group>
                         <Group gap="xs" mt="md">
                             <Badge variant="light" color="blue">
-                                {photoSummary?.recentUploads ?? 0} upload
-                                {photoSummary?.recentUploads !== 1 && "s"} in the last 7 days
+                                {photoSummary
+                                    ? `${photoSummary.recentUploads} upload${photoSummary.recentUploads !== 1 ? "s" : ""}`
+                                    : "— uploads"}{" "}
+                                in the last 7 days
                             </Badge>
                         </Group>
                     </Paper>

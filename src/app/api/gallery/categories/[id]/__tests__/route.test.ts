@@ -13,6 +13,10 @@ vi.mock("@/utils/auth/requireAuth", () => ({
     requireAuth: (...args: unknown[]) => mockRequireAuth(...args),
 }));
 
+vi.mock("@/utils/logger", () => ({
+    error: vi.fn(),
+}));
+
 const updatedCategory = {
     id: "cat-1",
     name: "The Ceremony",
