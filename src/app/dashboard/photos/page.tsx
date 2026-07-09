@@ -94,6 +94,8 @@ export default function PhotosModerationPage() {
             if (!res.ok) throw new Error("Update failed");
             setPhotos((prev) => prev.filter((p) => p.id !== id));
             fetchCounts();
+            // Tell the dashboard layout to refresh the Photos-tab pending badge
+            window.dispatchEvent(new CustomEvent("wedding:photos-moderated"));
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to update photo");
         }

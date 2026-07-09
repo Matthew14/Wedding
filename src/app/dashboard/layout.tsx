@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Tabs, Box, Anchor, Group, Title, Button } from "@mantine/core";
+import { Container, Tabs, Box, Anchor, Group, Title, Button, Badge } from "@mantine/core";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,6 +10,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<string | null>(null);
     const [signingOut, setSigningOut] = useState(false);
+    const [pendingCount, setPendingCount] = useState(0);
+
+    // Fetched once per dashboard visit — the layout wraps every dashboard
+    // page, so this must not refire on tab switches. Moderation actions
+    // dispatch "wedding:photos-moderated" so the badge doesn't go stale.
+    useEffect(() => {
+        const fetchPendingCount = () => {
+            fetch("/api/dashboard/photo-summary")
+                .then((r) => (r.ok ? r.json() : null))
+                .then((data) => setPendingCount(data?.summary?.pending ?? 0))
+                .catch(() => {}); // badge is best-effort
+        };
+        fetchPendingCount();
+        window.addEventListener("wedding:photos-moderated", fetchPendingCount);
+        return () => window.removeEventListener("wedding:photos-moderated", fetchPendingCount);
+    }, []);
 
     useEffect(() => {
         if (pathname.includes("/dashboard/invitations")) {
@@ -110,7 +126,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <Tabs.List>
                             <Tabs.Tab value="overview">Overview</Tabs.Tab>
                             <Tabs.Tab value="invitations">Invitations</Tabs.Tab>
-                            <Tabs.Tab value="photos">Photos</Tabs.Tab>
+                            <Tabs.Tab
+                                value="photos"
+                                rightSection={
+                                    pendingCount > 0 ? (
+                                        <Badge size="sm" circle color="orange" variant="filled">
+                                            {pendingCount}
+                                        </Badge>
+                                    ) : undefined
+                                }
+                            >
+                                Photos
+                            </Tabs.Tab>
                         </Tabs.List>
 
                         <Box mt="lg">{children}</Box>

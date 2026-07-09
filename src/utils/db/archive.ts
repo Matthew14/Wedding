@@ -1,4 +1,4 @@
-import { GetCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { docClient, ARCHIVE_TABLE } from "./dynamo";
 
 // The archive table holds the frozen post-wedding dataset (~141 items):
@@ -46,7 +46,6 @@ export interface ArchiveSummary {
     invitations: { total: number; sent: number };
     rsvps: { total: number; received: number; accepted: number; declined: number };
     guests: { total: number; coming: number; notComing: number; undecided: number };
-    villa: { stayingYes: number; stayingNo: number; undecided: number };
 }
 
 export interface InvitationCodeSummary {
@@ -64,6 +63,33 @@ export async function isValidInvitationCode(code: string): Promise<boolean> {
         })
     );
     return result.Item !== undefined;
+}
+
+// First names of the invitees behind a code, or null when the code doesn't
+// exist. Returning names behind a valid code is fine — the code is the
+// guest's credential.
+export async function getInviteesByCode(code: string): Promise<string[] | null> {
+    const codeResult = await docClient.send(
+        new GetCommand({
+            TableName: ARCHIVE_TABLE,
+            Key: { PK: `CODE#${code}`, SK: "META" },
+        })
+    );
+    const codeItem = codeResult.Item as CodeItem | undefined;
+    if (!codeItem) return null;
+
+    const result = await docClient.send(
+        new QueryCommand({
+            TableName: ARCHIVE_TABLE,
+            KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+            ExpressionAttributeValues: {
+                ":pk": `INVITATION#${codeItem.invitation_id}`,
+                ":sk": "INVITEE#",
+            },
+        })
+    );
+    const invitees = (result.Items ?? []) as InviteeItem[];
+    return invitees.map((i) => i.first_name).sort((a, b) => a.localeCompare(b));
 }
 
 async function scanArchive(): Promise<ArchiveItem[]> {
@@ -102,11 +128,6 @@ export async function getArchiveSummary(): Promise<ArchiveSummary> {
             coming: invitees.filter((g) => g.coming === true).length,
             notComing: invitees.filter((g) => g.coming === false).length,
             undecided: invitees.filter((g) => g.coming === null).length,
-        },
-        villa: {
-            stayingYes: rsvps.filter((r) => r.staying_villa === true).length,
-            stayingNo: rsvps.filter((r) => r.staying_villa === false).length,
-            undecided: rsvps.filter((r) => r.staying_villa === null).length,
         },
     };
 }

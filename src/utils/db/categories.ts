@@ -1,4 +1,5 @@
-import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { randomUUID } from "crypto";
 import { docClient, CATEGORIES_TABLE } from "./dynamo";
 
@@ -33,6 +34,60 @@ export interface CreateCategoryInput {
     description: string | null;
     event_day: "friday" | "saturday" | "sunday" | null;
     sort_order: number;
+}
+
+export interface UpdateCategoryInput {
+    name?: string;
+    description?: string | null;
+    sort_order?: number;
+}
+
+// Display-field updates only — slug is the public URL/filter key and stays
+// immutable. Returns the updated item, or null when no category has that id.
+export async function updateCategory(
+    id: string,
+    fields: UpdateCategoryInput
+): Promise<CategoryItem | null> {
+    const sets: string[] = [];
+    const names: Record<string, string> = {};
+    const values: Record<string, unknown> = {};
+
+    if (fields.name !== undefined) {
+        sets.push("#name = :name");
+        names["#name"] = "name";
+        values[":name"] = fields.name;
+    }
+    if (fields.description !== undefined) {
+        sets.push("#description = :description");
+        names["#description"] = "description";
+        values[":description"] = fields.description;
+    }
+    if (fields.sort_order !== undefined) {
+        sets.push("#sort_order = :sort_order");
+        names["#sort_order"] = "sort_order";
+        values[":sort_order"] = fields.sort_order;
+    }
+    if (sets.length === 0) {
+        throw new Error("updateCategory called with no fields to update");
+    }
+
+    try {
+        const result = await docClient.send(
+            new UpdateCommand({
+                TableName: CATEGORIES_TABLE,
+                Key: { id },
+                UpdateExpression: `SET ${sets.join(", ")}`,
+                ConditionExpression: "attribute_exists(id)",
+                ExpressionAttributeNames: names,
+                ExpressionAttributeValues: values,
+                ReturnValues: "ALL_NEW",
+            })
+        );
+        return result.Attributes as CategoryItem;
+    } catch (error) {
+        if (error instanceof ConditionalCheckFailedException) return null;
+        throw error;
+    }
 }
 
 // Slug uniqueness is enforced by a pre-check rather than a constraint; the

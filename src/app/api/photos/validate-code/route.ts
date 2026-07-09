@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isValidInvitationCode } from "@/utils/db/archive";
+import { getInviteesByCode } from "@/utils/db/archive";
 
 export async function POST(request: NextRequest) {
     try {
@@ -8,12 +8,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "code is required" }, { status: 400 });
         }
 
-        const valid = await isValidInvitationCode(code.trim().toUpperCase());
-        if (!valid) {
+        const names = await getInviteesByCode(code.trim().toUpperCase());
+        if (names === null) {
             return NextResponse.json({ valid: false, error: "Invalid invitation code" });
         }
 
-        return NextResponse.json({ valid: true });
+        return NextResponse.json({ valid: true, names });
     } catch (error) {
         console.error("Error in POST /api/photos/validate-code:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
