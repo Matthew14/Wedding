@@ -10,10 +10,11 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 const PHOTOS_TABLE = process.env.PHOTOS_TABLE ?? "wedding-photos";
 
-// Upper bound on the original file we will buffer into memory. The upload-url
-// API caps guest uploads at 20 MB; we allow a small margin and refuse anything
-// larger so a single oversized object cannot OOM-crash the function.
-const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+// Upper bound on the original file we will buffer into memory, so a single
+// oversized object cannot OOM-crash the function. Guest uploads are capped at
+// 20 MB by the upload-url API; the margin above that exists for bulk-imported
+// professional photos, which ran up to ~28 MB.
+const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
 
 // The S3 OBJECT_CREATED event can race ahead of the API route's photo insert,
 // in which case the byS3Key lookup below finds nothing. Retry a few times with
