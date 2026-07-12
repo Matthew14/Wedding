@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { getJWKS, getJWTIssuer } from "@/utils/auth/jwks";
-import { refreshTokens } from "@/utils/auth/refresh";
+import { refreshTokens, type RefreshedTokens } from "@/utils/auth/refresh";
 import {
     SESSION_COOKIE,
     ACCESS_TOKEN_COOKIE,
@@ -30,6 +30,30 @@ async function isAuthenticated(request: NextRequest): Promise<boolean> {
 
 type CookieToSet = ReturnType<typeof setSessionCookie>;
 
+// De-duplicate refreshes: a stale page load fires several requests at once,
+// all carrying the same refresh token, and none of them can see the rotated
+// cookies until a response reaches the browser. Sharing one in-flight
+// promise (kept briefly after success for stragglers) means one Cognito
+// call per burst — and keeps this safe if refresh-token rotation is ever
+// enabled on the app client (it's off today, the Cognito default).
+const inflightRefreshes = new Map<string, Promise<RefreshedTokens | null>>();
+const REFRESH_REUSE_TTL_MS = 30_000;
+
+function dedupedRefresh(refreshToken: string, username: string): Promise<RefreshedTokens | null> {
+    const existing = inflightRefreshes.get(refreshToken);
+    if (existing) return existing;
+
+    const promise = refreshTokens(refreshToken, username).then((tokens) => {
+        // Keep successes for the TTL; drop failures so a transient network
+        // error doesn't pin "not authenticated" for 30 seconds.
+        if (!tokens) inflightRefreshes.delete(refreshToken);
+        return tokens;
+    });
+    inflightRefreshes.set(refreshToken, promise);
+    setTimeout(() => inflightRefreshes.delete(refreshToken), REFRESH_REUSE_TTL_MS);
+    return promise;
+}
+
 // When the 1-hour session has lapsed but the 30-day refresh token is still
 // good, mint fresh tokens. Returns the cookies to attach to the response, or
 // null when refresh isn't possible — the caller falls through to login.
@@ -38,7 +62,7 @@ async function tryRefresh(request: NextRequest): Promise<CookieToSet[] | null> {
     const username = request.cookies.get(REFRESH_USERNAME_COOKIE)?.value;
     if (!refreshToken || !username) return null;
 
-    const tokens = await refreshTokens(refreshToken, username);
+    const tokens = await dedupedRefresh(refreshToken, username);
     if (!tokens) return null;
 
     // Make the fresh session visible to this request's own handlers (route
