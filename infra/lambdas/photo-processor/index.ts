@@ -10,10 +10,19 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 const PHOTOS_TABLE = process.env.PHOTOS_TABLE ?? "wedding-photos";
 
-// Upper bound on the original file we will buffer into memory. The upload-url
-// API caps guest uploads at 20 MB; we allow a small margin and refuse anything
-// larger so a single oversized object cannot OOM-crash the function.
-const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+// Upper bound on the original file we will buffer into memory, so a single
+// oversized object cannot OOM-crash the function. Guest uploads are capped at
+// 20 MB by the upload-url API; the margin above that exists for bulk-imported
+// professional photos, which ran up to ~28 MB.
+const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
+
+// Memory is really driven by decoded megapixels, not file bytes — a small,
+// heavily-compressed JPEG can still decode to a huge pixel buffer. sharp
+// enforces this bound at decode time and throws a normal JS error, which the
+// per-record catch turns into graceful degradation (unlike an OOM, which
+// kills the whole execution environment). 100 MP decodes to ~300 MB of RGB,
+// comfortably inside the 1536 MB function.
+const MAX_INPUT_PIXELS = 100_000_000;
 
 // The S3 OBJECT_CREATED event can race ahead of the API route's photo insert,
 // in which case the byS3Key lookup below finds nothing. Retry a few times with
@@ -48,7 +57,7 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
     }
     const buffer = await streamToBuffer(obj.Body as Readable, MAX_IMAGE_BYTES);
 
-    const image = sharp(buffer).rotate(); // auto-rotate using EXIF orientation
+    const image = sharp(buffer, { limitInputPixels: MAX_INPUT_PIXELS }).rotate(); // auto-rotate using EXIF orientation
     const metadata = await image.metadata();
     const takenAt = metadata.exif ? extractDateTimeOriginal(metadata.exif) : null;
 

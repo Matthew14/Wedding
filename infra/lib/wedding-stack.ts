@@ -197,7 +197,10 @@ export class WeddingStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.minutes(2),
-      memorySize: 512,
+      // 512 MB OOMed on large JPEGs during the professional photo import
+      // (decoded pixel buffers dwarf the file size — an 11 MB JPEG was enough).
+      // Guest uploads go up to 20 MB, so give sharp real headroom.
+      memorySize: 1536,
       bundling: {
         nodeModules: ['sharp'],
         // sharp ships per-platform binaries; force npm to stage the Lambda's
