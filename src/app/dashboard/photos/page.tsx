@@ -20,6 +20,8 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle, IconCheck, IconX } from "@tabler/icons-react";
 import Link from "next/link";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import type { Photo, PhotoCategory } from "@/types/photos";
 
 interface PhotoWithThumbnail extends Photo {
@@ -39,6 +41,11 @@ export default function PhotosModerationPage() {
     const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [lightboxIndex, setLightboxIndex] = useState(-1);
+
+    // Only processed photos can be viewed large; unprocessed ones have no
+    // image to show yet.
+    const viewablePhotos = photos.filter((p) => p.thumbnail_url);
 
     const fetchCounts = useCallback(async () => {
         try {
@@ -155,10 +162,25 @@ export default function PhotosModerationPage() {
                             categoryOptions={categoryOptions}
                             onApprove={(categoryId) => updatePhoto(photo.id, "approved", categoryId)}
                             onReject={() => updatePhoto(photo.id, "rejected")}
+                            onView={() =>
+                                setLightboxIndex(viewablePhotos.findIndex((p) => p.id === photo.id))
+                            }
                         />
                     ))}
                 </SimpleGrid>
             )}
+
+            <Lightbox
+                open={lightboxIndex >= 0}
+                close={() => setLightboxIndex(-1)}
+                index={lightboxIndex}
+                slides={viewablePhotos.map((p) => ({
+                    src: p.thumbnail_url as string,
+                    width: p.width ?? undefined,
+                    height: p.height ?? undefined,
+                    alt: p.file_name,
+                }))}
+            />
         </Stack>
     );
 }
@@ -168,11 +190,13 @@ function PhotoCard({
     categoryOptions,
     onApprove,
     onReject,
+    onView,
 }: {
     photo: PhotoWithThumbnail;
     categoryOptions: { value: string; label: string }[];
     onApprove: (categoryId?: string) => void;
     onReject: () => void;
+    onView: () => void;
 }) {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(photo.category_id);
 
@@ -189,7 +213,8 @@ function PhotoCard({
                         src={photo.thumbnail_url}
                         alt={photo.file_name}
                         radius="sm"
-                        style={{ aspectRatio: "4/3", objectFit: "cover" }}
+                        style={{ aspectRatio: "4/3", objectFit: "cover", cursor: "zoom-in" }}
+                        onClick={onView}
                     />
                 ) : (
                     <Paper

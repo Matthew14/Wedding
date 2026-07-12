@@ -15,7 +15,8 @@ import {
     Loader,
     Center,
 } from "@mantine/core";
-import { IconAlertCircle, IconDownload } from "@tabler/icons-react";
+import { IconAlertCircle, IconDownload, IconTrash } from "@tabler/icons-react";
+import { useSession } from "@/hooks/useSession";
 import { RowsPhotoAlbum } from "react-photo-album";
 import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
@@ -56,8 +57,37 @@ function Gallery() {
     const [invitationCode, setInvitationCode] = useState<string>("");
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [rejecting, setRejecting] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
+    const { status: sessionStatus } = useSession();
+    const isAdmin = sessionStatus === "authenticated";
     const LIMIT = 40;
+
+    // Admins can pull a photo straight from the lightbox: reject it and drop
+    // it from view without a trip to the moderation tab.
+    const rejectCurrent = async () => {
+        const photo = photos[lightboxIndex];
+        if (!photo || rejecting) return;
+        setRejecting(true);
+        try {
+            const res = await fetch(`/api/photos/${photo.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: "rejected" }),
+            });
+            if (!res.ok) throw new Error("Failed to reject photo");
+            setPhotos((prev) => {
+                const next = prev.filter((p) => p.id !== photo.id);
+                setLightboxIndex((i) => (next.length === 0 ? -1 : Math.min(i, next.length - 1)));
+                return next;
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to reject photo");
+            setLightboxIndex(-1);
+        } finally {
+            setRejecting(false);
+        }
+    };
 
     // Personal links carry ?code=XXXXXX. Store it (last link visited wins),
     // then strip the param so copy-pasting the address doesn't share the code.
@@ -228,9 +258,28 @@ function Gallery() {
                 close={() => setLightboxIndex(-1)}
                 slides={lightboxSlides}
                 index={lightboxIndex}
+                on={{ view: ({ index }) => setLightboxIndex(index) }}
                 plugins={invitationCode ? [Download] : []}
                 render={{
                     iconDownload: () => <IconDownload size={20} />,
+                }}
+                toolbar={{
+                    buttons: [
+                        isAdmin ? (
+                            <button
+                                key="reject"
+                                type="button"
+                                className="yarl__button"
+                                onClick={rejectCurrent}
+                                disabled={rejecting}
+                                aria-label="Reject photo"
+                                title="Reject photo"
+                            >
+                                <IconTrash size={20} color="#ff6b6b" />
+                            </button>
+                        ) : null,
+                        "close",
+                    ],
                 }}
             />
         </main>
