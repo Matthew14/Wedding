@@ -17,6 +17,7 @@ import {
     Loader,
     Center,
     Anchor,
+    UnstyledButton,
 } from "@mantine/core";
 import { IconAlertCircle, IconCheck, IconX } from "@tabler/icons-react";
 import Link from "next/link";
@@ -209,13 +210,18 @@ function PhotoCard({
         <Paper shadow="sm" radius="md" p="sm" withBorder>
             <Stack gap="xs">
                 {photo.thumbnail_url ? (
-                    <Image
-                        src={photo.thumbnail_url}
-                        alt={photo.file_name}
-                        radius="sm"
-                        style={{ aspectRatio: "4/3", objectFit: "cover", cursor: "zoom-in" }}
+                    <UnstyledButton
                         onClick={onView}
-                    />
+                        aria-label={`View ${photo.file_name} full size`}
+                        style={{ cursor: "zoom-in", display: "block", width: "100%" }}
+                    >
+                        <Image
+                            src={photo.thumbnail_url}
+                            alt={photo.file_name}
+                            radius="sm"
+                            style={{ aspectRatio: "4/3", objectFit: "cover", width: "100%" }}
+                        />
+                    </UnstyledButton>
                 ) : (
                     <Paper
                         style={{

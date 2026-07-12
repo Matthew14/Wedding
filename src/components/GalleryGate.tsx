@@ -34,8 +34,11 @@ export function GalleryGate({ children }: { children: React.ReactNode }) {
         return <>{children}</>;
     }
 
-    const flagPending = flagState === "loading" && !timedOut;
-    if (flagPending || sessionStatus === "loading") {
+    // The timeout caps the session check too — a hung /api/auth/me would
+    // otherwise reintroduce the exact infinite spinner this gate exists to
+    // prevent. After it fires, anything unresolved counts as "not allowed".
+    const stillResolving = flagState === "loading" || sessionStatus === "loading";
+    if (stillResolving && !timedOut) {
         return (
             <Center py="xl">
                 <Loader color="yellow" />

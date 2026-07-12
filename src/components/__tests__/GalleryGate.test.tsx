@@ -66,6 +66,22 @@ describe("GalleryGate", () => {
         expect(mockNotFound).not.toHaveBeenCalled();
     });
 
+    it("404s when the session check hangs past the timeout with the flag off", () => {
+        vi.useFakeTimers();
+        galleryFlag.value = "off";
+        session.value = "loading";
+        render(<GalleryGate>gallery-content</GalleryGate>);
+        expect(mockNotFound).not.toHaveBeenCalled();
+
+        // A hung /api/auth/me must not reintroduce the infinite spinner.
+        expect(() => {
+            act(() => {
+                vi.advanceTimersByTime(5001);
+            });
+        }).toThrow("NEXT_NOT_FOUND");
+        expect(mockNotFound).toHaveBeenCalled();
+    });
+
     it("404s instead of spinning forever when the flag never resolves", () => {
         vi.useFakeTimers();
         galleryFlag.value = "loading";

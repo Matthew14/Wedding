@@ -76,14 +76,13 @@ function Gallery() {
                 body: JSON.stringify({ status: "rejected" }),
             });
             if (!res.ok) throw new Error("Failed to reject photo");
-            setPhotos((prev) => {
-                const next = prev.filter((p) => p.id !== photo.id);
-                setLightboxIndex((i) => (next.length === 0 ? -1 : Math.min(i, next.length - 1)));
-                return next;
-            });
+            const next = photos.filter((p) => p.id !== photo.id);
+            setPhotos(next);
+            setLightboxIndex(next.length === 0 ? -1 : Math.min(lightboxIndex, next.length - 1));
         } catch (err) {
+            // Keep the lightbox open so the admin can retry without losing
+            // their place; the photo is still in the list.
             setError(err instanceof Error ? err.message : "Failed to reject photo");
-            setLightboxIndex(-1);
         } finally {
             setRejecting(false);
         }
