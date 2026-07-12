@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signIn, completeNewPassword, isNewPasswordChallenge } from "@/utils/auth/cognito";
-import { setSessionCookie, setAccessTokenCookie } from "@/utils/auth/session";
+import { decodeJwt } from "jose";
+import { signIn, completeNewPassword, isNewPasswordChallenge, type CognitoTokens } from "@/utils/auth/cognito";
+import {
+    setSessionCookie,
+    setAccessTokenCookie,
+    setRefreshTokenCookie,
+    setRefreshUsernameCookie,
+} from "@/utils/auth/session";
 import * as logger from "@/utils/logger";
+
+// The refresh flow's SECRET_HASH needs the immutable Cognito username (a
+// UUID when email is an alias), which only lives in the ID token we just
+// minted — capture it now, alongside the refresh token.
+function setAuthCookies(response: NextResponse, tokens: CognitoTokens, email: string) {
+    response.cookies.set(setSessionCookie(tokens.idToken, tokens.expiresIn));
+    response.cookies.set(setAccessTokenCookie(tokens.accessToken, tokens.expiresIn));
+
+    const username = (decodeJwt(tokens.idToken)["cognito:username"] as string | undefined) ?? email;
+    response.cookies.set(setRefreshTokenCookie(tokens.refreshToken));
+    response.cookies.set(setRefreshUsernameCookie(username));
+}
 
 export async function POST(request: NextRequest) {
     let email: string | undefined;
@@ -18,8 +36,7 @@ export async function POST(request: NextRequest) {
         if (newPassword && session) {
             const tokens = await completeNewPassword(email as string, newPassword as string, session as string);
             const response = NextResponse.json({ ok: true });
-            response.cookies.set(setSessionCookie(tokens.idToken, tokens.expiresIn));
-            response.cookies.set(setAccessTokenCookie(tokens.accessToken, tokens.expiresIn));
+            setAuthCookies(response, tokens, email as string);
             return response;
         }
 
@@ -36,8 +53,7 @@ export async function POST(request: NextRequest) {
 
         logger.info("POST /api/auth/login", "Login successful", { email });
         const response = NextResponse.json({ ok: true });
-        response.cookies.set(setSessionCookie(result.idToken, result.expiresIn));
-        response.cookies.set(setAccessTokenCookie(result.accessToken, result.expiresIn));
+        setAuthCookies(response, result, email as string);
 
         return response;
     } catch (err) {

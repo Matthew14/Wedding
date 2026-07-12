@@ -4,6 +4,7 @@ import {
     GlobalSignOutCommand,
     RespondToAuthChallengeCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
+import { computeSecretHash } from "./refresh";
 
 const client = new CognitoIdentityProviderClient({
     region: process.env.AWS_REGION ?? "eu-west-1",
@@ -101,20 +102,4 @@ export async function completeNewPassword(
 export async function signOut(accessToken: string): Promise<void> {
     const command = new GlobalSignOutCommand({ AccessToken: accessToken });
     await client.send(command);
-}
-
-async function computeSecretHash(username: string, clientId: string): Promise<string> {
-    const clientSecret = process.env.COGNITO_CLIENT_SECRET;
-    if (!clientSecret) throw new Error("COGNITO_CLIENT_SECRET environment variable is required");
-
-    const message = username + clientId;
-    const key = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(clientSecret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-    );
-    const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
-    return btoa(String.fromCharCode(...new Uint8Array(signature)));
 }

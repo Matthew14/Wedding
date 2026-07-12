@@ -55,7 +55,9 @@ This document outlines the security measures implemented in the wedding website.
 ### AWS Cognito Authentication
 
 - **Route Protection**: Middleware-based protection for admin routes (`/dashboard/*`)
-- **Session Management**: JWT tokens stored in cookies, validated on each request
+- **Session Management**: JWT tokens stored in httpOnly cookies, validated on each request
+- **Session Refresh**: the ID-token session cookie lives 1 hour; middleware transparently renews it from a 30-day httpOnly refresh-token cookie (Cognito `REFRESH_TOKEN_AUTH`), so admins stay signed in for up to 30 days without re-entering credentials
+- **Revocation**: logout calls Cognito `GlobalSignOut`, which revokes the refresh token server-side — a leaked refresh cookie is useless after an explicit logout
 - **Challenge Handling**: `NEW_PASSWORD_REQUIRED` challenge handled at login — forced password change on first login
 
 **Authentication Flow:**
@@ -63,9 +65,9 @@ This document outlines the security measures implemented in the wedding website.
 2. API calls Cognito `InitiateAuthCommand`
 3. If `NEW_PASSWORD_REQUIRED` challenge returned, user is prompted for new password
 4. On success, Cognito returns access/ID/refresh tokens
-5. Tokens stored in browser cookies
-6. Middleware validates token on protected routes
-7. Unauthenticated users redirected to `/login`
+5. Tokens stored in httpOnly browser cookies (session + access for 1 hour, refresh token + immutable username for 30 days)
+6. Middleware validates the session on protected routes and APIs; when it has expired it mints fresh tokens from the refresh cookie before the request proceeds
+7. Users are redirected to `/login` only when no valid session exists and the refresh token is missing, expired, or revoked
 
 **Protected Routes:**
 - `/dashboard/*` — Requires authenticated session

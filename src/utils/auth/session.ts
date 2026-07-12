@@ -29,9 +29,10 @@ export async function getSession(): Promise<SessionPayload | null> {
     }
 }
 
-// No refresh token flow: the session expires when the Cognito ID token does
-// (default 1 hour). Users of the admin dashboard will be silently logged out
-// after that window. This is an accepted trade-off for a low-traffic admin UI.
+// The session cookie lives as long as the Cognito ID token (default 1 hour).
+// The middleware transparently renews it from the 30-day refresh token
+// cookie, so admins only see the login page when the refresh token itself
+// has expired or been revoked.
 export function setSessionCookie(token: string, maxAge: number) {
     return {
         name: SESSION_COOKIE,
@@ -87,4 +88,46 @@ export async function getAccessToken(): Promise<string | undefined> {
     return cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
 }
 
-export { SESSION_COOKIE, ACCESS_TOKEN_COOKIE };
+const REFRESH_COOKIE = "wedding_refresh";
+const REFRESH_USERNAME_COOKIE = "wedding_refresh_user";
+
+// Matches the user pool client's 30-day refresh token validity.
+const REFRESH_MAX_AGE = 30 * 24 * 60 * 60;
+
+export function setRefreshTokenCookie(token: string) {
+    return {
+        name: REFRESH_COOKIE,
+        value: token,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict" as const,
+        path: "/",
+        maxAge: REFRESH_MAX_AGE,
+    };
+}
+
+export function clearRefreshTokenCookie() {
+    return { ...setRefreshTokenCookie(""), maxAge: 0 };
+}
+
+// The immutable Cognito username (the cognito:username claim — a UUID when
+// email is an alias). REFRESH_TOKEN_AUTH's SECRET_HASH must be computed from
+// it, and it can't be recovered later: the session cookie holding the claim
+// is deleted by the browser the moment it expires.
+export function setRefreshUsernameCookie(username: string) {
+    return {
+        name: REFRESH_USERNAME_COOKIE,
+        value: username,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict" as const,
+        path: "/",
+        maxAge: REFRESH_MAX_AGE,
+    };
+}
+
+export function clearRefreshUsernameCookie() {
+    return { ...setRefreshUsernameCookie(""), maxAge: 0 };
+}
+
+export { SESSION_COOKIE, ACCESS_TOKEN_COOKIE, REFRESH_COOKIE, REFRESH_USERNAME_COOKIE };
