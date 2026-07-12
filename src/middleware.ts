@@ -43,14 +43,23 @@ function dedupedRefresh(refreshToken: string, username: string): Promise<Refresh
     const existing = inflightRefreshes.get(refreshToken);
     if (existing) return existing;
 
+    // Evictions check identity, not just the key: the same token value recurs
+    // across bursts for the whole 30-day session, and a stale timer from an
+    // earlier (failed) attempt must not evict a newer cached entry early.
     const promise = refreshTokens(refreshToken, username).then((tokens) => {
         // Keep successes for the TTL; drop failures so a transient network
         // error doesn't pin "not authenticated" for 30 seconds.
-        if (!tokens) inflightRefreshes.delete(refreshToken);
+        if (!tokens && inflightRefreshes.get(refreshToken) === promise) {
+            inflightRefreshes.delete(refreshToken);
+        }
         return tokens;
     });
     inflightRefreshes.set(refreshToken, promise);
-    setTimeout(() => inflightRefreshes.delete(refreshToken), REFRESH_REUSE_TTL_MS);
+    setTimeout(() => {
+        if (inflightRefreshes.get(refreshToken) === promise) {
+            inflightRefreshes.delete(refreshToken);
+        }
+    }, REFRESH_REUSE_TTL_MS);
     return promise;
 }
 

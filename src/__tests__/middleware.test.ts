@@ -137,4 +137,32 @@ describe("middleware", () => {
         expect(second.status).toBe(200);
         expect(mockRefreshTokens).toHaveBeenCalledTimes(2);
     });
+
+    it("does not let a failed attempt's stale eviction timer evict a later cached success", async () => {
+        vi.useFakeTimers();
+        try {
+            const cookies = { wedding_refresh: "stale-timer-tok", wedding_refresh_user: "uuid-1" };
+
+            // t=0: refresh fails — the entry is dropped immediately, but its
+            // 30s eviction timer stays scheduled.
+            mockRefreshTokens.mockResolvedValueOnce(null);
+            const first = await middleware(makeRequest("/dashboard", cookies));
+            expect(first.status).toBe(307);
+
+            // t=5s: a retry succeeds and is cached (should live until t=35s).
+            vi.advanceTimersByTime(5000);
+            mockRefreshTokens.mockResolvedValueOnce(freshTokens);
+            const second = await middleware(makeRequest("/dashboard", cookies));
+            expect(second.status).toBe(200);
+
+            // t=30s: the failed attempt's timer fires — it must not evict the
+            // success cached at t=5s, so this request hits the cache.
+            vi.advanceTimersByTime(25001);
+            const third = await middleware(makeRequest("/dashboard", cookies));
+            expect(third.status).toBe(200);
+            expect(mockRefreshTokens).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 });
