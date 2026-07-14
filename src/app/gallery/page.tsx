@@ -14,6 +14,8 @@ import {
     Group,
     Loader,
     Center,
+    Paper,
+    TextInput,
 } from "@mantine/core";
 import { IconAlertCircle, IconDownload, IconTrash } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
@@ -55,6 +57,10 @@ function Gallery() {
     const [error, setError] = useState<string | null>(null);
     const [lightboxIndex, setLightboxIndex] = useState(-1);
     const [invitationCode, setInvitationCode] = useState<string>("");
+    const [codeChecked, setCodeChecked] = useState(false);
+    const [codeInput, setCodeInput] = useState("");
+    const [codeError, setCodeError] = useState<string | null>(null);
+    const [validatingCode, setValidatingCode] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [rejecting, setRejecting] = useState(false);
@@ -62,6 +68,12 @@ function Gallery() {
     const { status: sessionStatus } = useSession();
     const isAdmin = sessionStatus === "authenticated";
     const LIMIT = 40;
+
+    // The gallery is code-access only: a guest needs a code (from their
+    // personalised link, a previous visit, or typed in below); a logged-in
+    // admin gets in regardless and has the master code auto-filled.
+    const hasAccess = !!invitationCode || isAdmin;
+    const showCodeGate = codeChecked && !invitationCode && sessionStatus === "unauthenticated";
 
     // The photo list as of the latest render — rejectCurrent reads it after
     // an await, by which point the closed-over `photos` may be stale (e.g.
@@ -106,11 +118,56 @@ function Gallery() {
             localStorage.setItem("invitation_code", urlCode);
             setInvitationCode(urlCode);
             router.replace("/gallery", { scroll: false });
+        } else {
+            const stored = localStorage.getItem("invitation_code");
+            if (stored) setInvitationCode(stored);
+        }
+        setCodeChecked(true);
+    }, [searchParams, router]);
+
+    // Logged-in admins get the bride & groom's master code auto-filled so
+    // downloads and uploads work without typing anything.
+    useEffect(() => {
+        if (sessionStatus !== "authenticated" || invitationCode) return;
+        fetch("/api/auth/me")
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+                if (data?.masterCode) {
+                    localStorage.setItem("invitation_code", data.masterCode);
+                    setInvitationCode(data.masterCode);
+                }
+            })
+            .catch(() => {}); // downloads just stay code-less until retry
+    }, [sessionStatus, invitationCode]);
+
+    // Manual entry on the code gate.
+    const handleCodeSubmit = async () => {
+        const trimmed = codeInput.trim().toUpperCase();
+        if (!/^[A-Z0-9]{6}$/.test(trimmed)) {
+            setCodeError("Please enter your 6-character invitation code");
             return;
         }
-        const stored = localStorage.getItem("invitation_code");
-        if (stored) setInvitationCode(stored);
-    }, [searchParams, router]);
+        setValidatingCode(true);
+        setCodeError(null);
+        try {
+            const res = await fetch("/api/photos/validate-code", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: trimmed }),
+            });
+            const data = await res.json();
+            if (!data.valid) {
+                setCodeError(data.error ?? "Invalid invitation code");
+                return;
+            }
+            localStorage.setItem("invitation_code", trimmed);
+            setInvitationCode(trimmed);
+        } catch {
+            setCodeError("Something went wrong — please try again");
+        } finally {
+            setValidatingCode(false);
+        }
+    };
 
     const fetchPhotos = useCallback(
         async (category: string | null, pg: number) => {
@@ -119,7 +176,16 @@ function Gallery() {
             try {
                 const params = new URLSearchParams({ page: String(pg), limit: String(LIMIT) });
                 if (category) params.set("category", category);
+                if (invitationCode) params.set("code", invitationCode);
                 const res = await fetch(`/api/photos?${params}`);
+                if (res.status === 401) {
+                    // The stored code is no longer accepted — drop it and
+                    // fall back to the code gate (admins pass via session).
+                    localStorage.removeItem("invitation_code");
+                    setInvitationCode("");
+                    setPhotos([]);
+                    return;
+                }
                 if (!res.ok) throw new Error("Failed to load photos");
                 const data = await res.json();
                 const mapped: GalleryPhoto[] = (data.photos as PublicPhoto[]).map((p) => ({
@@ -138,7 +204,7 @@ function Gallery() {
                 setLoading(false);
             }
         },
-        []
+        [invitationCode]
     );
 
     useEffect(() => {
@@ -149,10 +215,13 @@ function Gallery() {
     }, []);
 
     useEffect(() => {
+        // Don't fetch until code resolution has run, and never fetch without
+        // access — the API would just 401.
+        if (!codeChecked || (!invitationCode && sessionStatus !== "authenticated")) return;
         setPage(1);
         setPhotos([]);
         fetchPhotos(activeCategory, 1);
-    }, [activeCategory, fetchPhotos]);
+    }, [activeCategory, fetchPhotos, codeChecked, invitationCode, sessionStatus]);
 
     // Infinite scroll: load the next page when the sentinel scrolls into view.
     // The effect re-runs on every relevant state change so the observer always
@@ -211,19 +280,40 @@ function Gallery() {
                         </Button>
                     </Group>
 
-                    {!invitationCode && (
-                        <Text size="sm" c="dimmed">
-                            You&apos;re viewing the public gallery. If we sent you a personalised link,
-                            open it to unlock full-resolution downloads.
-                        </Text>
-                    )}
-
                     {error && (
                         <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
                             {error}
                         </Alert>
                     )}
 
+                    {showCodeGate ? (
+                        <Paper p="xl" radius="md" withBorder maw={440} mx="auto" mt="lg" w="100%">
+                            <Stack gap="sm">
+                                <Text fw={500}>This gallery is for our wedding guests</Text>
+                                <Text size="sm" c="dimmed">
+                                    Enter the code from your invitation, or open the personalised
+                                    link we sent you.
+                                </Text>
+                                <TextInput
+                                    placeholder="e.g. ABC123"
+                                    value={codeInput}
+                                    onChange={(e) => setCodeInput(e.currentTarget.value.toUpperCase())}
+                                    maxLength={6}
+                                    error={codeError}
+                                    onKeyDown={(e) => e.key === "Enter" && handleCodeSubmit()}
+                                    styles={{ input: { textTransform: "uppercase", letterSpacing: "0.1em" } }}
+                                />
+                                <Button color="yellow" onClick={handleCodeSubmit} loading={validatingCode}>
+                                    View the gallery
+                                </Button>
+                            </Stack>
+                        </Paper>
+                    ) : !hasAccess ? (
+                        <Center py="xl">
+                            <Loader color="yellow" />
+                        </Center>
+                    ) : (
+                        <>
                     <Tabs value={activeCategory ?? "all"} onChange={(v) => setActiveCategory(v === "all" ? null : v)}>
                         <Tabs.List>
                             <Tabs.Tab value="all">All Photos</Tabs.Tab>
@@ -259,6 +349,8 @@ function Gallery() {
 
                     {/* Infinite-scroll sentinel — observed to trigger the next page */}
                     {hasMore && photos.length > 0 && <Box ref={sentinelRef} h={1} />}
+                        </>
+                    )}
                 </Stack>
             </Container>
 
@@ -270,7 +362,7 @@ function Gallery() {
                 on={{ view: ({ index }) => setLightboxIndex(index) }}
                 plugins={invitationCode ? [Download] : []}
                 render={{
-                    iconDownload: () => <IconDownload size={20} />,
+                    iconDownload: () => <IconDownload size={32} />,
                 }}
                 toolbar={{
                     buttons: [

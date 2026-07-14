@@ -55,7 +55,16 @@ export interface InvitationCodeSummary {
     invitee_names: string[];
 }
 
+// The bride & groom's master code lives in an env var, not the frozen
+// archive — it validates everywhere a guest code does, and /api/auth/me
+// hands it to logged-in admins so the gallery can auto-fill it.
+export function isMasterCode(code: string): boolean {
+    const master = process.env.MASTER_INVITATION_CODE;
+    return !!master && code === master;
+}
+
 export async function isValidInvitationCode(code: string): Promise<boolean> {
+    if (isMasterCode(code)) return true;
     const result = await docClient.send(
         new GetCommand({
             TableName: ARCHIVE_TABLE,
@@ -69,6 +78,7 @@ export async function isValidInvitationCode(code: string): Promise<boolean> {
 // exist. Returning names behind a valid code is fine — the code is the
 // guest's credential.
 export async function getInviteesByCode(code: string): Promise<string[] | null> {
+    if (isMasterCode(code)) return ["Matthew", "Rebecca"];
     const codeResult = await docClient.send(
         new GetCommand({
             TableName: ARCHIVE_TABLE,

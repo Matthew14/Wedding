@@ -5,9 +5,14 @@ import { GET } from "../route";
 const mockListPhotosByStatus = vi.fn();
 const mockListCategories = vi.fn();
 const mockRequireAuth = vi.fn();
+const mockIsValidInvitationCode = vi.fn();
 
 vi.mock("@/utils/db/photos", () => ({
     listPhotosByStatus: (...args: unknown[]) => mockListPhotosByStatus(...args),
+}));
+
+vi.mock("@/utils/db/archive", () => ({
+    isValidInvitationCode: (...args: unknown[]) => mockIsValidInvitationCode(...args),
 }));
 
 vi.mock("@/utils/db/categories", () => ({
@@ -56,16 +61,41 @@ describe("GET /api/photos", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockListCategories.mockResolvedValue([ceremonyCategory]);
-        // Default to an unauthenticated (public) caller
+        // Default to an unauthenticated (public) caller with a valid code —
+        // the gallery is code-access only.
+        mockIsValidInvitationCode.mockResolvedValue(true);
         mockRequireAuth.mockResolvedValue({
             success: false,
             response: new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
         });
     });
 
-    it("returns approved photos by default", async () => {
+    it("rejects public requests without an invitation code", async () => {
+        const req = new NextRequest("http://localhost/api/photos");
+        const res = await GET(req);
+        expect(res.status).toBe(401);
+        expect(mockListPhotosByStatus).not.toHaveBeenCalled();
+    });
+
+    it("rejects public requests with an invalid invitation code", async () => {
+        mockIsValidInvitationCode.mockResolvedValue(false);
+        const req = new NextRequest("http://localhost/api/photos?code=ZZZZZZ");
+        const res = await GET(req);
+        expect(res.status).toBe(401);
+    });
+
+    it("admins need no code", async () => {
+        mockRequireAuth.mockResolvedValue({ success: true, payload: { email: "admin@test.com" } });
         mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
         const req = new NextRequest("http://localhost/api/photos");
+        const res = await GET(req);
+        expect(res.status).toBe(200);
+        expect(mockIsValidInvitationCode).not.toHaveBeenCalled();
+    });
+
+    it("returns approved photos by default", async () => {
+        mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123");
         const res = await GET(req);
         expect(res.status).toBe(200);
         const data = await res.json();
@@ -77,7 +107,7 @@ describe("GET /api/photos", () => {
 
     it("does not expose sensitive fields to public callers", async () => {
         mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
-        const req = new NextRequest("http://localhost/api/photos");
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123");
         const res = await GET(req);
         const data = await res.json();
         const photo = data.photos[0];
@@ -112,7 +142,7 @@ describe("GET /api/photos", () => {
             { ...mockPhoto, id: "photo-1", category_id: "cat-ceremony" },
             { ...mockPhoto, id: "photo-2", category_id: null },
         ]);
-        const req = new NextRequest("http://localhost/api/photos?category=ceremony");
+        const req = new NextRequest("http://localhost/api/photos?category=ceremony&code=ABC123");
         const res = await GET(req);
         const data = await res.json();
         expect(data.photos).toHaveLength(1);
@@ -124,7 +154,7 @@ describe("GET /api/photos", () => {
     it("respects page and limit params", async () => {
         const photos = Array.from({ length: 25 }, (_, i) => ({ ...mockPhoto, id: `photo-${i}` }));
         mockListPhotosByStatus.mockResolvedValue(photos);
-        const req = new NextRequest("http://localhost/api/photos?page=2&limit=10");
+        const req = new NextRequest("http://localhost/api/photos?page=2&limit=10&code=ABC123");
         const res = await GET(req);
         const data = await res.json();
         expect(data.page).toBe(2);
@@ -146,7 +176,7 @@ describe("GET /api/photos", () => {
 
     it("returns null thumbnail_url when thumbnail_key is null", async () => {
         mockListPhotosByStatus.mockResolvedValue([{ ...mockPhoto, thumbnail_key: null }]);
-        const req = new NextRequest("http://localhost/api/photos");
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123");
         const res = await GET(req);
         const data = await res.json();
         expect(data.photos[0].thumbnail_url).toBeNull();
@@ -154,7 +184,7 @@ describe("GET /api/photos", () => {
 
     it("handles database errors", async () => {
         mockListPhotosByStatus.mockRejectedValue(new Error("DB error"));
-        const req = new NextRequest("http://localhost/api/photos");
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123");
         const res = await GET(req);
         expect(res.status).toBe(500);
     });

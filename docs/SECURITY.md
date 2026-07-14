@@ -113,6 +113,7 @@ The `wedding-deploy` IAM user has `AdministratorAccess`. This is flagged for red
 
 ### Data Access
 - Guest data accessible only via valid RSVP code or admin dashboard
+- Photo gallery is code-access only: `/api/photos` requires a valid invitation code (or admin session); a `MASTER_INVITATION_CODE` env var defines the bride & groom's code, which is auto-filled for logged-in admins and exempt from the upload rate limit
 - No data sharing with third parties beyond AWS (hosting, DB, auth) and PostHog (analytics)
 - PostHog analytics configured with privacy-respecting defaults
 

@@ -45,6 +45,7 @@ const nextConfig = {
         LAMBDA_AWS_KEY_ID: process.env.LAMBDA_AWS_KEY_ID ?? "",
         LAMBDA_AWS_SECRET: process.env.LAMBDA_AWS_SECRET ?? "",
         S3_PHOTOS_BUCKET: process.env.S3_PHOTOS_BUCKET ?? "",
+        MASTER_INVITATION_CODE: process.env.MASTER_INVITATION_CODE ?? "",
     },
     images: {
         remotePatterns: cloudfrontUrl
