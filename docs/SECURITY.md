@@ -36,19 +36,10 @@ This document outlines the security measures implemented in the wedding website.
 
 ### 4. Rate Limiting
 
-- **What**: Request limiting for public API endpoints
-- **Why**: Prevents brute-force attacks, API abuse, and reduces costs
-- **Location**: `src/utils/api/rateLimit.ts` (reusable utility)
-- **Protected Endpoints**:
-    - `/api/rsvp/validate/[code]` — 5 requests/minute (strictest, prevents code guessing)
-    - `/api/rsvp/[code]` — 20 requests/minute (RSVP form submission)
-    - `/api/invitation/[slug]` — 30 requests/minute (invitation lookup)
-- **Implementation**: In-memory rate limiter with per-IP tracking and validation
-- **Security Features**:
-    - IP format validation prevents header spoofing attacks
-    - Automatic memory cleanup prevents resource exhaustion
-    - Rate limit headers on all responses for client backoff
-- **Response**: Returns HTTP 429 with `Retry-After` header and rate limit metadata
+- **What**: Per-code limiting of guest photo uploads
+- **Why**: Prevents a single invitation code from flooding the gallery or running up S3/Lambda costs
+- **Location**: `/api/photos/upload-url` — counts a code's uploads in the last hour via the `byCode` DynamoDB GSI; 50/hour per code, HTTP 429 beyond that. The bride & groom's master code is exempt.
+- **Historical note**: the per-IP limiter (`src/utils/api/rateLimit.ts`) protecting the RSVP endpoints was removed along with the RSVP system after the wedding. Code-validation endpoints (`/api/photos`, `/api/photos/validate-code`) rely on the 6-character alphanumeric keyspace (~2.2B) rather than per-IP throttling — an accepted trade-off for a low-value target; revisit if scripted enumeration ever shows up in the logs.
 
 ## 🔒 Authentication & Authorization
 

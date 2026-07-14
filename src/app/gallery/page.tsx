@@ -65,7 +65,7 @@ function Gallery() {
     const [hasMore, setHasMore] = useState(true);
     const [rejecting, setRejecting] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
-    const { status: sessionStatus } = useSession();
+    const { status: sessionStatus, masterCode } = useSession();
     const isAdmin = sessionStatus === "authenticated";
     const LIMIT = 40;
 
@@ -126,19 +126,13 @@ function Gallery() {
     }, [searchParams, router]);
 
     // Logged-in admins get the bride & groom's master code auto-filled so
-    // downloads and uploads work without typing anything.
+    // downloads and uploads work without typing anything. useSession already
+    // carries it from its /api/auth/me check — no extra round-trip.
     useEffect(() => {
-        if (sessionStatus !== "authenticated" || invitationCode) return;
-        fetch("/api/auth/me")
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => {
-                if (data?.masterCode) {
-                    localStorage.setItem("invitation_code", data.masterCode);
-                    setInvitationCode(data.masterCode);
-                }
-            })
-            .catch(() => {}); // downloads just stay code-less until retry
-    }, [sessionStatus, invitationCode]);
+        if (!isAdmin || invitationCode || !masterCode) return;
+        localStorage.setItem("invitation_code", masterCode);
+        setInvitationCode(masterCode);
+    }, [isAdmin, invitationCode, masterCode]);
 
     // Manual entry on the code gate.
     const handleCodeSubmit = async () => {

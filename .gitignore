@@ -64,3 +64,6 @@ infra/cdk.context.json
 # infra dependencies
 infra/node_modules/
 infra/package-lock.json
+
+# Local one-off scripts (run manually, not part of the app)
+scripts/import-photos-from-s3.mjs

@@ -19,6 +19,7 @@ import {
     ThemeIcon,
 } from "@mantine/core";
 import { IconAlertCircle, IconUpload, IconX, IconCheck } from "@tabler/icons-react";
+import { useSession } from "@/hooks/useSession";
 import type { UploadUrlResponse } from "@/types/photos";
 
 interface FileUploadState {
@@ -66,22 +67,17 @@ export default function UploadPage() {
     const [allDone, setAllDone] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const { masterCode } = useSession();
+
     // Logged-in admins get the bride & groom's master code auto-filled, same
-    // as on the gallery page. Guests just get a 401 here and type theirs.
+    // as on the gallery page (useSession resolves it; guests get null).
     useEffect(() => {
-        if (code) return;
-        fetch("/api/auth/me")
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => {
-                if (data?.masterCode) {
-                    localStorage.setItem("invitation_code", data.masterCode);
-                    setCode(data.masterCode);
-                    setCodeInput(data.masterCode);
-                    setCodeValidated(true);
-                }
-            })
-            .catch(() => {});
-    }, [code]);
+        if (code || !masterCode) return;
+        localStorage.setItem("invitation_code", masterCode);
+        setCode(masterCode);
+        setCodeInput(masterCode);
+        setCodeValidated(true);
+    }, [code, masterCode]);
 
     // A code inherited from localStorage (personal link or a previous visit)
     // was never validated here — look it up to greet by name, and fall back
