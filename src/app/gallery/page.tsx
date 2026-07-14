@@ -63,6 +63,14 @@ function Gallery() {
     const isAdmin = sessionStatus === "authenticated";
     const LIMIT = 40;
 
+    // The photo list as of the latest render — rejectCurrent reads it after
+    // an await, by which point the closed-over `photos` may be stale (e.g.
+    // infinite scroll appended a page while the PATCH was in flight).
+    const photosRef = useRef(photos);
+    useEffect(() => {
+        photosRef.current = photos;
+    }, [photos]);
+
     // Admins can pull a photo straight from the lightbox: reject it and drop
     // it from view without a trip to the moderation tab.
     const rejectCurrent = async () => {
@@ -76,9 +84,11 @@ function Gallery() {
                 body: JSON.stringify({ status: "rejected" }),
             });
             if (!res.ok) throw new Error("Failed to reject photo");
-            const next = photos.filter((p) => p.id !== photo.id);
+            const next = photosRef.current.filter((p) => p.id !== photo.id);
             setPhotos(next);
-            setLightboxIndex(next.length === 0 ? -1 : Math.min(lightboxIndex, next.length - 1));
+            // Functional form: the admin may have navigated the lightbox
+            // while the request was in flight.
+            setLightboxIndex((i) => (next.length === 0 ? -1 : Math.min(i, next.length - 1)));
         } catch (err) {
             // Keep the lightbox open so the admin can retry without losing
             // their place; the photo is still in the list.
