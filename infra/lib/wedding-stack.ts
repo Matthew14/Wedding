@@ -187,6 +187,14 @@ export class WeddingStack extends cdk.Stack {
             categoriesTable.tableArn,
           ],
         }),
+        // Presigned URLs (guest photo downloads and uploads) are signed as
+        // this user, so S3 evaluates ITS permissions when the URL is used —
+        // without this grant every presigned URL 403s. Originals only:
+        // thumbnails are served publicly through CloudFront's OAC instead.
+        new iam.PolicyStatement({
+          actions: ['s3:GetObject', 's3:PutObject'],
+          resources: [`${photosBucket.bucketArn}/uploads/original/*`],
+        }),
       ],
     });
 
