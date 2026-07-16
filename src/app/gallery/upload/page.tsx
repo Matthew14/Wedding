@@ -19,6 +19,7 @@ import {
     ThemeIcon,
 } from "@mantine/core";
 import { IconAlertCircle, IconUpload, IconX, IconCheck } from "@tabler/icons-react";
+import { useSession } from "@/hooks/useSession";
 import type { UploadUrlResponse } from "@/types/photos";
 
 interface FileUploadState {
@@ -28,8 +29,9 @@ interface FileUploadState {
     error?: string;
 }
 
-const MAX_FILES = 10;
 const MAX_SIZE = 20 * 1024 * 1024;
+// How many files upload at once — the rest queue behind them.
+const UPLOAD_CONCURRENCY = 4;
 const ALLOWED = ["image/jpeg", "image/png", "image/heic", "image/heif"];
 
 // "Matthew", "Matthew and Jim", "Matthew, Jim and Sarah" — no Oxford comma.
@@ -64,6 +66,18 @@ export default function UploadPage() {
     const [uploading, setUploading] = useState(false);
     const [allDone, setAllDone] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const { masterCode } = useSession();
+
+    // Logged-in admins get the bride & groom's master code auto-filled, same
+    // as on the gallery page (useSession resolves it; guests get null).
+    useEffect(() => {
+        if (code || !masterCode) return;
+        localStorage.setItem("invitation_code", masterCode);
+        setCode(masterCode);
+        setCodeInput(masterCode);
+        setCodeValidated(true);
+    }, [code, masterCode]);
 
     // A code inherited from localStorage (personal link or a previous visit)
     // was never validated here — look it up to greet by name, and fall back
@@ -117,10 +131,9 @@ export default function UploadPage() {
             if (f.size > MAX_SIZE) return false;
             return true;
         });
-        const capped = valid.slice(0, MAX_FILES - files.length);
         setFiles((prev) => [
             ...prev,
-            ...capped.map((f) => ({ file: f, progress: 0, status: "pending" as const })),
+            ...valid.map((f) => ({ file: f, progress: 0, status: "pending" as const })),
         ]);
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
@@ -209,7 +222,16 @@ export default function UploadPage() {
         const pending = files
             .map((f, i) => ({ f, i }))
             .filter(({ f }) => f.status === "pending");
-        const results = await Promise.all(pending.map(({ f, i }) => uploadFile(i, f.file)));
+        // Upload in small batches — with no cap on the number of photos, a
+        // huge selection shouldn't fire hundreds of parallel requests.
+        const results: boolean[] = [];
+        for (let i = 0; i < pending.length; i += UPLOAD_CONCURRENCY) {
+            results.push(
+                ...(await Promise.all(
+                    pending.slice(i, i + UPLOAD_CONCURRENCY).map(({ f, i: idx }) => uploadFile(idx, f.file))
+                ))
+            );
+        }
         setUploading(false);
         // Only celebrate if at least one file actually made it; otherwise the
         // failed files stay listed with their per-file error messages.
@@ -246,7 +268,7 @@ export default function UploadPage() {
                             Share Your Photos
                         </Title>
                         <Text c="dimmed" size="sm" mt={4}>
-                            Upload up to 10 photos. JPEG, PNG, or HEIC — max 20 MB each.
+                            Share as many photos as you like. JPEG, PNG, or HEIC — max 20 MB each.
                         </Text>
                     </Box>
 
@@ -334,17 +356,15 @@ export default function UploadPage() {
                                 onChange={handleFileChange}
                             />
 
-                            {files.length < MAX_FILES && (
-                                <Button
-                                    leftSection={<IconUpload size={16} />}
-                                    variant="outline"
-                                    color="yellow"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={uploading}
-                                >
-                                    Choose photos {files.length > 0 && `(${files.length} selected)`}
-                                </Button>
-                            )}
+                            <Button
+                                leftSection={<IconUpload size={16} />}
+                                variant="outline"
+                                color="yellow"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploading}
+                            >
+                                Choose photos {files.length > 0 && `(${files.length} selected)`}
+                            </Button>
 
                             {files.length > 0 && (
                                 <SimpleGrid cols={1} spacing="xs">

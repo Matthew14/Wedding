@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
-import { isValidInvitationCode } from "@/utils/db/archive";
+import { isValidInvitationCode, isMasterCode } from "@/utils/db/archive";
 import { createPhoto, countUploadsSince } from "@/utils/db/photos";
 import { getCategoryBySlug } from "@/utils/db/categories";
 import { getS3, BUCKET } from "@/utils/storage";
@@ -43,10 +43,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Invalid invitation code" }, { status: 400 });
         }
 
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-        const recentUploads = await countUploadsSince(code, oneHourAgo);
-        if (recentUploads >= RATE_LIMIT) {
-            return NextResponse.json({ error: "Upload limit reached. Try again later." }, { status: 429 });
+        // The bride & groom's master code is exempt — bulk uploads from the
+        // couple shouldn't trip the guest rate limit.
+        if (!isMasterCode(code)) {
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+            const recentUploads = await countUploadsSince(code, oneHourAgo);
+            if (recentUploads >= RATE_LIMIT) {
+                return NextResponse.json({ error: "Upload limit reached. Try again later." }, { status: 429 });
+            }
         }
 
         const uuid = randomUUID();

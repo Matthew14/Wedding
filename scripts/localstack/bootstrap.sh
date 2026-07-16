@@ -182,6 +182,10 @@ LAMBDA_AWS_SECRET=test
 S3_PHOTOS_BUCKET=${BUCKET}
 NEXT_PUBLIC_CLOUDFRONT_URL=${ENDPOINT}/${BUCKET}
 
+# Bride & groom master code — valid everywhere a guest code is, auto-filled
+# for logged-in admins, exempt from upload rate limiting.
+MASTER_INVITATION_CODE=LOCAL1
+
 # DynamoDB
 DDB_ARCHIVE_TABLE=${ARCHIVE_TABLE}
 DDB_PHOTOS_TABLE=${PHOTOS_TABLE}

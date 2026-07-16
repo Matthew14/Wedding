@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { POST } from "../route";
 
 const mockIsValidInvitationCode = vi.fn();
+const mockIsMasterCode = vi.fn();
 const mockCountUploadsSince = vi.fn();
 const mockCreatePhoto = vi.fn();
 const mockGetCategoryBySlug = vi.fn();
@@ -10,6 +11,7 @@ const mockGetSignedUrl = vi.fn();
 
 vi.mock("@/utils/db/archive", () => ({
     isValidInvitationCode: (...args: unknown[]) => mockIsValidInvitationCode(...args),
+    isMasterCode: (...args: unknown[]) => mockIsMasterCode(...args),
 }));
 
 vi.mock("@/utils/db/photos", () => ({
@@ -100,6 +102,15 @@ describe("POST /api/photos/upload-url", () => {
             makeRequest({ code: "ABC123", fileName: "photo.jpg", contentType: "image/jpeg", sizeBytes: 500 })
         );
         expect(res.status).toBe(429);
+    });
+
+    it("exempts the master code from the rate limit", async () => {
+        mockIsMasterCode.mockReturnValue(true);
+        const res = await POST(
+            makeRequest({ code: "RM2026", fileName: "photo.jpg", contentType: "image/jpeg", sizeBytes: 500 })
+        );
+        expect(res.status).toBe(200);
+        expect(mockCountUploadsSince).not.toHaveBeenCalled();
     });
 
     it("returns upload URL for valid request", async () => {

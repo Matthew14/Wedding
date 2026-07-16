@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listPhotosByStatus } from "@/utils/db/photos";
 import { listCategories } from "@/utils/db/categories";
+import { isValidInvitationCode } from "@/utils/db/archive";
 import { requireAuth } from "@/utils/auth/requireAuth";
 import { cdnUrl } from "@/utils/storage";
 import type { Photo, PublicPhoto } from "@/types/photos";
@@ -22,6 +23,18 @@ export async function GET(request: NextRequest) {
         // only see approved photos with a restricted set of fields.
         const auth = await requireAuth(request);
         const isAdmin = auth.success;
+
+        // The gallery is code-access only: unauthenticated callers must
+        // present a valid invitation code (guest or master).
+        if (!isAdmin) {
+            const code = searchParams.get("code")?.trim().toUpperCase();
+            if (!code || !(await isValidInvitationCode(code))) {
+                return NextResponse.json(
+                    { error: "A valid invitation code is required" },
+                    { status: 401 }
+                );
+            }
+        }
 
         const requestedStatus = searchParams.get("status");
         let status: Photo["status"] = "approved";
