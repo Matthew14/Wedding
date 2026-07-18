@@ -13,6 +13,7 @@ import {
     RekognitionClient,
     IndexFacesCommand,
     SearchFacesCommand,
+    DetectLabelsCommand,
 } from "@aws-sdk/client-rekognition";
 import { randomUUID } from "node:crypto";
 import type { Readable } from "stream";
@@ -98,13 +99,78 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
 
     const photoId = await updatePhotoRecord(key, thumbKey, info.width, info.height, takenAt);
 
-    // Face indexing is strictly best-effort: a Rekognition or faces-table
-    // failure must never break the thumbnail pipeline the gallery depends on.
-    try {
-        await indexAndAssignFaces(bucket, thumbKey, photoId);
-    } catch (err) {
-        console.error(`Face indexing failed for ${key} (photo ${photoId}):`, err);
+    // Face indexing and dog detection are strictly best-effort: a Rekognition
+    // or faces-table failure must never break the thumbnail pipeline the
+    // gallery depends on. They're independent calls, so run them concurrently.
+    const [faceResult, dogResult] = await Promise.allSettled([
+        indexAndAssignFaces(bucket, thumbKey, photoId),
+        detectDogs(bucket, thumbKey, photoId),
+    ]);
+    if (faceResult.status === "rejected") {
+        console.error(`Face indexing failed for ${key} (photo ${photoId}):`, faceResult.reason);
     }
+    if (dogResult.status === "rejected") {
+        console.error(`Dog detection failed for ${key} (photo ${photoId}):`, dogResult.reason);
+    }
+}
+
+// Dog detections make Maggie searchable in the gallery's people search. Each
+// detection becomes an UNASSIGNED singleton row (other dogs attended the
+// wedding, so a new dog is never auto-assumed to be Maggie) — it surfaces as
+// an unassigned card in the dashboard for the admin to assign or ignore.
+async function detectDogs(bucket: string, thumbKey: string, photoId: string): Promise<void> {
+    const photo = await docClient.send(
+        new GetCommand({
+            TableName: PHOTOS_TABLE,
+            Key: { id: photoId },
+            ConsistentRead: true,
+            ProjectionExpression: "dog_scanned_at",
+        })
+    );
+    if (photo.Item?.dog_scanned_at) return;
+
+    const result = await rekognition.send(
+        new DetectLabelsCommand({
+            Image: { S3Object: { Bucket: bucket, Name: thumbKey } },
+            Features: ["GENERAL_LABELS"],
+            Settings: { GeneralLabels: { LabelInclusionFilters: ["Dog"] } },
+            MinConfidence: 70,
+        })
+    );
+
+    for (const label of result.Labels ?? []) {
+        for (const instance of label.Instances ?? []) {
+            const box = instance.BoundingBox;
+            if (!box) continue;
+            await docClient.send(
+                new PutCommand({
+                    TableName: FACES_TABLE,
+                    Item: {
+                        face_id: `dog-${randomUUID()}`,
+                        photo_id: photoId,
+                        cluster_id: randomUUID(),
+                        bounding_box: {
+                            left: box.Left ?? 0,
+                            top: box.Top ?? 0,
+                            width: box.Width ?? 0,
+                            height: box.Height ?? 0,
+                        },
+                        confidence: instance.Confidence ?? 0,
+                        indexed_at: new Date().toISOString(),
+                    },
+                })
+            );
+        }
+    }
+
+    await docClient.send(
+        new UpdateCommand({
+            TableName: PHOTOS_TABLE,
+            Key: { id: photoId },
+            UpdateExpression: "SET dog_scanned_at = :now",
+            ExpressionAttributeValues: { ":now": new Date().toISOString() },
+        })
+    );
 }
 
 // Index every face in the thumbnail into the Rekognition collection and store

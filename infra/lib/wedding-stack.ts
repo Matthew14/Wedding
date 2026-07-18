@@ -323,6 +323,12 @@ export class WeddingStack extends cdk.Stack {
             `arn:aws:rekognition:${this.region}:${this.account}:collection/wedding-faces-2026`,
           ],
         }),
+        // Dog detection (Maggie in the gallery's people search). DetectLabels
+        // doesn't operate on a collection, so it can't be resource-scoped.
+        new iam.PolicyStatement({
+          actions: ['rekognition:DetectLabels'],
+          resources: ['*'],
+        }),
       ],
     });
     // Only the photo-processor talks to Rekognition at runtime — the Next.js

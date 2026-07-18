@@ -192,6 +192,18 @@ export const COUPLE_INVITEES: InviteeSummary[] = [
     { id: -2, invitation_id: -1, name: "Rebecca O'Neill", code: null },
 ];
 
+// The couple's dog. Dog detections (Rekognition DetectLabels, not face
+// matching) are stored as ordinary face rows and assigned to her like any
+// person, so she surfaces through the gallery's people search once her
+// detections are labeled. Deliberately NOT part of COUPLE_INVITEES — the
+// master code's Find My Photos stays humans-only.
+export const MAGGIE_INVITEE: InviteeSummary = {
+    id: -3,
+    invitation_id: -1,
+    name: "Maggie",
+    code: null,
+};
+
 // Every assignable person for the face-cluster picker: archived invitees
 // with their invitation's code, plus the couple. Alphabetical by full name.
 export async function listAllInvitees(): Promise<InviteeSummary[]> {
@@ -210,7 +222,7 @@ export async function listAllInvitees(): Promise<InviteeSummary[]> {
             name: `${i.first_name} ${i.last_name}`,
             code: codeByInvitation.get(i.invitation_id) ?? null,
         }))
-        .concat(COUPLE_INVITEES)
+        .concat(COUPLE_INVITEES, MAGGIE_INVITEE)
         .sort((a, b) => a.name.localeCompare(b.name));
 }
 
