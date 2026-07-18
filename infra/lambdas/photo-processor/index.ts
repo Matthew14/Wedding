@@ -1,6 +1,7 @@
 import type { S3Event } from "aws-lambda";
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
+import heicConvert from "heic-convert";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
@@ -202,11 +203,26 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
             `Object ${key} is ${obj.ContentLength} bytes, exceeds ${MAX_IMAGE_BYTES} limit`
         );
     }
-    const buffer = await streamToBuffer(obj.Body as Readable, MAX_IMAGE_BYTES);
+    let buffer = await streamToBuffer(obj.Body as Readable, MAX_IMAGE_BYTES);
+
+    // sharp's prebuilt libvips has no HEVC decoder (patent licensing), so
+    // iPhone-default HEIC/HEIF uploads must be decoded in WASM first.
+    // heic-convert applies the file's rotation/mirror transforms during
+    // decode but drops metadata, so the EXIF capture date is pulled from the
+    // ORIGINAL bytes — extractDateTimeOriginal only pattern-scans, and the
+    // EXIF block inside a HEIC container scans the same as a raw EXIF buffer.
+    const ext = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
+    let takenAt: string | null = null;
+    if (ext === ".heic" || ext === ".heif") {
+        takenAt = extractDateTimeOriginal(buffer);
+        buffer = Buffer.from(
+            new Uint8Array(await heicConvert({ buffer, format: "JPEG", quality: 0.9 }))
+        );
+    }
 
     const image = sharp(buffer, { limitInputPixels: MAX_INPUT_PIXELS }).rotate(); // auto-rotate using EXIF orientation
     const metadata = await image.metadata();
-    const takenAt = metadata.exif ? extractDateTimeOriginal(metadata.exif) : null;
+    if (!takenAt) takenAt = metadata.exif ? extractDateTimeOriginal(metadata.exif) : null;
 
     const { data, info } = await image
         .withMetadata(false) // strip EXIF from thumbnail
