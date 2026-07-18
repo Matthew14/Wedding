@@ -214,7 +214,11 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
     const ext = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
     let takenAt: string | null = null;
     if (ext === ".heic" || ext === ".heif") {
-        takenAt = extractDateTimeOriginal(buffer);
+        // Scan only the head of the file: HEIC metadata (the meta box, incl.
+        // EXIF) precedes the mdat media data, so this finds the capture date
+        // without regexing megabytes of HEVC bitstream — cheaper and far less
+        // surface for the unanchored date pattern to false-positive in.
+        takenAt = extractDateTimeOriginal(buffer.subarray(0, 256 * 1024));
         buffer = Buffer.from(
             new Uint8Array(await heicConvert({ buffer, format: "JPEG", quality: 0.9 }))
         );
