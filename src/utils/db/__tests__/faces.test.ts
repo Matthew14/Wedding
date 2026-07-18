@@ -7,7 +7,7 @@ vi.mock("../dynamo", () => ({
     FACES_TABLE: "wedding-photo-faces",
 }));
 
-import { getFacesByInvitees, updateClusterAssignment } from "../faces";
+import { getFacesByInvitees, updateClusterAssignment, detachFace } from "../faces";
 
 interface SentCommand {
     input: {
@@ -93,5 +93,30 @@ describe("updateClusterAssignment", () => {
 
         expect(await updateClusterAssignment("nope", { ignored: true })).toBe(0);
         expect(mockSend).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("detachFace", () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it("moves the face to a fresh cluster and strips assignment fields", async () => {
+        mockSend.mockResolvedValue({});
+
+        expect(await detachFace("f1")).toBe(true);
+        const update = sentCommand(0);
+        expect(update.Key).toEqual({ face_id: "f1" });
+        expect(update.UpdateExpression).toBe(
+            "SET cluster_id = :fresh REMOVE invitee_id, invitation_id, ignored"
+        );
+        // A real (random) uuid, not a fixed sentinel.
+        expect(update.ExpressionAttributeValues?.[":fresh"]).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it("returns false when the face does not exist", async () => {
+        const { ConditionalCheckFailedException } = await import("@aws-sdk/client-dynamodb");
+        mockSend.mockRejectedValue(
+            new ConditionalCheckFailedException({ message: "nope", $metadata: {} })
+        );
+        expect(await detachFace("missing")).toBe(false);
     });
 });

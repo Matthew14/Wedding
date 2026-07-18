@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
     Stack,
     Title,
@@ -17,15 +17,22 @@ import {
     Center,
     Anchor,
     Modal,
+    Tooltip,
+    ActionIcon,
     UnstyledButton,
 } from "@mantine/core";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { FaceCrop } from "@/components/FaceCrop";
-import type { ClusterSummary, ClustersResponse, ClusterDetailResponse } from "@/types/faces";
+import type {
+    ClusterSummary,
+    ClustersResponse,
+    ClusterDetailResponse,
+    FaceView,
+} from "@/types/faces";
 import type { InviteeSummary } from "@/utils/db/archive";
 
-type FilterTab = "unassigned" | "assigned" | "ignored";
+type FilterTab = "unassigned" | "assigned" | "ignored" | "by-person";
 
 function clusterTab(cluster: ClusterSummary): FilterTab {
     if (cluster.ignored) return "ignored";
@@ -133,7 +140,27 @@ export default function FacesPage() {
     const assigned = clusters.filter((c) => c.invitee_id != null).length;
     const ignored = clusters.filter((c) => c.ignored).length;
     const visible = clusters.filter((c) => clusterTab(c) === activeTab);
-    const counts: Record<FilterTab, number> = {
+
+    // People with at least one assigned face, for the By Person review tab.
+    const personOptions = useMemo(() => {
+        const byInvitee = new Map<number, { name: string; count: number }>();
+        for (const c of clusters) {
+            if (c.invitee_id == null) continue;
+            const entry = byInvitee.get(c.invitee_id) ?? {
+                name: c.invitee_name ?? `Guest #${c.invitee_id}`,
+                count: 0,
+            };
+            entry.count += c.face_count;
+            byInvitee.set(c.invitee_id, entry);
+        }
+        return [...byInvitee.entries()]
+            .sort((a, b) => a[1].name.localeCompare(b[1].name))
+            .map(([id, v]) => ({
+                value: String(id),
+                label: `${v.name} (${v.count} face${v.count === 1 ? "" : "s"})`,
+            }));
+    }, [clusters]);
+    const counts: Record<Exclude<FilterTab, "by-person">, number> = {
         unassigned: clusters.length - assigned - ignored,
         assigned,
         ignored,
@@ -179,10 +206,17 @@ export default function FacesPage() {
                     </Tabs.Tab>
                     <Tabs.Tab value="assigned">Assigned</Tabs.Tab>
                     <Tabs.Tab value="ignored">Ignored</Tabs.Tab>
+                    <Tabs.Tab value="by-person">By Person</Tabs.Tab>
                 </Tabs.List>
             </Tabs>
 
-            {loading ? (
+            {activeTab === "by-person" ? (
+                <PersonReview
+                    options={personOptions}
+                    onError={setError}
+                    onDetached={fetchClusters}
+                />
+            ) : loading ? (
                 <Center py="xl">
                     <Loader color="yellow" />
                 </Center>
@@ -299,6 +333,124 @@ export default function FacesPage() {
                     </Stack>
                 )}
             </Modal>
+        </Stack>
+    );
+}
+
+interface PersonReviewProps {
+    options: { value: string; label: string }[];
+    onError: (message: string) => void;
+    onDetached: () => void;
+}
+
+// "Show me every face of the selected person" with a reject button per face.
+// Rejecting detaches the face into an unassigned singleton — it leaves this
+// person (and guest results) immediately and reappears in the Unassigned tab.
+function PersonReview({ options, onError, onDetached }: PersonReviewProps) {
+    const [personId, setPersonId] = useState<string | null>(null);
+    const [faces, setFaces] = useState<FaceView[] | null>(null);
+    const [loading, setLoading] = useState(false);
+    // Guards against a slow response landing after the admin switched person.
+    const requestId = useRef(0);
+
+    const loadFaces = async (id: string) => {
+        const reqId = ++requestId.current;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/dashboard/faces/by-invitee/${id}`);
+            if (!res.ok) throw new Error("Failed to load this person's faces");
+            const data = await res.json();
+            if (requestId.current !== reqId) return;
+            setFaces(data.faces ?? []);
+        } catch (err) {
+            if (requestId.current !== reqId) return;
+            onError(err instanceof Error ? err.message : "Failed to load this person's faces");
+        } finally {
+            if (requestId.current === reqId) setLoading(false);
+        }
+    };
+
+    const rejectFace = async (faceId: string) => {
+        const previous = faces;
+        setFaces((prev) => (prev ?? []).filter((f) => f.face_id !== faceId));
+        try {
+            const res = await fetch(`/api/dashboard/faces/${faceId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ detach: true }),
+            });
+            if (!res.ok) throw new Error("Failed to reject face");
+            onDetached();
+        } catch (err) {
+            setFaces(previous);
+            onError(err instanceof Error ? err.message : "Failed to reject face");
+        }
+    };
+
+    return (
+        <Stack gap="md">
+            <Select
+                label="Show me all faces of"
+                placeholder={options.length === 0 ? "No one assigned yet" : "Pick a person"}
+                data={options}
+                searchable
+                value={personId}
+                disabled={options.length === 0}
+                maw={360}
+                onChange={(value) => {
+                    setPersonId(value);
+                    setFaces(null);
+                    if (value) loadFaces(value);
+                }}
+            />
+
+            {personId && (
+                <Text size="sm" c="dimmed">
+                    Blurriest, least-certain faces first — mistakes tend to be near the top.
+                    Click ✕ on any face that isn&apos;t them; it moves back to the Unassigned
+                    tab.
+                </Text>
+            )}
+
+            {loading ? (
+                <Center py="xl">
+                    <Loader color="yellow" />
+                </Center>
+            ) : !personId ? (
+                <Center py="xl">
+                    <Text c="dimmed">Pick a person to verify every face assigned to them.</Text>
+                </Center>
+            ) : faces && faces.length === 0 ? (
+                <Center py="xl">
+                    <Text c="dimmed">No faces are assigned to this person.</Text>
+                </Center>
+            ) : faces ? (
+                <SimpleGrid cols={{ base: 3, sm: 5, md: 7, lg: 8 }} spacing="sm">
+                    {faces.map((face) => (
+                        <div key={face.face_id} style={{ position: "relative" }}>
+                            <FaceCrop
+                                src={face.thumbnail_url}
+                                box={face.bounding_box}
+                                imgWidth={face.thumbnail_width}
+                                imgHeight={face.thumbnail_height}
+                                size={104}
+                            />
+                            <Tooltip label="Not them — move to Unassigned">
+                                <ActionIcon
+                                    size="sm"
+                                    variant="filled"
+                                    color="red"
+                                    aria-label="Reject face"
+                                    style={{ position: "absolute", top: 2, right: 2 }}
+                                    onClick={() => rejectFace(face.face_id)}
+                                >
+                                    <IconX size={14} />
+                                </ActionIcon>
+                            </Tooltip>
+                        </div>
+                    ))}
+                </SimpleGrid>
+            ) : null}
         </Stack>
     );
 }
