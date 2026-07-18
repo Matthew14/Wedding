@@ -81,6 +81,39 @@ export async function isValidInvitationCode(code: string): Promise<boolean> {
     return result.Item !== undefined;
 }
 
+// The invitation behind a guest code, or null when the code doesn't exist.
+// The master code also resolves to null: it belongs to the couple, not an
+// archived invitation, so there is no household behind it.
+export async function getInvitationIdByCode(code: string): Promise<number | null> {
+    if (isMasterCode(code)) return null;
+    const result = await docClient.send(
+        new GetCommand({
+            TableName: ARCHIVE_TABLE,
+            Key: { PK: `CODE#${code}`, SK: "META" },
+        })
+    );
+    return (result.Item as CodeItem | undefined)?.invitation_id ?? null;
+}
+
+// The invitees of an invitation with their ids, for face-match lookups.
+export async function getInviteesWithIds(
+    invitationId: number
+): Promise<{ id: number; first_name: string }[]> {
+    const result = await docClient.send(
+        new QueryCommand({
+            TableName: ARCHIVE_TABLE,
+            KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+            ExpressionAttributeValues: {
+                ":pk": `INVITATION#${invitationId}`,
+                ":sk": "INVITEE#",
+            },
+        })
+    );
+    return ((result.Items ?? []) as InviteeItem[])
+        .map((i) => ({ id: i.id, first_name: i.first_name }))
+        .sort((a, b) => a.first_name.localeCompare(b.first_name));
+}
+
 // First names of the invitees behind a code, or null when the code doesn't
 // exist. Returning names behind a valid code is fine — the code is the
 // guest's credential.
