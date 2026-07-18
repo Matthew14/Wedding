@@ -331,11 +331,17 @@ export class WeddingStack extends cdk.Stack {
     photoProcessor.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['ses:SendEmail'],
-        // Resource = the SENDING identity; recipients aren't IAM resources
-        // (in sandbox they're gated by SES verification instead).
-        resources: [
-          `arn:aws:ses:${this.region}:${this.account}:identity/oneill.wedding`,
-        ],
+        // SendEmail authorizes against EVERY identity involved — the sender
+        // AND, while in the sandbox, each verified recipient — and the
+        // recipients are dynamic (SSM parameter), so the resource must be a
+        // wildcard. The FromAddress condition keeps the grant pinned to the
+        // gallery sender: this role can email anyone verified, but only AS
+        // photos@oneill.wedding. (Proved by e2e: the identity-scoped grant
+        // 403'd on the recipient's identity ARN.)
+        resources: [`arn:aws:ses:${this.region}:${this.account}:identity/*`],
+        conditions: {
+          StringEquals: { 'ses:FromAddress': 'photos@oneill.wedding' },
+        },
       })
     );
     photoProcessor.addToRolePolicy(
