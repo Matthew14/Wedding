@@ -204,6 +204,43 @@ export const MAGGIE_INVITEE: InviteeSummary = {
     code: null,
 };
 
+// "Aoife" / "Aoife & Brian" / "Aoife, Brian & Cara"
+function joinFirstNames(names: string[]): string {
+    if (names.length <= 1) return names[0] ?? "";
+    return `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}`;
+}
+
+// Upload attribution: display names for the household behind each invitation
+// code ("Aoife & Brian"), plus the master code mapped to the couple. Guest
+// uploads carry their code on the photo row; photos without a code (the
+// professional imports) simply aren't in this map. One archive scan.
+export async function listUploaderNames(): Promise<Map<string, string>> {
+    const items = await scanArchive();
+
+    const firstNamesByInvitation = new Map<number, string[]>();
+    for (const item of items) {
+        if (item.entity !== "invitee") continue;
+        const names = firstNamesByInvitation.get(item.invitation_id) ?? [];
+        names.push(item.first_name);
+        firstNamesByInvitation.set(item.invitation_id, names);
+    }
+
+    const uploaders = new Map<string, string>();
+    for (const item of items) {
+        if (item.entity !== "code") continue;
+        const names = (firstNamesByInvitation.get(item.invitation_id) ?? []).sort((a, b) =>
+            a.localeCompare(b)
+        );
+        if (names.length > 0) uploaders.set(item.code, joinFirstNames(names));
+    }
+
+    const master = process.env.MASTER_INVITATION_CODE;
+    if (master) {
+        uploaders.set(master, joinFirstNames(COUPLE_INVITEES.map((c) => c.name.split(" ")[0])));
+    }
+    return uploaders;
+}
+
 // Every assignable person for the face-cluster picker: archived invitees
 // with their invitation's code, plus the couple. Alphabetical by full name.
 export async function listAllInvitees(): Promise<InviteeSummary[]> {

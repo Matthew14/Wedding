@@ -3,6 +3,7 @@ import {
     isMasterCode,
     getInvitationIdByCode,
     getInviteesWithIds,
+    listUploaderNames,
     COUPLE_INVITEES,
 } from "@/utils/db/archive";
 import { getFacesByInvitees } from "@/utils/db/faces";
@@ -67,7 +68,13 @@ export async function GET(request: NextRequest) {
                 (b.taken_at ?? b.uploaded_at).localeCompare(a.taken_at ?? a.uploaded_at)
             );
 
-        const photos: PublicPhoto[] = approved.slice(offset, offset + limit).map((p) => ({
+        const rows = approved.slice(offset, offset + limit);
+        // Attribution for guest uploads; professional imports carry no code.
+        const uploaders = rows.some((p) => p.invitation_code)
+            ? await listUploaderNames()
+            : new Map<string, string>();
+
+        const photos: PublicPhoto[] = rows.map((p) => ({
             id: p.id,
             thumbnail_url: p.thumbnail_key ? cdnUrl(p.thumbnail_key) : null,
             width: p.width,
@@ -77,6 +84,9 @@ export async function GET(request: NextRequest) {
             category_id: p.category_id,
             category_slug: p.category_id ? (slugById.get(p.category_id) ?? null) : null,
             uploaded_at: p.uploaded_at,
+            uploaded_by: p.invitation_code
+                ? (uploaders.get(p.invitation_code) ?? null)
+                : null,
         }));
 
         return NextResponse.json({

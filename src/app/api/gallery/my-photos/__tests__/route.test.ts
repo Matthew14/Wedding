@@ -13,10 +13,12 @@ const mockListCategories = vi.fn();
 vi.mock("@/utils/auth/requireAuth", () => ({
     requireAuth: (...args: unknown[]) => mockRequireAuth(...args),
 }));
+const mockListUploaderNames = vi.fn();
 vi.mock("@/utils/db/archive", () => ({
     isMasterCode: (...args: unknown[]) => mockIsMasterCode(...args),
     getInvitationIdByCode: (...args: unknown[]) => mockGetInvitationIdByCode(...args),
     getInviteesWithIds: (...args: unknown[]) => mockGetInviteesWithIds(...args),
+    listUploaderNames: (...args: unknown[]) => mockListUploaderNames(...args),
     COUPLE_INVITEES: [
         { id: -1, invitation_id: -1, name: "Matthew O'Neill", code: null },
         { id: -2, invitation_id: -1, name: "Rebecca O'Neill", code: null },
@@ -69,6 +71,7 @@ describe("GET /api/gallery/my-photos", () => {
             { id: 8, first_name: "Brian" },
         ]);
         mockListCategories.mockResolvedValue([]);
+        mockListUploaderNames.mockResolvedValue(new Map([["ABC123", "Aoife & Brian"]]));
     });
 
     it("rejects requests without a code", async () => {
@@ -118,7 +121,7 @@ describe("GET /api/gallery/my-photos", () => {
         expect(body.total).toBe(1);
     });
 
-    it("only exposes PublicPhoto fields", async () => {
+    it("only exposes PublicPhoto fields, including household attribution", async () => {
         mockGetFacesByInvitees.mockResolvedValue([
             { face_id: "f1", photo_id: "p1", invitee_id: 7 },
         ]);
@@ -130,6 +133,7 @@ describe("GET /api/gallery/my-photos", () => {
         expect(keys).not.toContain("invitation_code");
         expect(keys).not.toContain("approved_by");
         expect(body.photos[0].thumbnail_url).toBe("https://cdn/uploads/thumbnail/x/p1.jpg");
+        expect(body.photos[0].uploaded_by).toBe("Aoife & Brian");
     });
 
     it("master code searches the couple's synthetic ids without touching the archive", async () => {

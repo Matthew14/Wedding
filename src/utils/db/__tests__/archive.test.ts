@@ -12,6 +12,7 @@ import {
     isValidInvitationCode,
     getInviteesByCode,
     listAllInvitees,
+    listUploaderNames,
 } from "../archive";
 
 const savedMaster = process.env.MASTER_INVITATION_CODE;
@@ -53,6 +54,48 @@ describe("master invitation code", () => {
     it("returns the couple's names for the master code", async () => {
         expect(await getInviteesByCode("LOCAL1")).toEqual(["Matthew", "Rebecca"]);
         expect(mockSend).not.toHaveBeenCalled();
+    });
+});
+
+describe("listUploaderNames", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        process.env.MASTER_INVITATION_CODE = "LOCAL1";
+    });
+    afterEach(() => {
+        if (savedMaster === undefined) delete process.env.MASTER_INVITATION_CODE;
+        else process.env.MASTER_INVITATION_CODE = savedMaster;
+    });
+
+    it("maps codes to household first names, never exposing the code in values", async () => {
+        mockSend.mockResolvedValue({
+            Items: [
+                { entity: "code", code: "ABC123", invitation_id: 3 },
+                { entity: "code", code: "SOLO01", invitation_id: 4 },
+                { entity: "code", code: "EMPTY0", invitation_id: 5 }, // no invitees
+                { entity: "invitee", id: 7, invitation_id: 3, first_name: "Brian", last_name: "Byrne" },
+                { entity: "invitee", id: 8, invitation_id: 3, first_name: "Aoife", last_name: "Byrne" },
+                { entity: "invitee", id: 9, invitation_id: 4, first_name: "Cara", last_name: "Kelly" },
+            ],
+        });
+
+        const uploaders = await listUploaderNames();
+
+        expect(uploaders.get("ABC123")).toBe("Aoife & Brian");
+        expect(uploaders.get("SOLO01")).toBe("Cara");
+        expect(uploaders.has("EMPTY0")).toBe(false);
+        expect(uploaders.get("LOCAL1")).toBe("Matthew & Rebecca");
+        // Display values are names only — a code appearing in a value would
+        // leak the site's access credential into public payloads.
+        for (const name of uploaders.values()) {
+            expect(name).not.toMatch(/^[A-Z0-9]{6}$/);
+        }
+    });
+
+    it("omits the master entry when the env var is unset", async () => {
+        delete process.env.MASTER_INVITATION_CODE;
+        mockSend.mockResolvedValue({ Items: [] });
+        expect((await listUploaderNames()).size).toBe(0);
     });
 });
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listPhotosByStatus } from "@/utils/db/photos";
 import { listCategories } from "@/utils/db/categories";
-import { isValidInvitationCode } from "@/utils/db/archive";
+import { isValidInvitationCode, listUploaderNames } from "@/utils/db/archive";
 import { getFacesByInvitees } from "@/utils/db/faces";
 import { requireAuth } from "@/utils/auth/requireAuth";
 import { cdnUrl } from "@/utils/storage";
@@ -79,10 +79,23 @@ export async function GET(request: NextRequest) {
         const total = matching.length;
         const rows = matching.slice(offset, offset + limit);
 
+        // Attribution for guest uploads (rows carrying an invitation code) —
+        // professional imports have no code and stay unattributed. Only hit
+        // the archive when this page actually contains guest uploads.
+        // Deliberately NOT gated on isAdmin: the couple browse the gallery
+        // logged in, and its lightbox reads uploaded_by from the admin rows —
+        // skipping the (tiny) scan would strip their captions.
+        const uploaders = rows.some((p) => p.invitation_code)
+            ? await listUploaderNames()
+            : new Map<string, string>();
+
         const photos = rows.map((p) => {
             const thumbnail_url = p.thumbnail_key ? cdnUrl(p.thumbnail_key) : null;
+            const uploaded_by = p.invitation_code
+                ? (uploaders.get(p.invitation_code) ?? null)
+                : null;
             if (isAdmin) {
-                return { ...p, thumbnail_url };
+                return { ...p, thumbnail_url, uploaded_by };
             }
             // Public allowlist — never expose invitation_code, s3_key,
             // approved_by, or other internal fields to gallery visitors.
@@ -96,6 +109,7 @@ export async function GET(request: NextRequest) {
                 category_id: p.category_id,
                 category_slug: p.category_slug,
                 uploaded_at: p.uploaded_at,
+                uploaded_by,
             };
             return publicPhoto;
         });

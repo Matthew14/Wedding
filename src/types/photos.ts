@@ -26,6 +26,9 @@ export interface PublicPhoto {
     category_id: string | null;
     category_slug: string | null;
     uploaded_at: string;
+    // Household display names for guest uploads ("Aoife & Brian"); null for
+    // professionally imported photos. The code itself is never exposed.
+    uploaded_by: string | null;
 }
 
 export interface PhotoCategory {

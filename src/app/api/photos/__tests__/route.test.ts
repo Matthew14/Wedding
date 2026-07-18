@@ -11,8 +11,10 @@ vi.mock("@/utils/db/photos", () => ({
     listPhotosByStatus: (...args: unknown[]) => mockListPhotosByStatus(...args),
 }));
 
+const mockListUploaderNames = vi.fn();
 vi.mock("@/utils/db/archive", () => ({
     isValidInvitationCode: (...args: unknown[]) => mockIsValidInvitationCode(...args),
+    listUploaderNames: (...args: unknown[]) => mockListUploaderNames(...args),
 }));
 
 const mockGetFacesByInvitees = vi.fn();
@@ -69,6 +71,7 @@ describe("GET /api/photos", () => {
         // Default to an unauthenticated (public) caller with a valid code —
         // the gallery is code-access only.
         mockIsValidInvitationCode.mockResolvedValue(true);
+        mockListUploaderNames.mockResolvedValue(new Map([["ABC123", "Aoife & Brian"]]));
         mockRequireAuth.mockResolvedValue({
             success: false,
             response: new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
@@ -150,6 +153,33 @@ describe("GET /api/photos", () => {
         const req = new NextRequest("http://localhost/api/photos?code=ABC123");
         await GET(req);
         expect(mockGetFacesByInvitees).not.toHaveBeenCalled();
+    });
+
+    it("attributes guest uploads to their household by name", async () => {
+        mockListPhotosByStatus.mockResolvedValue([
+            { ...mockPhoto, id: "guest-upload", invitation_code: "ABC123" },
+            { ...mockPhoto, id: "professional", invitation_code: undefined },
+        ]);
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123");
+        const data = await (await GET(req)).json();
+
+        const byId = Object.fromEntries(
+            data.photos.map((p: { id: string; uploaded_by: string | null }) => [
+                p.id,
+                p.uploaded_by,
+            ])
+        );
+        expect(byId["guest-upload"]).toBe("Aoife & Brian");
+        expect(byId["professional"]).toBeNull();
+    });
+
+    it("skips the archive scan when the page has no guest uploads", async () => {
+        mockListPhotosByStatus.mockResolvedValue([
+            { ...mockPhoto, invitation_code: undefined },
+        ]);
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123");
+        await GET(req);
+        expect(mockListUploaderNames).not.toHaveBeenCalled();
     });
 
     it("does not expose sensitive fields to public callers", async () => {
