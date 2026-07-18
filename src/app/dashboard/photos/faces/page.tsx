@@ -200,12 +200,12 @@ export default function FacesPage() {
         ignored,
     };
 
-    // Clear every cluster assigned to a person (sequential — each patch is
-    // an idempotent fan-out server-side, and person cluster counts are small).
+    // Clear every cluster assigned to a person — in parallel, since each
+    // patch is an independent, idempotent fan-out server-side.
     const clearPerson = async (group: AssignedGroup) => {
-        for (const clusterId of group.cluster_ids) {
-            await patchCluster(clusterId, { invitee_id: null });
-        }
+        await Promise.all(
+            group.cluster_ids.map((clusterId) => patchCluster(clusterId, { invitee_id: null }))
+        );
     };
 
     // Person-level detail: every face across all their clusters, via the
@@ -221,7 +221,9 @@ export default function FacesPage() {
             setDetail({
                 cluster_id: "",
                 invitee_id: group.invitee_id,
-                invitee_name: group.invitee_name,
+                // Fallback keeps the modal title person-specific even for a
+                // nameless invitee, matching the card badge.
+                invitee_name: group.invitee_name ?? `Guest #${group.invitee_id}`,
                 ignored: false,
                 faces: json.faces ?? [],
             });
@@ -250,7 +252,8 @@ export default function FacesPage() {
             </Group>
 
             <Text c="dimmed" size="sm">
-                {assigned} of {clusters.length - ignored} people identified · {ignored} ignored
+                {assignedGroups.length} people identified · {counts.unassigned} unassigned
+                face{counts.unassigned === 1 ? "" : "s"} · {ignored} ignored
                 {unclusteredFaces > 0 &&
                     ` · ${unclusteredFaces} faces not yet clustered (run the clustering script)`}
             </Text>
