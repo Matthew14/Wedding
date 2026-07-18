@@ -30,9 +30,17 @@ export async function GET(
             return NextResponse.json({ error: "Photo not available" }, { status: 403 });
         }
 
+        // Without an attachment disposition the browser follows the redirect
+        // and just DISPLAYS the image; this makes S3 serve it as a download
+        // with the original file name.
+        const safeName = photo.file_name.replace(/[^\w.\- ]/g, "_");
         const downloadUrl = await getSignedUrl(
             getS3(),
-            new GetObjectCommand({ Bucket: BUCKET, Key: photo.s3_key }),
+            new GetObjectCommand({
+                Bucket: BUCKET,
+                Key: photo.s3_key,
+                ResponseContentDisposition: `attachment; filename="${safeName}"`,
+            }),
             { expiresIn: 900 }
         );
 
