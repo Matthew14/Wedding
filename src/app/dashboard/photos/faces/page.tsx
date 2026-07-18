@@ -370,11 +370,11 @@ function PersonReview({ options, onError, onDetached }: PersonReviewProps) {
         }
     };
 
-    const rejectFace = async (faceId: string) => {
-        const previous = faces;
-        setFaces((prev) => (prev ?? []).filter((f) => f.face_id !== faceId));
+    const rejectFace = async (face: FaceView) => {
+        const reqId = requestId.current;
+        setFaces((prev) => (prev ?? []).filter((f) => f.face_id !== face.face_id));
         try {
-            const res = await fetch(`/api/dashboard/faces/${faceId}`, {
+            const res = await fetch(`/api/dashboard/faces/${face.face_id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ detach: true }),
@@ -382,7 +382,16 @@ function PersonReview({ options, onError, onDetached }: PersonReviewProps) {
             if (!res.ok) throw new Error("Failed to reject face");
             onDetached();
         } catch (err) {
-            setFaces(previous);
+            // If the admin switched person meanwhile, this list no longer
+            // belongs to the face — leave it alone (the face was never
+            // detached server-side, so it returns on the next load).
+            if (requestId.current !== reqId) return;
+            // Additive restore of just this face: a wholesale snapshot
+            // rollback would resurrect other faces whose rejects succeeded
+            // while this request was in flight.
+            setFaces((prev) =>
+                [...(prev ?? []), face].sort((a, b) => a.confidence - b.confidence)
+            );
             onError(err instanceof Error ? err.message : "Failed to reject face");
         }
     };
@@ -442,7 +451,7 @@ function PersonReview({ options, onError, onDetached }: PersonReviewProps) {
                                     color="red"
                                     aria-label="Reject face"
                                     style={{ position: "absolute", top: 2, right: 2 }}
-                                    onClick={() => rejectFace(face.face_id)}
+                                    onClick={() => rejectFace(face)}
                                 >
                                     <IconX size={14} />
                                 </ActionIcon>
