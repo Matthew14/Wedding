@@ -110,10 +110,14 @@ export default function FacesPage() {
         setDetailLoading(true);
         try {
             const res = await fetch(`/api/dashboard/faces/clusters/${clusterId}`);
-            if (detailRequestId.current !== requestId) return; // closed or superseded
             if (!res.ok) throw new Error("Failed to load cluster");
-            setDetail(await res.json());
+            const json = await res.json();
+            // Guard after the last await — res.json() is an await point too,
+            // and a close during parsing must not resurface stale data.
+            if (detailRequestId.current !== requestId) return;
+            setDetail(json);
         } catch (err) {
+            if (detailRequestId.current !== requestId) return; // stale failure, irrelevant
             setError(err instanceof Error ? err.message : "Failed to load cluster");
         } finally {
             if (detailRequestId.current === requestId) setDetailLoading(false);
