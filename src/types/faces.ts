@@ -16,6 +16,10 @@ export interface PhotoFace {
     invitee_id?: number;
     invitation_id?: number;
     ignored?: boolean;
+    // People an admin has explicitly said this face is NOT (via the By
+    // Person reject button). Automated re-matching must never re-attach the
+    // face to anyone on this list.
+    rejected_invitee_ids?: number[];
     bounding_box: FaceBoundingBox;
     confidence: number;
     indexed_at: string;

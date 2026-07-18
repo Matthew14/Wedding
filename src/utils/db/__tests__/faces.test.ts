@@ -99,24 +99,36 @@ describe("updateClusterAssignment", () => {
 describe("detachFace", () => {
     beforeEach(() => vi.clearAllMocks());
 
-    it("moves the face to a fresh cluster and strips assignment fields", async () => {
-        mockSend.mockResolvedValue({});
+    it("records the rejected person and strips assignment fields", async () => {
+        mockSend
+            .mockResolvedValueOnce({ Item: { invitee_id: 7 } }) // current row
+            .mockResolvedValueOnce({}); // update
 
         expect(await detachFace("f1")).toBe(true);
-        const update = sentCommand(0);
+        const update = sentCommand(1);
         expect(update.Key).toEqual({ face_id: "f1" });
         expect(update.UpdateExpression).toBe(
-            "SET cluster_id = :fresh REMOVE invitee_id, invitation_id, ignored"
+            "SET cluster_id = :fresh, rejected_invitee_ids = list_append(if_not_exists(rejected_invitee_ids, :empty), :rejected) REMOVE invitee_id, invitation_id, ignored"
         );
+        expect(update.ExpressionAttributeValues?.[":rejected"]).toEqual([7]);
         // A real (random) uuid, not a fixed sentinel.
         expect(update.ExpressionAttributeValues?.[":fresh"]).toMatch(/^[0-9a-f-]{36}$/);
     });
 
-    it("returns false when the face does not exist", async () => {
-        const { ConditionalCheckFailedException } = await import("@aws-sdk/client-dynamodb");
-        mockSend.mockRejectedValue(
-            new ConditionalCheckFailedException({ message: "nope", $metadata: {} })
+    it("detaches an unassigned face without recording a rejection", async () => {
+        mockSend.mockResolvedValueOnce({ Item: {} }).mockResolvedValueOnce({});
+
+        expect(await detachFace("f1")).toBe(true);
+        const update = sentCommand(1);
+        expect(update.UpdateExpression).toBe(
+            "SET cluster_id = :fresh REMOVE invitee_id, invitation_id, ignored"
         );
+        expect(update.ExpressionAttributeValues).not.toHaveProperty(":rejected");
+    });
+
+    it("returns false when the face does not exist", async () => {
+        mockSend.mockResolvedValueOnce({ Item: undefined });
         expect(await detachFace("missing")).toBe(false);
+        expect(mockSend).toHaveBeenCalledTimes(1); // no update attempted
     });
 });
