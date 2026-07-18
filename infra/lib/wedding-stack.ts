@@ -10,6 +10,8 @@ import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as rekognition from 'aws-cdk-lib/aws-rekognition';
+import * as ses from 'aws-cdk-lib/aws-ses';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -250,6 +252,23 @@ export class WeddingStack extends cdk.Stack {
       ],
     });
 
+    // ── SES (admin upload notifications) ─────────────────────────────────────
+    // The domain identity lets photos@oneill.wedding send; DKIM CNAMEs land
+    // in the Route53 zone automatically. The account stays in the SES
+    // sandbox, which is fine because the ONLY recipient is the admin — whose
+    // address is verified by the second identity (a confirmation email
+    // arrives on first deploy; click it once).
+    const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'WeddingZone', {
+      hostedZoneId: 'Z0934871XWIQZAKBW951',
+      zoneName: 'oneill.wedding',
+    });
+    new ses.EmailIdentity(this, 'SesDomainIdentity', {
+      identity: ses.Identity.publicHostedZone(zone),
+    });
+    new ses.EmailIdentity(this, 'SesAdminRecipient', {
+      identity: ses.Identity.email('matthew@matthewoneill.com'),
+    });
+
     // ── photo-processor Lambda ───────────────────────────────────────────────
     const photoProcessor = new NodejsFunction(this, 'PhotoProcessor', {
       entry: path.join(__dirname, '../lambdas/photo-processor/index.ts'),
@@ -291,6 +310,11 @@ export class WeddingStack extends cdk.Stack {
         // sunglasses cross-match above it, which chained 44% of all faces
         // into one cluster during the backfill.
         FACE_MATCH_THRESHOLD: '97',
+        ARCHIVE_TABLE: archiveTable.tableName,
+        CDN_URL: `https://${distribution.distributionDomainName}`,
+        NOTIFY_FROM: 'photos@oneill.wedding',
+        NOTIFY_TO: 'matthew@matthewoneill.com',
+        SITE_URL: 'https://oneill.wedding',
       },
     });
     photosBucket.addEventNotification(
@@ -301,6 +325,18 @@ export class WeddingStack extends cdk.Stack {
     photosBucket.grantReadWrite(photoProcessor);
     photosTable.grantReadWriteData(photoProcessor);
     facesTable.grantReadWriteData(photoProcessor);
+    // Read-only: resolving an uploader's code to household names for the
+    // notification email (the archive stays frozen).
+    archiveTable.grantReadData(photoProcessor);
+    photoProcessor.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail'],
+        resources: [
+          `arn:aws:ses:${this.region}:${this.account}:identity/oneill.wedding`,
+          `arn:aws:ses:${this.region}:${this.account}:identity/matthew@matthewoneill.com`,
+        ],
+      })
+    );
     // The dashboard's "Re-match unassigned" button async-invokes the Lambda —
     // the app itself has no Rekognition permissions by design.
     photoProcessor.grantInvoke(apiUser);

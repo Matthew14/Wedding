@@ -2,7 +2,8 @@ import type { S3Event } from "aws-lambda";
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import heicConvert from "heic-convert";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
+import { DynamoDBClient, ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
     GetCommand,
@@ -25,11 +26,22 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
     marshallOptions: { removeUndefinedValues: true },
 });
 const rekognition = new RekognitionClient({});
+const sesClient = new SESv2Client({});
 
 const PHOTOS_TABLE = process.env.PHOTOS_TABLE ?? "wedding-photos";
 const FACES_TABLE = process.env.FACES_TABLE ?? "wedding-photo-faces";
+const ARCHIVE_TABLE = process.env.ARCHIVE_TABLE ?? "wedding-archive";
 const COLLECTION_ID = process.env.REKOGNITION_COLLECTION_ID ?? "wedding-faces-2026";
 const FACE_MATCH_THRESHOLD = Number(process.env.FACE_MATCH_THRESHOLD ?? "95");
+
+// Admin notification email; unset NOTIFY_TO disables it entirely.
+const NOTIFY_FROM = process.env.NOTIFY_FROM ?? "";
+const NOTIFY_TO = process.env.NOTIFY_TO ?? "";
+const SITE_URL = process.env.SITE_URL ?? "https://oneill.wedding";
+const CDN_URL = process.env.CDN_URL ?? "";
+// One email per burst: a guest selecting 40 photos triggers 40 invocations,
+// but only the first inside this window sends.
+const NOTIFY_DEBOUNCE_MS = 30 * 60 * 1000;
 
 // Upper bound on the original file we will buffer into memory, so a single
 // oversized object cannot OOM-crash the function. Guest uploads are capped at
@@ -285,6 +297,127 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
     if (dogResult.status === "rejected") {
         console.error(`Dog detection failed for ${key} (photo ${photoId}):`, dogResult.reason);
     }
+    try {
+        await notifyAdminOfUpload(code, thumbKey);
+    } catch (err) {
+        console.error(`Upload notification failed for ${key}:`, err);
+    }
+}
+
+// Email the admin that guest photos are waiting for review — at most one
+// email per debounce window, no matter how large the upload burst.
+async function notifyAdminOfUpload(code: string, thumbKey: string): Promise<void> {
+    if (!NOTIFY_TO || !NOTIFY_FROM) return;
+
+    // Guest uploads only: the key's code segment must be a real archived
+    // invitation code. Professional imports use category slugs there, and
+    // the couple's own master code isn't in the archive — both skip.
+    const codeItem = await docClient.send(
+        new GetCommand({
+            TableName: ARCHIVE_TABLE,
+            Key: { PK: `CODE#${code}`, SK: "META" },
+        })
+    );
+    const invitationId = (codeItem.Item as { invitation_id?: number } | undefined)
+        ?.invitation_id;
+    if (invitationId == null) return;
+
+    // Debounce marker lives in the photos table under a reserved id. The
+    // conditional write is atomic: exactly one concurrent invocation wins
+    // the window and sends.
+    const now = Date.now();
+    try {
+        await docClient.send(
+            new UpdateCommand({
+                TableName: PHOTOS_TABLE,
+                Key: { id: "NOTIFICATION#uploads" },
+                UpdateExpression: "SET last_sent_at = :now",
+                ConditionExpression: "attribute_not_exists(last_sent_at) OR last_sent_at < :cutoff",
+                ExpressionAttributeValues: {
+                    ":now": new Date(now).toISOString(),
+                    ":cutoff": new Date(now - NOTIFY_DEBOUNCE_MS).toISOString(),
+                },
+            })
+        );
+    } catch (err) {
+        if (err instanceof ConditionalCheckFailedException) return; // already notified recently
+        throw err;
+    }
+
+    // Household first names for the greeting, pending count for the summary.
+    const [inviteeRows, pending] = await Promise.all([
+        docClient.send(
+            new QueryCommand({
+                TableName: ARCHIVE_TABLE,
+                KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+                ExpressionAttributeValues: {
+                    ":pk": `INVITATION#${invitationId}`,
+                    ":sk": "INVITEE#",
+                },
+            })
+        ),
+        docClient.send(
+            new QueryCommand({
+                TableName: PHOTOS_TABLE,
+                IndexName: "byStatus",
+                KeyConditionExpression: "#status = :pending",
+                ExpressionAttributeNames: { "#status": "status" },
+                ExpressionAttributeValues: { ":pending": "pending" },
+                Select: "COUNT",
+            })
+        ),
+    ]);
+    const names = ((inviteeRows.Items ?? []) as { first_name: string }[])
+        .map((i) => i.first_name)
+        .sort((a, b) => a.localeCompare(b));
+    const who =
+        names.length > 1
+            ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}`
+            : (names[0] ?? "A guest");
+    const pendingCount = pending.Count ?? 0;
+    const reviewUrl = `${SITE_URL}/dashboard/photos`;
+    const thumbUrl = CDN_URL ? `${CDN_URL}/${thumbKey}` : null;
+
+    await sesClient.send(
+        new SendEmailCommand({
+            FromEmailAddress: `Wedding Gallery <${NOTIFY_FROM}>`,
+            Destination: { ToAddresses: [NOTIFY_TO] },
+            Content: {
+                Simple: {
+                    Subject: {
+                        Data: `${who} shared new wedding photos (${pendingCount} awaiting review)`,
+                    },
+                    Body: {
+                        Text: {
+                            Data:
+                                `${who} just uploaded photos to the gallery.\n\n` +
+                                `${pendingCount} photo${pendingCount === 1 ? "" : "s"} now awaiting review: ${reviewUrl}\n\n` +
+                                `(At most one of these emails per 30 minutes, however many photos arrive.)`,
+                        },
+                        Html: {
+                            Data: `
+<div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto; color: #495057;">
+  <h2 style="font-weight: 300; color: #8b7355;">New photos in the gallery</h2>
+  <p><strong>${who}</strong> just uploaded photos.</p>
+  ${thumbUrl ? `<img src="${thumbUrl}" alt="" style="max-width: 100%; border-radius: 8px;" />` : ""}
+  <p>${pendingCount} photo${pendingCount === 1 ? "" : "s"} now awaiting review.</p>
+  <p style="margin: 24px 0;">
+    <a href="${reviewUrl}"
+       style="background: #f5b301; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none;">
+      Review photos
+    </a>
+  </p>
+  <p style="color: #adb5bd; font-size: 12px;">
+    At most one of these emails per 30 minutes, however many photos arrive.
+  </p>
+</div>`,
+                        },
+                    },
+                },
+            },
+        })
+    );
+    console.log(`Upload notification sent (${who}, ${pendingCount} pending)`);
 }
 
 // Dog detections make Maggie searchable in the gallery's people search. Each
