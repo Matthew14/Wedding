@@ -118,18 +118,19 @@ async function indexAndAssignFaces(
     thumbKey: string,
     photoId: string
 ): Promise<void> {
-    // S3 retries can re-deliver an event after a partial run; face rows for
-    // this photo mean indexing already happened.
-    const existing = await docClient.send(
-        new QueryCommand({
-            TableName: FACES_TABLE,
-            IndexName: "byPhoto",
-            KeyConditionExpression: "photo_id = :photo",
-            ExpressionAttributeValues: { ":photo": photoId },
-            Limit: 1,
+    // S3 retries can re-deliver an event after a completed run. Check the
+    // photo item's face_indexed_at marker with a strongly consistent read —
+    // a byPhoto GSI query is eventually consistent (it could miss rows
+    // written moments ago) and can't represent zero-face photos at all.
+    const photo = await docClient.send(
+        new GetCommand({
+            TableName: PHOTOS_TABLE,
+            Key: { id: photoId },
+            ConsistentRead: true,
+            ProjectionExpression: "face_indexed_at",
         })
     );
-    if ((existing.Items?.length ?? 0) > 0) return;
+    if (photo.Item?.face_indexed_at) return;
 
     const indexed = await rekognition.send(
         new IndexFacesCommand({

@@ -218,8 +218,9 @@ async function clusterFaces() {
     if (labeled.length > 0 && !force) {
         console.error(
             `Phase B refused: ${labeled.length} faces already carry labels. ` +
-                `Re-clustering replaces every cluster_id and orphans that work. ` +
-                `Run with --force if you really want this.`
+                `Re-clustering replaces every cluster_id and WIPES all labels ` +
+                `(they belong to the old clusters). Run with --force if you ` +
+                `really want to start labeling over.`
         );
         process.exit(1);
     }
@@ -281,7 +282,12 @@ async function clusterFaces() {
             new UpdateCommand({
                 TableName: facesTable,
                 Key: { face_id: face.face_id },
-                UpdateExpression: "SET cluster_id = :cluster",
+                // Faces can land in a different cluster than last time, so any
+                // label denormalized from the old clustering is stale — wipe
+                // it rather than leave clusters with conflicting members.
+                // (A no-op unless --force allowed re-clustering after labeling.)
+                UpdateExpression:
+                    "SET cluster_id = :cluster REMOVE invitee_id, invitation_id, ignored",
                 ExpressionAttributeValues: { ":cluster": clusterIds.get(find(face.face_id)) },
             })
         );
