@@ -1,4 +1,6 @@
 import { QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
+import { randomUUID } from "crypto";
 import { docClient, FACES_TABLE } from "./dynamo";
 import type { ClusterAssignment, PhotoFace } from "@/types/faces";
 
@@ -73,6 +75,30 @@ export async function getFacesByInvitees(inviteeIds: number[]): Promise<PhotoFac
         })
     );
     return results.flat();
+}
+
+// An admin rejected this face from its person: sever it into a fresh,
+// unassigned singleton cluster. It disappears from the person (and from
+// guest results) immediately, but reappears in the Unassigned tab — if it's
+// really a different guest, it can be labeled correctly from there. Returns
+// false when no such face exists.
+export async function detachFace(faceId: string): Promise<boolean> {
+    try {
+        await docClient.send(
+            new UpdateCommand({
+                TableName: FACES_TABLE,
+                Key: { face_id: faceId },
+                UpdateExpression:
+                    "SET cluster_id = :fresh REMOVE invitee_id, invitation_id, ignored",
+                ConditionExpression: "attribute_exists(face_id)",
+                ExpressionAttributeValues: { ":fresh": randomUUID() },
+            })
+        );
+        return true;
+    } catch (error) {
+        if (error instanceof ConditionalCheckFailedException) return false;
+        throw error;
+    }
 }
 
 // Apply an assignment to every face in a cluster. Not transactional: a crash
