@@ -17,6 +17,10 @@ vi.mock("@/utils/db/archive", () => ({
     isMasterCode: (...args: unknown[]) => mockIsMasterCode(...args),
     getInvitationIdByCode: (...args: unknown[]) => mockGetInvitationIdByCode(...args),
     getInviteesWithIds: (...args: unknown[]) => mockGetInviteesWithIds(...args),
+    COUPLE_INVITEES: [
+        { id: -1, invitation_id: -1, name: "Matthew O'Neill", code: null },
+        { id: -2, invitation_id: -1, name: "Rebecca O'Neill", code: null },
+    ],
 }));
 vi.mock("@/utils/db/faces", () => ({
     getFacesByInvitees: (...args: unknown[]) => mockGetFacesByInvitees(...args),
@@ -128,12 +132,20 @@ describe("GET /api/gallery/my-photos", () => {
         expect(body.photos[0].thumbnail_url).toBe("https://cdn/uploads/thumbnail/x/p1.jpg");
     });
 
-    it("returns an empty result for the master code without touching the archive", async () => {
+    it("master code searches the couple's synthetic ids without touching the archive", async () => {
         mockIsMasterCode.mockReturnValue(true);
+        mockGetFacesByInvitees.mockResolvedValue([
+            { face_id: "f1", photo_id: "p1", invitee_id: -1 },
+        ]);
+        mockGetPhotosByIds.mockResolvedValue([photo({ id: "p1" })]);
+
         const body = await (await GET(req("?code=RM2026"))).json();
-        expect(body).toEqual({ photos: [], invitees: [], page: 1, limit: 200, total: 0 });
+
         expect(mockGetInvitationIdByCode).not.toHaveBeenCalled();
-        expect(mockGetFacesByInvitees).not.toHaveBeenCalled();
+        expect(mockGetInviteesWithIds).not.toHaveBeenCalled();
+        expect(mockGetFacesByInvitees).toHaveBeenCalledWith([-1, -2]);
+        expect(body.invitees).toEqual(["Matthew", "Rebecca"]);
+        expect(body.photos).toHaveLength(1);
     });
 
     it("admin without a code gets an empty 200, not a 401", async () => {

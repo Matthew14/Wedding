@@ -215,7 +215,7 @@ export default function MyPhotosPage() {
                             <Stack align="center" gap="xs">
                                 <Text c="dimmed">
                                     {isAdmin && (!invitationCode || invitationCode === masterCode)
-                                        ? "The couple's code has no guest household to match — enter a guest's code to preview their view."
+                                        ? "No faces are assigned to you two yet — label your clusters in the dashboard (Photos → Faces)."
                                         : "We haven't spotted you in any photos yet."}
                                 </Text>
                                 <Text c="dimmed" size="sm">
