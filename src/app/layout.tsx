@@ -36,7 +36,7 @@ const greatVibes = Great_Vibes({
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://oneill.wedding"),
     title: "Rebecca & Matthew's Wedding",
-    description: "Thanks for celebrating with us. Check back soon to see the photos.",
+    description: "Thanks for celebrating with us. Click the link we sent you to see the photos.",
     keywords: ["wedding", "Rebecca", "Matthew", "celebration"],
     icons: {
         icon: "/favicon.ico",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     },
     openGraph: {
         title: "Rebecca & Matthew's Wedding",
-        description: "Thanks for celebrating with us. Check back soon to see the photos.",
+        description: "Thanks for celebrating with us. Click the link we sent you to see the photos.",
         type: "website",
         images: [
             {
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     twitter: {
         card: "summary_large_image",
         title: "Rebecca & Matthew's Wedding",
-        description: "Thanks for celebrating with us. Check back soon to see the photos.",
+        description: "Thanks for celebrating with us. Click the link we sent you to see the photos.",
         images: ["/rebecca-matthew-wedding-photo-2.jpeg"],
     },
     other: {
