@@ -59,6 +59,16 @@ export interface ClustersResponse {
     };
 }
 
+// A searchable person in the public gallery: anyone (or the dog) with at
+// least one assigned face. The face is their highest-confidence detection,
+// CSS-cropped as a headshot in the search dropdown.
+export interface GalleryPerson {
+    invitee_id: number;
+    name: string;
+    photo_count: number;
+    face: FaceView;
+}
+
 export interface ClusterDetailResponse {
     cluster_id: string;
     invitee_id: number | null;

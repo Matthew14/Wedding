@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { listPhotosByStatus } from "@/utils/db/photos";
 import { listCategories } from "@/utils/db/categories";
 import { isValidInvitationCode } from "@/utils/db/archive";
+import { getFacesByInvitees } from "@/utils/db/faces";
 import { requireAuth } from "@/utils/auth/requireAuth";
 import { cdnUrl } from "@/utils/storage";
 import type { Photo, PublicPhoto } from "@/types/photos";
@@ -51,12 +52,29 @@ export async function GET(request: NextRequest) {
         ]);
         const slugById = new Map(categories.map((c) => [c.id, c.slug]));
 
-        const matching: PhotoRow[] = allPhotos
+        let matching: PhotoRow[] = allPhotos
             .map((p) => ({
                 ...p,
                 category_slug: p.category_id ? (slugById.get(p.category_id) ?? null) : null,
             }))
             .filter((p) => !categorySlug || p.category_slug === categorySlug);
+
+        // People search: restrict to photos the selected person appears in
+        // (per the labeled face detections). Composes with the category
+        // filter above. Guest-visible by design — the same code gate that
+        // protects the photos protects who's in them.
+        const personParam = searchParams.get("person");
+        if (personParam !== null) {
+            // Strict digit check: Number() would coerce "", whitespace, and
+            // hex strings into integers that silently query the wrong id.
+            if (!/^-?\d+$/.test(personParam)) {
+                return NextResponse.json({ error: "Invalid person id" }, { status: 400 });
+            }
+            const personId = Number(personParam);
+            const personFaces = await getFacesByInvitees([personId]);
+            const personPhotoIds = new Set(personFaces.map((f) => f.photo_id));
+            matching = matching.filter((p) => personPhotoIds.has(p.id));
+        }
 
         const total = matching.length;
         const rows = matching.slice(offset, offset + limit);

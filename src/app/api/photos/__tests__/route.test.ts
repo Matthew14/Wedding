@@ -15,6 +15,11 @@ vi.mock("@/utils/db/archive", () => ({
     isValidInvitationCode: (...args: unknown[]) => mockIsValidInvitationCode(...args),
 }));
 
+const mockGetFacesByInvitees = vi.fn();
+vi.mock("@/utils/db/faces", () => ({
+    getFacesByInvitees: (...args: unknown[]) => mockGetFacesByInvitees(...args),
+}));
+
 vi.mock("@/utils/db/categories", () => ({
     listCategories: (...args: unknown[]) => mockListCategories(...args),
 }));
@@ -103,6 +108,48 @@ describe("GET /api/photos", () => {
         expect(data.photos[0].thumbnail_url).toBe("https://cdn/uploads/thumbnail/ABC123/uuid.jpg");
         // Verify only approved was queried
         expect(mockListPhotosByStatus).toHaveBeenCalledWith("approved");
+    });
+
+    it("person param restricts to that person's photos and composes with category", async () => {
+        mockListPhotosByStatus.mockResolvedValue([
+            { ...mockPhoto, id: "photo-1", category_id: "cat-ceremony" },
+            { ...mockPhoto, id: "photo-2", category_id: "cat-ceremony" },
+            { ...mockPhoto, id: "photo-3", category_id: null },
+        ]);
+        mockGetFacesByInvitees.mockResolvedValue([
+            { face_id: "f1", photo_id: "photo-2", invitee_id: 7 },
+            { face_id: "f2", photo_id: "photo-3", invitee_id: 7 },
+        ]);
+
+        const req = new NextRequest(
+            "http://localhost/api/photos?code=ABC123&person=7&category=ceremony"
+        );
+        const data = await (await GET(req)).json();
+
+        expect(mockGetFacesByInvitees).toHaveBeenCalledWith([7]);
+        // photo-2 is both ceremony AND person 7; photo-3 is person 7 but not
+        // ceremony; photo-1 is ceremony but not person 7.
+        expect(data.photos.map((p: { id: string }) => p.id)).toEqual(["photo-2"]);
+        expect(data.total).toBe(1);
+    });
+
+    it("rejects non-numeric person params, including coercible ones", async () => {
+        mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
+        for (const bad of ["abc", "", " 7", "0x7", "7.5"]) {
+            const req = new NextRequest(
+                `http://localhost/api/photos?code=ABC123&person=${encodeURIComponent(bad)}`
+            );
+            const res = await GET(req);
+            expect(res.status, `person=${JSON.stringify(bad)}`).toBe(400);
+        }
+        expect(mockGetFacesByInvitees).not.toHaveBeenCalled();
+    });
+
+    it("does not query faces without a person param", async () => {
+        mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123");
+        await GET(req);
+        expect(mockGetFacesByInvitees).not.toHaveBeenCalled();
     });
 
     it("does not expose sensitive fields to public callers", async () => {
