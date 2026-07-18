@@ -401,12 +401,9 @@ function Gallery() {
                     <Tabs
                         value={activeCategory ?? "all"}
                         onChange={(v) => setActiveCategory(v === "all" ? null : v)}
+                        classNames={{ list: "no-scrollbar" }}
                         styles={{
-                            list: {
-                                flexWrap: "nowrap",
-                                overflowX: "auto",
-                                scrollbarWidth: "none",
-                            },
+                            list: { flexWrap: "nowrap", overflowX: "auto" },
                             tab: { whiteSpace: "nowrap", flexShrink: 0 },
                         }}
                     >

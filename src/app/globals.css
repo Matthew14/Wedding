@@ -77,6 +77,17 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--gold);
 }
 
+/* Swipeable rows (e.g. the gallery category tabs) scroll without showing a
+   bar. scrollbar-width covers Firefox; the pseudo-element rule covers
+   WebKit/Safari, which otherwise paints the gold scrollbar above. */
+.no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
 /* Text selection color */
 ::selection {
     background-color: #8b7355;
