@@ -79,7 +79,14 @@ async function rematchUnassignedFaces(): Promise<void> {
     let lastKey: Record<string, unknown> | undefined;
     do {
         const page = await docClient.send(
-            new ScanCommand({ TableName: FACES_TABLE, ExclusiveStartKey: lastKey })
+            new ScanCommand({
+                TableName: FACES_TABLE,
+                // Only the fields the filter needs — no point hauling
+                // bounding boxes for thousands of already-decided rows.
+                ProjectionExpression: "face_id, invitee_id, #ig",
+                ExpressionAttributeNames: { "#ig": "ignored" },
+                ExclusiveStartKey: lastKey,
+            })
         );
         faces.push(...((page.Items ?? []) as typeof faces));
         lastKey = page.LastEvaluatedKey;
@@ -131,15 +138,21 @@ async function rematchUnassignedFaces(): Promise<void> {
     console.log(`Re-match done: ${assigned} auto-assigned, ${ignored} auto-ignored`);
 }
 
-// Like findClusterForFace, but only decisive outcomes count: the best match
-// that is itself labeled (assigned to a person, or ignored). Matching another
-// unlabeled face wouldn't move the admin's queue forward.
-async function findLabeledMatch(faceId: string): Promise<{
+interface FaceAssignment {
     cluster_id: string;
     invitee_id?: number;
     invitation_id?: number;
     ignored?: boolean;
-} | null> {
+}
+
+// Search the collection for faces similar to the given one and return the
+// first match (in similarity order) whose faces-table row satisfies the
+// predicate. Shared by upload-time assignment and the re-match pass so their
+// search tuning can't drift apart.
+async function findMatchingRow(
+    faceId: string,
+    accept: (item: FaceAssignment) => boolean
+): Promise<FaceAssignment | null> {
     const search = await rekognition.send(
         new SearchFacesCommand({
             CollectionId: COLLECTION_ID,
@@ -154,25 +167,24 @@ async function findLabeledMatch(faceId: string): Promise<{
         const row = await docClient.send(
             new GetCommand({ TableName: FACES_TABLE, Key: { face_id: matchedId } })
         );
-        const item = row.Item as
-            | {
-                  cluster_id?: string;
-                  invitee_id?: number;
-                  invitation_id?: number;
-                  ignored?: boolean;
-              }
-            | undefined;
+        const item = row.Item as (Partial<FaceAssignment> & { cluster_id?: string }) | undefined;
         if (!item?.cluster_id) continue;
-        if (item.invitee_id != null || item.ignored) {
-            return {
-                cluster_id: item.cluster_id,
-                invitee_id: item.invitee_id,
-                invitation_id: item.invitation_id,
-                ignored: item.ignored,
-            };
-        }
+        const candidate: FaceAssignment = {
+            cluster_id: item.cluster_id,
+            invitee_id: item.invitee_id,
+            invitation_id: item.invitation_id,
+            ignored: item.ignored,
+        };
+        if (accept(candidate)) return candidate;
     }
     return null;
+}
+
+// Only decisive outcomes count for re-matching: the best match that is
+// itself labeled (assigned to a person, or ignored). Matching another
+// unlabeled face wouldn't move the admin's queue forward.
+function findLabeledMatch(faceId: string): Promise<FaceAssignment | null> {
+    return findMatchingRow(faceId, (item) => item.invitee_id != null || !!item.ignored);
 }
 
 async function processPhoto(key: string, bucket: string): Promise<void> {
@@ -301,48 +313,10 @@ async function indexAndAssignFaces(
     );
 }
 
-// Search the collection for faces similar to the given one and return the
-// cluster (and any invitee assignment) of the best already-clustered match.
-async function findClusterForFace(faceId: string): Promise<{
-    cluster_id: string;
-    invitee_id?: number;
-    invitation_id?: number;
-    ignored?: boolean;
-} | null> {
-    const search = await rekognition.send(
-        new SearchFacesCommand({
-            CollectionId: COLLECTION_ID,
-            FaceId: faceId,
-            FaceMatchThreshold: FACE_MATCH_THRESHOLD,
-            MaxFaces: 10,
-        })
-    );
-
-    // Matches arrive sorted by similarity; take the first with a cluster.
-    for (const match of search.FaceMatches ?? []) {
-        const matchedId = match.Face?.FaceId;
-        if (!matchedId) continue;
-        const row = await docClient.send(
-            new GetCommand({ TableName: FACES_TABLE, Key: { face_id: matchedId } })
-        );
-        const item = row.Item as
-            | {
-                  cluster_id?: string;
-                  invitee_id?: number;
-                  invitation_id?: number;
-                  ignored?: boolean;
-              }
-            | undefined;
-        if (item?.cluster_id) {
-            return {
-                cluster_id: item.cluster_id,
-                invitee_id: item.invitee_id,
-                invitation_id: item.invitation_id,
-                ignored: item.ignored,
-            };
-        }
-    }
-    return null;
+// Upload-time assignment: any already-clustered match will do — an unlabeled
+// cluster is still the right home for a new face of the same person.
+function findClusterForFace(faceId: string): Promise<FaceAssignment | null> {
+    return findMatchingRow(faceId, () => true);
 }
 
 // Look up the photo id via the byS3Key GSI and backfill the thumbnail fields.

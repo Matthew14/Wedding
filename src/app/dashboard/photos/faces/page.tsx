@@ -141,13 +141,21 @@ export default function FacesPage() {
     // Fire the Lambda's re-match pass: every unassigned face gets another
     // SearchFaces look now that more of the collection is labeled. It runs in
     // the background — refresh the cluster list after a while to see results.
+    const rematchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        // The refresh timer outlives fetches by design; don't let it fire
+        // into an unmounted page.
+        return () => {
+            if (rematchTimer.current) clearTimeout(rematchTimer.current);
+        };
+    }, []);
     const startRematch = async () => {
         setRematchState("starting");
         try {
             const res = await fetch("/api/dashboard/faces/rematch", { method: "POST" });
             if (!res.ok) throw new Error("Failed to start re-matching");
             setRematchState("running");
-            setTimeout(() => {
+            rematchTimer.current = setTimeout(() => {
                 fetchClusters();
                 setRematchState("idle");
             }, 30000);

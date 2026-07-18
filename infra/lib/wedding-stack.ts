@@ -248,7 +248,10 @@ export class WeddingStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       // 2 min covered thumbnailing; the re-match mode walks every unassigned
-      // face (SearchFaces each), which needs headroom at ~2k faces.
+      // face (SearchFaces each), which needs headroom at ~2k faces. The
+      // longer cap also applies to S3-triggered runs — accepted: a hung
+      // invocation holds a slot longer, but post-wedding upload volume is a
+      // trickle and the account's default concurrency dwarfs it.
       timeout: cdk.Duration.minutes(10),
       // 512 MB OOMed on large JPEGs during the professional photo import
       // (decoded pixel buffers dwarf the file size — an 11 MB JPEG was enough).
