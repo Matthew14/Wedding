@@ -13,6 +13,7 @@
   "dependencies": {
     "aws-cdk-lib": "^2.200.0",
     "constructs": "^10.0.0",
+    "heic-convert": "^2.1.0",
     "sharp": "^0.34.5"
   },
   "devDependencies": {

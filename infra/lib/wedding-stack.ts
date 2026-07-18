@@ -271,7 +271,9 @@ export class WeddingStack extends cdk.Stack {
       // Guest uploads go up to 20 MB, so give sharp real headroom.
       memorySize: 1536,
       bundling: {
-        nodeModules: ['sharp'],
+        // heic-convert stays a real node_module (not esbuild-inlined) so its
+        // WASM decoder loads the way its loader expects.
+        nodeModules: ['sharp', 'heic-convert'],
         // sharp ships per-platform binaries; force npm to stage the Lambda's
         // platform (linux/arm64) rather than the machine running `cdk deploy`.
         environment: {
