@@ -21,7 +21,9 @@ import { RowsPhotoAlbum } from "react-photo-album";
 import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
 import Download from "yet-another-react-lightbox/plugins/download";
+import Captions from "yet-another-react-lightbox/plugins/captions";
 import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/captions.css";
 import type { PublicPhoto } from "@/types/photos";
 import Link from "next/link";
 
@@ -32,6 +34,7 @@ interface GalleryPhoto {
     alt: string;
     id: string;
     key: string;
+    uploadedBy: string | null;
 }
 
 const FALLBACK_ASPECT = { width: 4, height: 3 };
@@ -124,6 +127,7 @@ export default function MyPhotosPage() {
                     alt: p.file_name,
                     id: p.id,
                     key: p.id,
+                    uploadedBy: p.uploaded_by ?? null,
                 }))
             );
             setLoaded(true);
@@ -144,6 +148,8 @@ export default function MyPhotosPage() {
         width: p.width,
         height: p.height,
         alt: p.alt,
+        // Attribution caption for guest uploads; professional photos have none.
+        ...(p.uploadedBy && { description: `Shared by ${p.uploadedBy}` }),
         download: {
             url: `/api/photos/${p.id}/download-url?code=${invitationCode}`,
             filename: p.alt,
@@ -240,7 +246,7 @@ export default function MyPhotosPage() {
                 slides={lightboxSlides}
                 index={lightboxIndex}
                 on={{ view: ({ index }) => setLightboxIndex(index) }}
-                plugins={invitationCode ? [Download] : []}
+                plugins={invitationCode ? [Captions, Download] : [Captions]}
                 render={{
                     iconDownload: () => <IconDownload size={32} />,
                 }}
