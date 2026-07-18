@@ -26,7 +26,8 @@ export function FaceCrop({ src, box, imgWidth, imgHeight, size = 96 }: FaceCropP
         flexShrink: 0,
     };
 
-    if (!src || !imgWidth || !imgHeight) {
+    // A degenerate box (corrupt face row) would make scale Infinity/NaN below.
+    if (!src || !imgWidth || !imgHeight || box.width <= 0 || box.height <= 0) {
         return <div style={frame} />;
     }
 

@@ -28,4 +28,16 @@ describe("FaceCrop", () => {
         );
         expect(container.querySelector("img")).toBeNull();
     });
+
+    it("renders an empty placeholder for a degenerate bounding box", () => {
+        const { container } = render(
+            <FaceCrop
+                src="https://cdn/t.jpg"
+                box={{ left: 0.5, top: 0.5, width: 0, height: 0.2 }}
+                imgWidth={1000}
+                imgHeight={800}
+            />
+        );
+        expect(container.querySelector("img")).toBeNull();
+    });
 });

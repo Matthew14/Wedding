@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     Stack,
     Title,
@@ -42,6 +42,10 @@ export default function FacesPage() {
     const [error, setError] = useState<string | null>(null);
     const [detail, setDetail] = useState<ClusterDetailResponse | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+    // Monotonic id per detail fetch: closing the modal (or opening another
+    // cluster) bumps it, so a stale response can neither reopen a dismissed
+    // modal nor overwrite a newer cluster's data.
+    const detailRequestId = useRef(0);
 
     const fetchClusters = useCallback(async () => {
         setLoading(true);
@@ -102,16 +106,24 @@ export default function FacesPage() {
     };
 
     const openDetail = async (clusterId: string) => {
+        const requestId = ++detailRequestId.current;
         setDetailLoading(true);
         try {
             const res = await fetch(`/api/dashboard/faces/clusters/${clusterId}`);
+            if (detailRequestId.current !== requestId) return; // closed or superseded
             if (!res.ok) throw new Error("Failed to load cluster");
             setDetail(await res.json());
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load cluster");
         } finally {
-            setDetailLoading(false);
+            if (detailRequestId.current === requestId) setDetailLoading(false);
         }
+    };
+
+    const closeDetail = () => {
+        detailRequestId.current++;
+        setDetail(null);
+        setDetailLoading(false);
     };
 
     const assigned = clusters.filter((c) => c.invitee_id != null).length;
@@ -249,7 +261,7 @@ export default function FacesPage() {
 
             <Modal
                 opened={detail !== null || detailLoading}
-                onClose={() => setDetail(null)}
+                onClose={closeDetail}
                 title={
                     detail?.invitee_name
                         ? `Faces assigned to ${detail.invitee_name}`
