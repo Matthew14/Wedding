@@ -32,14 +32,21 @@ export async function GET(
 
         // Without an attachment disposition the browser follows the redirect
         // and just DISPLAYS the image; this makes S3 serve it as a download
-        // with the original file name.
+        // with the original file name. The ASCII fallback also strips ", CR/LF
+        // and ; — file_name is guest-supplied, so this doubles as header-
+        // injection protection. filename* (RFC 5987) preserves accented or
+        // non-Latin names in modern browsers.
         const safeName = photo.file_name.replace(/[^\w.\- ]/g, "_");
+        const utf8Name = encodeURIComponent(photo.file_name).replace(
+            /['()*]/g,
+            (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase()
+        );
         const downloadUrl = await getSignedUrl(
             getS3(),
             new GetObjectCommand({
                 Bucket: BUCKET,
                 Key: photo.s3_key,
-                ResponseContentDisposition: `attachment; filename="${safeName}"`,
+                ResponseContentDisposition: `attachment; filename="${safeName}"; filename*=UTF-8''${utf8Name}`,
             }),
             { expiresIn: 900 }
         );
