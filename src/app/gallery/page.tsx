@@ -16,9 +16,12 @@ import {
     Center,
     Paper,
     TextInput,
+    Select,
 } from "@mantine/core";
-import { IconAlertCircle, IconDownload, IconTrash } from "@tabler/icons-react";
+import { IconAlertCircle, IconDownload, IconTrash, IconSearch } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
+import { FaceCrop } from "@/components/FaceCrop";
+import type { GalleryPerson } from "@/types/faces";
 import { RowsPhotoAlbum } from "react-photo-album";
 import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
@@ -64,6 +67,8 @@ function Gallery() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [rejecting, setRejecting] = useState(false);
+    const [people, setPeople] = useState<GalleryPerson[]>([]);
+    const [personFilter, setPersonFilter] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
     const { status: sessionStatus, masterCode } = useSession();
     const isAdmin = sessionStatus === "authenticated";
@@ -164,12 +169,13 @@ function Gallery() {
     };
 
     const fetchPhotos = useCallback(
-        async (category: string | null, pg: number) => {
+        async (category: string | null, pg: number, person: string | null) => {
             setLoading(true);
             setError(null);
             try {
                 const params = new URLSearchParams({ page: String(pg), limit: String(LIMIT) });
                 if (category) params.set("category", category);
+                if (person) params.set("person", person);
                 if (invitationCode) params.set("code", invitationCode);
                 const res = await fetch(`/api/photos?${params}`);
                 if (res.status === 401) {
@@ -208,14 +214,25 @@ function Gallery() {
             .catch(() => {});
     }, []);
 
+    // The searchable people list (labeled faces). Needs gallery access, so
+    // it waits for the same code/session resolution the photos do.
+    useEffect(() => {
+        if (!codeChecked || (!invitationCode && sessionStatus !== "authenticated")) return;
+        const params = invitationCode ? `?code=${invitationCode}` : "";
+        fetch(`/api/gallery/people${params}`)
+            .then((r) => (r.ok ? r.json() : { people: [] }))
+            .then((d) => setPeople(d.people ?? []))
+            .catch(() => {});
+    }, [codeChecked, invitationCode, sessionStatus]);
+
     useEffect(() => {
         // Don't fetch until code resolution has run, and never fetch without
         // access — the API would just 401.
         if (!codeChecked || (!invitationCode && sessionStatus !== "authenticated")) return;
         setPage(1);
         setPhotos([]);
-        fetchPhotos(activeCategory, 1);
-    }, [activeCategory, fetchPhotos, codeChecked, invitationCode, sessionStatus]);
+        fetchPhotos(activeCategory, 1, personFilter);
+    }, [activeCategory, personFilter, fetchPhotos, codeChecked, invitationCode, sessionStatus]);
 
     // Infinite scroll: load the next page when the sentinel scrolls into view.
     // The effect re-runs on every relevant state change so the observer always
@@ -228,14 +245,14 @@ function Gallery() {
                 if (entries[0].isIntersecting) {
                     const next = page + 1;
                     setPage(next);
-                    fetchPhotos(activeCategory, next);
+                    fetchPhotos(activeCategory, next, personFilter);
                 }
             },
             { rootMargin: "400px" }
         );
         observer.observe(el);
         return () => observer.disconnect();
-    }, [hasMore, loading, page, activeCategory, fetchPhotos]);
+    }, [hasMore, loading, page, activeCategory, personFilter, fetchPhotos]);
 
     const lightboxSlides = photos.map((p) => ({
         src: p.src,
@@ -318,6 +335,49 @@ function Gallery() {
                         </Center>
                     ) : (
                         <>
+                    {people.length > 0 && (
+                        <Select
+                            placeholder="Search for someone…"
+                            leftSection={<IconSearch size={16} />}
+                            data={people.map((p) => ({
+                                value: String(p.invitee_id),
+                                label: p.name,
+                            }))}
+                            renderOption={({ option }) => {
+                                const person = people.find(
+                                    (p) => String(p.invitee_id) === option.value
+                                );
+                                return (
+                                    <Group gap="sm" wrap="nowrap">
+                                        {person && (
+                                            <FaceCrop
+                                                src={person.face.thumbnail_url}
+                                                box={person.face.bounding_box}
+                                                imgWidth={person.face.thumbnail_width}
+                                                imgHeight={person.face.thumbnail_height}
+                                                size={36}
+                                            />
+                                        )}
+                                        <div>
+                                            <Text size="sm">{option.label}</Text>
+                                            {person && (
+                                                <Text size="xs" c="dimmed">
+                                                    {person.photo_count} photo
+                                                    {person.photo_count === 1 ? "" : "s"}
+                                                </Text>
+                                            )}
+                                        </div>
+                                    </Group>
+                                );
+                            }}
+                            searchable
+                            clearable
+                            maw={340}
+                            value={personFilter}
+                            onChange={setPersonFilter}
+                        />
+                    )}
+
                     <Tabs value={activeCategory ?? "all"} onChange={(v) => setActiveCategory(v === "all" ? null : v)}>
                         <Tabs.List>
                             <Tabs.Tab value="all">All Photos</Tabs.Tab>
@@ -335,7 +395,11 @@ function Gallery() {
                         </Center>
                     ) : photos.length === 0 ? (
                         <Center py="xl">
-                            <Text c="dimmed">No photos yet — be the first to share!</Text>
+                            <Text c="dimmed">
+                                {personFilter
+                                    ? "No photos of them here — try All Photos or another section."
+                                    : "No photos yet — be the first to share!"}
+                            </Text>
                         </Center>
                     ) : (
                         <RowsPhotoAlbum
