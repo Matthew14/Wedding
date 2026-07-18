@@ -188,8 +188,9 @@ export class WeddingStack extends cdk.Stack {
     // The Next.js SSR runtime authenticates as the pre-existing
     // `wedding-api-lambda` IAM user (Amplify bakes its keys into the bundle),
     // so grant it table access via an attached managed policy.
+    const apiUser = iam.User.fromUserName(this, 'ApiUser', 'wedding-api-lambda');
     new iam.ManagedPolicy(this, 'DynamoAccessPolicy', {
-      users: [iam.User.fromUserName(this, 'ApiUser', 'wedding-api-lambda')],
+      users: [apiUser],
       statements: [
         // The archive is the frozen wedding dataset — nothing in the app
         // writes to it, so keep the grant read-only.
@@ -240,9 +241,18 @@ export class WeddingStack extends cdk.Stack {
     const photoProcessor = new NodejsFunction(this, 'PhotoProcessor', {
       entry: path.join(__dirname, '../lambdas/photo-processor/index.ts'),
       handler: 'handler',
+      // Fixed name so the dashboard's re-match trigger can invoke it without
+      // env-var plumbing. NOTE: naming a previously auto-named function makes
+      // CloudFormation REPLACE it (brief harmless window during deploy).
+      functionName: 'wedding-photo-processor',
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
-      timeout: cdk.Duration.minutes(2),
+      // 2 min covered thumbnailing; the re-match mode walks every unassigned
+      // face (SearchFaces each), which needs headroom at ~2k faces. The
+      // longer cap also applies to S3-triggered runs — accepted: a hung
+      // invocation holds a slot longer, but post-wedding upload volume is a
+      // trickle and the account's default concurrency dwarfs it.
+      timeout: cdk.Duration.minutes(10),
       // 512 MB OOMed on large JPEGs during the professional photo import
       // (decoded pixel buffers dwarf the file size — an 11 MB JPEG was enough).
       // Guest uploads go up to 20 MB, so give sharp real headroom.
@@ -276,6 +286,9 @@ export class WeddingStack extends cdk.Stack {
     photosBucket.grantReadWrite(photoProcessor);
     photosTable.grantReadWriteData(photoProcessor);
     facesTable.grantReadWriteData(photoProcessor);
+    // The dashboard's "Re-match unassigned" button async-invokes the Lambda —
+    // the app itself has no Rekognition permissions by design.
+    photoProcessor.grantInvoke(apiUser);
 
     // ── Cognito User Pool ─────────────────────────────────────────────────────
     const userPool = new cognito.UserPool(this, 'AdminUserPool', {
