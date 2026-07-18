@@ -17,6 +17,10 @@
 // Idempotent: photos with a dog_scanned_at marker are skipped, so a crashed
 // run can simply be re-run. Cost: ~$0.001/photo (~$0.75 for the full set).
 //
+// Caveat: the to-do list is snapshotted up front, so a photo uploaded (and
+// Lambda-scanned) mid-run can be scanned twice, leaving duplicate dog rows —
+// harmless, just extra cards to prune. Avoid re-running while uploads are hot.
+//
 // Requires: AWS credentials (run with AWS_PROFILE=wedding), S3_PHOTOS_BUCKET,
 // DDB_PHOTOS_TABLE, DDB_FACES_TABLE.
 

@@ -99,17 +99,18 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
 
     const photoId = await updatePhotoRecord(key, thumbKey, info.width, info.height, takenAt);
 
-    // Face indexing is strictly best-effort: a Rekognition or faces-table
-    // failure must never break the thumbnail pipeline the gallery depends on.
-    try {
-        await indexAndAssignFaces(bucket, thumbKey, photoId);
-    } catch (err) {
-        console.error(`Face indexing failed for ${key} (photo ${photoId}):`, err);
+    // Face indexing and dog detection are strictly best-effort: a Rekognition
+    // or faces-table failure must never break the thumbnail pipeline the
+    // gallery depends on. They're independent calls, so run them concurrently.
+    const [faceResult, dogResult] = await Promise.allSettled([
+        indexAndAssignFaces(bucket, thumbKey, photoId),
+        detectDogs(bucket, thumbKey, photoId),
+    ]);
+    if (faceResult.status === "rejected") {
+        console.error(`Face indexing failed for ${key} (photo ${photoId}):`, faceResult.reason);
     }
-    try {
-        await detectDogs(bucket, thumbKey, photoId);
-    } catch (err) {
-        console.error(`Dog detection failed for ${key} (photo ${photoId}):`, err);
+    if (dogResult.status === "rejected") {
+        console.error(`Dog detection failed for ${key} (photo ${photoId}):`, dogResult.reason);
     }
 }
 
