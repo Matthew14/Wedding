@@ -11,6 +11,7 @@ import {
     Stack,
     Box,
     Group,
+    Flex,
     Progress,
     Alert,
     Paper,
@@ -255,7 +256,7 @@ export default function UploadPage() {
         <main id="main-content">
             <Container size="sm" py="xl">
                 <Stack gap="xl">
-                    <Box>
+                    <Box ta={{ base: "center", sm: "left" }}>
                         <Title
                             order={1}
                             style={{
@@ -306,14 +307,21 @@ export default function UploadPage() {
                                         failed to upload — you can retry below.
                                     </Alert>
                                 )}
-                                <Group gap="sm">
+                                {/* Full-width stacked on phones (thumb-sized
+                                    targets), inline and centred otherwise. */}
+                                <Flex
+                                    direction={{ base: "column", xs: "row" }}
+                                    gap="sm"
+                                    justify="center"
+                                    w="100%"
+                                >
                                     <Button color="yellow" onClick={resetForMoreUploads}>
                                         Upload more photos
                                     </Button>
                                     <Button component={Link} href="/gallery" variant="light" color="yellow">
                                         View the gallery
                                     </Button>
-                                </Group>
+                                </Flex>
                             </Stack>
                         </Paper>
                     ) : !codeValidated ? (

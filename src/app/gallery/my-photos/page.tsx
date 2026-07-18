@@ -9,7 +9,7 @@ import {
     Box,
     Button,
     Alert,
-    Group,
+    Flex,
     Loader,
     Center,
     Paper,
@@ -161,8 +161,14 @@ export default function MyPhotosPage() {
         <main id="main-content">
             <Container size="xl" py="xl">
                 <Stack gap="lg">
-                    <Group justify="space-between" align="flex-end">
-                        <Box>
+                    {/* Stacked and centred on phones, side-by-side on wider screens. */}
+                    <Flex
+                        direction={{ base: "column", sm: "row" }}
+                        align={{ base: "center", sm: "flex-end" }}
+                        justify="space-between"
+                        gap="md"
+                    >
+                        <Box ta={{ base: "center", sm: "left" }}>
                             <Title
                                 order={1}
                                 style={{
@@ -183,7 +189,7 @@ export default function MyPhotosPage() {
                         <Button component={Link} href="/gallery" variant="light" color="yellow">
                             Full Gallery
                         </Button>
-                    </Group>
+                    </Flex>
 
                     {error && (
                         <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
