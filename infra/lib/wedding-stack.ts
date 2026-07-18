@@ -155,6 +155,36 @@ export class WeddingStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    // One item per face Rekognition detects in a photo. Cluster assignment is
+    // denormalized onto every face row (no cluster-metadata items) — the admin
+    // labeling page reads the whole table (a few thousand tiny items) and
+    // groups in code, matching the archive table's scan-and-assemble pattern.
+    const facesTable = new dynamodb.Table(this, 'PhotoFacesTable', {
+      tableName: 'wedding-photo-faces',
+      partitionKey: { name: 'face_id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+    // photo-processor idempotency ("is this photo already indexed?") and cleanup.
+    facesTable.addGlobalSecondaryIndex({
+      indexName: 'byPhoto',
+      partitionKey: { name: 'photo_id', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+    // Admin cluster detail + assignment fan-out (update every face in a cluster).
+    facesTable.addGlobalSecondaryIndex({
+      indexName: 'byCluster',
+      partitionKey: { name: 'cluster_id', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+    // Guest "Find My Photos": faces assigned to an invitee. Sparse — rows
+    // without an invitee_id (unassigned/ignored clusters) never appear here.
+    facesTable.addGlobalSecondaryIndex({
+      indexName: 'byInvitee',
+      partitionKey: { name: 'invitee_id', type: dynamodb.AttributeType.NUMBER },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
     // The Next.js SSR runtime authenticates as the pre-existing
     // `wedding-api-lambda` IAM user (Amplify bakes its keys into the bundle),
     // so grant it table access via an attached managed policy.
@@ -185,7 +215,15 @@ export class WeddingStack extends cdk.Stack {
             photosTable.tableArn,
             `${photosTable.tableArn}/index/*`,
             categoriesTable.tableArn,
+            facesTable.tableArn,
+            `${facesTable.tableArn}/index/*`,
           ],
+        }),
+        // Face rows are the only items the app ever deletes (admin re-cluster
+        // and cleanup), so the DeleteItem grant is scoped to that table alone.
+        new iam.PolicyStatement({
+          actions: ['dynamodb:DeleteItem'],
+          resources: [facesTable.tableArn],
         }),
         // Presigned URLs (guest photo downloads and uploads) are signed as
         // this user, so S3 evaluates ITS permissions when the URL is used —
@@ -222,6 +260,9 @@ export class WeddingStack extends cdk.Stack {
       environment: {
         PHOTOS_TABLE: photosTable.tableName,
         S3_BUCKET: photosBucket.bucketName,
+        FACES_TABLE: facesTable.tableName,
+        REKOGNITION_COLLECTION_ID: 'wedding-faces-2026',
+        FACE_MATCH_THRESHOLD: '95',
       },
     });
     photosBucket.addEventNotification(
@@ -231,6 +272,7 @@ export class WeddingStack extends cdk.Stack {
     );
     photosBucket.grantReadWrite(photoProcessor);
     photosTable.grantReadWriteData(photoProcessor);
+    facesTable.grantReadWriteData(photoProcessor);
 
     // ── Cognito User Pool ─────────────────────────────────────────────────────
     const userPool = new cognito.UserPool(this, 'AdminUserPool', {
@@ -269,7 +311,9 @@ export class WeddingStack extends cdk.Stack {
         new iam.PolicyStatement({
           actions: [
             'rekognition:IndexFaces',
+            'rekognition:SearchFaces',
             'rekognition:SearchFacesByImage',
+            'rekognition:ListFaces',
             'rekognition:DeleteFaces',
           ],
           resources: [
@@ -278,6 +322,10 @@ export class WeddingStack extends cdk.Stack {
         }),
       ],
     });
+    // Only the photo-processor talks to Rekognition at runtime — the Next.js
+    // app reads face matches from DynamoDB. The backfill script runs with
+    // local admin credentials.
+    rekognitionPolicy.attachToRole(photoProcessor.role!);
 
     // ── Outputs ───────────────────────────────────────────────────────────────
     new cdk.CfnOutput(this, 'CloudFrontDomain', {
@@ -320,6 +368,11 @@ export class WeddingStack extends cdk.Stack {
       description: 'DynamoDB photo categories table (DDB_CATEGORIES_TABLE)',
     });
 
+    new cdk.CfnOutput(this, 'PhotoFacesTableName', {
+      value: facesTable.tableName,
+      description: 'DynamoDB photo faces table (DDB_FACES_TABLE)',
+    });
+
     new cdk.CfnOutput(this, 'PhotosBucketName', {
       value: photosBucket.bucketName,
       description: 'S3 photos bucket name',
@@ -327,7 +380,7 @@ export class WeddingStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'RekognitionPolicyArn', {
       value: rekognitionPolicy.managedPolicyArn,
-      description: 'Rekognition policy ARN — attach to Amplify execution role',
+      description: 'Rekognition policy ARN — attached to the photo-processor Lambda role',
     });
 
   }

@@ -1,0 +1,122 @@
+import { QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { docClient, FACES_TABLE } from "./dynamo";
+import type { ClusterAssignment, PhotoFace } from "@/types/faces";
+
+// The whole table, for the admin labeling page (which groups by cluster in
+// code). A few thousand tiny items — one or two scan pages.
+export async function listAllFaces(): Promise<PhotoFace[]> {
+    const faces: PhotoFace[] = [];
+    let lastKey: Record<string, unknown> | undefined;
+    do {
+        const result = await docClient.send(
+            new ScanCommand({ TableName: FACES_TABLE, ExclusiveStartKey: lastKey })
+        );
+        faces.push(...((result.Items ?? []) as PhotoFace[]));
+        lastKey = result.LastEvaluatedKey;
+    } while (lastKey);
+    return faces;
+}
+
+export async function getFacesByCluster(clusterId: string): Promise<PhotoFace[]> {
+    const faces: PhotoFace[] = [];
+    let lastKey: Record<string, unknown> | undefined;
+    do {
+        const result = await docClient.send(
+            new QueryCommand({
+                TableName: FACES_TABLE,
+                IndexName: "byCluster",
+                KeyConditionExpression: "cluster_id = :cluster",
+                ExpressionAttributeValues: { ":cluster": clusterId },
+                ExclusiveStartKey: lastKey,
+            })
+        );
+        faces.push(...((result.Items ?? []) as PhotoFace[]));
+        lastKey = result.LastEvaluatedKey;
+    } while (lastKey);
+    return faces;
+}
+
+export async function getFacesByPhoto(photoId: string): Promise<PhotoFace[]> {
+    const result = await docClient.send(
+        new QueryCommand({
+            TableName: FACES_TABLE,
+            IndexName: "byPhoto",
+            KeyConditionExpression: "photo_id = :photo",
+            ExpressionAttributeValues: { ":photo": photoId },
+        })
+    );
+    return (result.Items ?? []) as PhotoFace[];
+}
+
+// Faces assigned to any of the given invitees (a household). The byInvitee
+// GSI is sparse, so unassigned faces never appear. Households are ≤ ~6
+// people, so parallel queries are fine.
+export async function getFacesByInvitees(inviteeIds: number[]): Promise<PhotoFace[]> {
+    const results = await Promise.all(
+        inviteeIds.map(async (inviteeId) => {
+            const faces: PhotoFace[] = [];
+            let lastKey: Record<string, unknown> | undefined;
+            do {
+                const result = await docClient.send(
+                    new QueryCommand({
+                        TableName: FACES_TABLE,
+                        IndexName: "byInvitee",
+                        KeyConditionExpression: "invitee_id = :invitee",
+                        ExpressionAttributeValues: { ":invitee": inviteeId },
+                        ExclusiveStartKey: lastKey,
+                    })
+                );
+                faces.push(...((result.Items ?? []) as PhotoFace[]));
+                lastKey = result.LastEvaluatedKey;
+            } while (lastKey);
+            return faces;
+        })
+    );
+    return results.flat();
+}
+
+// Apply an assignment to every face in a cluster. Not transactional: a crash
+// mid-way leaves a partial assignment, but re-applying converges (each face
+// update is idempotent), so the admin just clicks again.
+export async function updateClusterAssignment(
+    clusterId: string,
+    assignment: ClusterAssignment
+): Promise<number> {
+    const faces = await getFacesByCluster(clusterId);
+
+    for (const face of faces) {
+        if (assignment === null) {
+            await docClient.send(
+                new UpdateCommand({
+                    TableName: FACES_TABLE,
+                    Key: { face_id: face.face_id },
+                    UpdateExpression: "REMOVE invitee_id, invitation_id, ignored",
+                })
+            );
+        } else if ("ignored" in assignment) {
+            await docClient.send(
+                new UpdateCommand({
+                    TableName: FACES_TABLE,
+                    Key: { face_id: face.face_id },
+                    UpdateExpression: "SET ignored = :ignored REMOVE invitee_id, invitation_id",
+                    ExpressionAttributeValues: { ":ignored": true },
+                })
+            );
+        } else {
+            await docClient.send(
+                new UpdateCommand({
+                    TableName: FACES_TABLE,
+                    Key: { face_id: face.face_id },
+                    UpdateExpression:
+                        "SET invitee_id = :invitee, invitation_id = :invitation REMOVE ignored",
+                    ExpressionAttributeValues: {
+                        ":invitee": assignment.invitee_id,
+                        ":invitation": assignment.invitation_id,
+                    },
+                })
+            );
+        }
+    }
+
+    return faces.length;
+}

@@ -22,7 +22,6 @@
     "@aws-sdk/client-cloudwatch-logs": "^3.1065.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.1058.0",
     "@aws-sdk/client-dynamodb": "^3.1083.0",
-    "@aws-sdk/client-rekognition": "^3.1058.0",
     "@aws-sdk/client-s3": "^3.1058.0",
     "@aws-sdk/lib-dynamodb": "^3.1083.0",
     "@aws-sdk/s3-request-presigner": "^3.1058.0",
@@ -41,6 +40,7 @@
     "yet-another-react-lightbox": "^3.32.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-rekognition": "^3.1090.0",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3.2.0",
