@@ -82,6 +82,9 @@ export async function GET(request: NextRequest) {
         // Attribution for guest uploads (rows carrying an invitation code) —
         // professional imports have no code and stay unattributed. Only hit
         // the archive when this page actually contains guest uploads.
+        // Deliberately NOT gated on isAdmin: the couple browse the gallery
+        // logged in, and its lightbox reads uploaded_by from the admin rows —
+        // skipping the (tiny) scan would strip their captions.
         const uploaders = rows.some((p) => p.invitation_code)
             ? await listUploaderNames()
             : new Map<string, string>();
