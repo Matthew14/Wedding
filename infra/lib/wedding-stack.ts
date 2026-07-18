@@ -262,7 +262,10 @@ export class WeddingStack extends cdk.Stack {
         S3_BUCKET: photosBucket.bucketName,
         FACES_TABLE: facesTable.tableName,
         REKOGNITION_COLLECTION_ID: 'wedding-faces-2026',
-        FACE_MATCH_THRESHOLD: '95',
+        // 95 proved too loose in production: different people wearing
+        // sunglasses cross-match above it, which chained 44% of all faces
+        // into one cluster during the backfill.
+        FACE_MATCH_THRESHOLD: '97',
       },
     });
     photosBucket.addEventNotification(

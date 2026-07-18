@@ -14,12 +14,17 @@
 //
 // Usage:
 //   node scripts/index-faces.mjs [--dry-run] [--limit N] [--index-only]
-//                                [--cluster-only] [--threshold N] [--force]
+//                                [--cluster-only] [--recluster ID]
+//                                [--threshold N] [--force]
 //
 //   --dry-run       report what each phase would do without calling AWS mutators
 //   --limit N       index at most N photos (smoke-testing)
 //   --index-only    run Phase A only
 //   --cluster-only  run Phase B only (e.g. after re-tuning --threshold)
+//   --recluster ID  re-cluster ONLY the faces currently in cluster ID (implies
+//                   --cluster-only). Use with a higher --threshold to split a
+//                   drifted mega-cluster without disturbing any other cluster
+//                   or its labels
 //   --threshold N   SearchFaces similarity threshold, default 95
 //   --force         allow re-clustering even after labeling has started
 //
@@ -62,8 +67,10 @@ const limitIdx = args.indexOf("--limit");
 const limit = limitIdx !== -1 ? Number(args[limitIdx + 1]) : Infinity;
 const thresholdIdx = args.indexOf("--threshold");
 const threshold = thresholdIdx !== -1 ? Number(args[thresholdIdx + 1]) : 95;
+const reclusterIdx = args.indexOf("--recluster");
+const reclusterId = reclusterIdx !== -1 ? args[reclusterIdx + 1] : null;
 
-if (!bucket && !clusterOnly) {
+if (!bucket && !clusterOnly && !reclusterId) {
     console.error("S3_PHOTOS_BUCKET is required");
     process.exit(1);
 }
@@ -208,7 +215,19 @@ async function indexPhotos() {
 // ── Phase B: cluster faces ──────────────────────────────────────────────────
 
 async function clusterFaces() {
-    const faces = await scanAll(facesTable);
+    let faces = await scanAll(facesTable);
+    if (reclusterId) {
+        // Scoped mode: only the target cluster's faces are re-clustered, and
+        // (because the union step below ignores SearchFaces matches outside
+        // the fed set) no other cluster can gain or lose members. Splitting a
+        // person off from an already-labeled cluster just creates a duplicate
+        // cluster, which labeling absorbs.
+        faces = faces.filter((f) => f.cluster_id === reclusterId);
+        if (faces.length === 0) {
+            console.error(`No faces found in cluster ${reclusterId}`);
+            process.exit(1);
+        }
+    }
     if (faces.length === 0) {
         console.log("Phase B: no faces to cluster");
         return;
@@ -227,6 +246,7 @@ async function clusterFaces() {
 
     console.log(
         `Phase B: clustering ${faces.length} faces at threshold ${threshold}` +
+            (reclusterId ? ` (scoped to cluster ${reclusterId})` : "") +
             (dryRun ? " (dry-run: no SearchFaces calls, no writes)" : "")
     );
     if (dryRun) return;
@@ -309,6 +329,6 @@ async function clusterFaces() {
     );
 }
 
-if (!clusterOnly) await indexPhotos();
+if (!clusterOnly && !reclusterId) await indexPhotos();
 if (!indexOnly) await clusterFaces();
 console.log("Done.");
