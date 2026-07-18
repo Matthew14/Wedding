@@ -76,6 +76,14 @@ export async function GET(request: NextRequest) {
             matching = matching.filter((p) => personPhotoIds.has(p.id));
         }
 
+        // "My uploads": only photos uploaded under the caller's OWN code —
+        // the same already-validated code that granted access, so there's no
+        // new exposure and no way to view another household's uploads.
+        if (searchParams.get("mine") === "1") {
+            const ownCode = searchParams.get("code")?.trim().toUpperCase();
+            matching = ownCode ? matching.filter((p) => p.invitation_code === ownCode) : [];
+        }
+
         const total = matching.length;
         const rows = matching.slice(offset, offset + limit);
 

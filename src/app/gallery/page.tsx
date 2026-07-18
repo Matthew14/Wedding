@@ -18,6 +18,7 @@ import {
     Paper,
     TextInput,
     Select,
+    SegmentedControl,
 } from "@mantine/core";
 import { IconAlertCircle, IconDownload, IconTrash, IconSearch } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
@@ -45,6 +46,9 @@ interface GalleryPhoto {
 }
 
 const FALLBACK_ASPECT = { width: 4, height: 3 };
+
+// The category tab that gets the "My uploads" sub-filter.
+const GUEST_PHOTOS_SLUG = "guest-photos";
 
 // useSearchParams requires a Suspense boundary in App Router client pages.
 export default function GalleryPage() {
@@ -74,6 +78,7 @@ function Gallery() {
     const [rejecting, setRejecting] = useState(false);
     const [people, setPeople] = useState<GalleryPerson[]>([]);
     const [personFilter, setPersonFilter] = useState<string | null>(null);
+    const [myUploadsOnly, setMyUploadsOnly] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
     const { status: sessionStatus, masterCode } = useSession();
     const isAdmin = sessionStatus === "authenticated";
@@ -174,13 +179,14 @@ function Gallery() {
     };
 
     const fetchPhotos = useCallback(
-        async (category: string | null, pg: number, person: string | null) => {
+        async (category: string | null, pg: number, person: string | null, mine: boolean) => {
             setLoading(true);
             setError(null);
             try {
                 const params = new URLSearchParams({ page: String(pg), limit: String(LIMIT) });
                 if (category) params.set("category", category);
                 if (person) params.set("person", person);
+                if (mine) params.set("mine", "1");
                 if (invitationCode) params.set("code", invitationCode);
                 const res = await fetch(`/api/photos?${params}`);
                 if (res.status === 401) {
@@ -231,14 +237,18 @@ function Gallery() {
             .catch(() => {});
     }, [codeChecked, invitationCode, sessionStatus]);
 
+    // The sub-filter only applies on the Guest Photos tab (its state is kept
+    // so flipping tabs and back doesn't lose the selection).
+    const mineActive = myUploadsOnly && activeCategory === GUEST_PHOTOS_SLUG;
+
     useEffect(() => {
         // Don't fetch until code resolution has run, and never fetch without
         // access — the API would just 401.
         if (!codeChecked || (!invitationCode && sessionStatus !== "authenticated")) return;
         setPage(1);
         setPhotos([]);
-        fetchPhotos(activeCategory, 1, personFilter);
-    }, [activeCategory, personFilter, fetchPhotos, codeChecked, invitationCode, sessionStatus]);
+        fetchPhotos(activeCategory, 1, personFilter, mineActive);
+    }, [activeCategory, personFilter, mineActive, fetchPhotos, codeChecked, invitationCode, sessionStatus]);
 
     // Infinite scroll: load the next page when the sentinel scrolls into view.
     // The effect re-runs on every relevant state change so the observer always
@@ -251,14 +261,14 @@ function Gallery() {
                 if (entries[0].isIntersecting) {
                     const next = page + 1;
                     setPage(next);
-                    fetchPhotos(activeCategory, next, personFilter);
+                    fetchPhotos(activeCategory, next, personFilter, mineActive);
                 }
             },
             { rootMargin: "400px" }
         );
         observer.observe(el);
         return () => observer.disconnect();
-    }, [hasMore, loading, page, activeCategory, personFilter, fetchPhotos]);
+    }, [hasMore, loading, page, activeCategory, personFilter, mineActive, fetchPhotos]);
 
     const lightboxSlides = photos.map((p) => ({
         src: p.src,
@@ -418,6 +428,19 @@ function Gallery() {
                         </Tabs.List>
                     </Tabs>
 
+                    {activeCategory === GUEST_PHOTOS_SLUG && (
+                        <SegmentedControl
+                            value={myUploadsOnly ? "mine" : "all"}
+                            onChange={(v) => setMyUploadsOnly(v === "mine")}
+                            data={[
+                                { label: "All guest photos", value: "all" },
+                                { label: "My uploads", value: "mine" },
+                            ]}
+                            size="xs"
+                            w="fit-content"
+                        />
+                    )}
+
                     {loading && photos.length === 0 ? (
                         <Center py="xl">
                             <Loader color="yellow" />
@@ -425,9 +448,11 @@ function Gallery() {
                     ) : photos.length === 0 ? (
                         <Center py="xl">
                             <Text c="dimmed">
-                                {personFilter
-                                    ? "No photos of them here — try All Photos or another section."
-                                    : "No photos yet — be the first to share!"}
+                                {mineActive
+                                    ? "You haven't uploaded any photos yet — tap Upload Photos to share some!"
+                                    : personFilter
+                                      ? "No photos of them here — try All Photos or another section."
+                                      : "No photos yet — be the first to share!"}
                             </Text>
                         </Center>
                     ) : (
