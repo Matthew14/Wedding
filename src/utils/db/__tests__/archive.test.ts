@@ -7,7 +7,12 @@ vi.mock("../dynamo", () => ({
     ARCHIVE_TABLE: "wedding-archive",
 }));
 
-import { isMasterCode, isValidInvitationCode, getInviteesByCode } from "../archive";
+import {
+    isMasterCode,
+    isValidInvitationCode,
+    getInviteesByCode,
+    listAllInvitees,
+} from "../archive";
 
 const savedMaster = process.env.MASTER_INVITATION_CODE;
 
@@ -48,5 +53,33 @@ describe("master invitation code", () => {
     it("returns the couple's names for the master code", async () => {
         expect(await getInviteesByCode("LOCAL1")).toEqual(["Matthew", "Rebecca"]);
         expect(mockSend).not.toHaveBeenCalled();
+    });
+});
+
+describe("listAllInvitees", () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    it("includes the couple as synthetic invitees alongside archived guests", async () => {
+        mockSend.mockResolvedValue({
+            Items: [
+                { entity: "code", code: "ABC123", invitation_id: 3 },
+                {
+                    entity: "invitee",
+                    id: 7,
+                    invitation_id: 3,
+                    first_name: "Aoife",
+                    last_name: "Byrne",
+                    coming: true,
+                },
+            ],
+        });
+
+        const invitees = await listAllInvitees();
+
+        expect(invitees).toEqual([
+            { id: 7, invitation_id: 3, name: "Aoife Byrne", code: "ABC123" },
+            { id: -1, invitation_id: -1, name: "Matthew O'Neill", code: null },
+            { id: -2, invitation_id: -1, name: "Rebecca O'Neill", code: null },
+        ]);
     });
 });

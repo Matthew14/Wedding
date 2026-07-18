@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isMasterCode, getInvitationIdByCode, getInviteesWithIds } from "@/utils/db/archive";
+import {
+    isMasterCode,
+    getInvitationIdByCode,
+    getInviteesWithIds,
+    COUPLE_INVITEES,
+} from "@/utils/db/archive";
 import { getFacesByInvitees } from "@/utils/db/faces";
 import { getPhotosByIds } from "@/utils/db/photos";
 import { listCategories } from "@/utils/db/categories";
@@ -34,13 +39,17 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // The master code (and an admin session without a guest code) has no
-        // archived household behind it — nothing to match, empty result.
-        if (invitationId === null) {
+        // The couple aren't archived invitees — the master code maps to their
+        // synthetic ids so their own faces are searchable too. An admin
+        // session without any code still has nobody to match.
+        const invitees = isMaster
+            ? COUPLE_INVITEES.map((c) => ({ id: c.id, first_name: c.name.split(" ")[0] }))
+            : invitationId !== null
+              ? await getInviteesWithIds(invitationId)
+              : null;
+        if (invitees === null) {
             return NextResponse.json({ photos: [], invitees: [], page, limit, total: 0 });
         }
-
-        const invitees = await getInviteesWithIds(invitationId);
         const faces = await getFacesByInvitees(invitees.map((i) => i.id));
         const photoIds = [...new Set(faces.map((f) => f.photo_id))];
 

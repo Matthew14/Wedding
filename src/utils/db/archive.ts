@@ -182,8 +182,18 @@ export async function getArchiveSummary(): Promise<ArchiveSummary> {
     };
 }
 
-// Every archived invitee with their invitation's code, for the face-cluster
-// assignment picker. Alphabetical by full name.
+// The bride & groom aren't archived invitees (nobody sent them an invitation
+// to their own wedding), so they get reserved synthetic ids — negative, to
+// stay clear of the Postgres-era serial ids — making their face clusters
+// assignable like anyone else's. Their "code" is the master code env var,
+// never an archive row, hence code: null here.
+export const COUPLE_INVITEES: InviteeSummary[] = [
+    { id: -1, invitation_id: -1, name: "Matthew O'Neill", code: null },
+    { id: -2, invitation_id: -1, name: "Rebecca O'Neill", code: null },
+];
+
+// Every assignable person for the face-cluster picker: archived invitees
+// with their invitation's code, plus the couple. Alphabetical by full name.
 export async function listAllInvitees(): Promise<InviteeSummary[]> {
     const items = await scanArchive();
 
@@ -200,6 +210,7 @@ export async function listAllInvitees(): Promise<InviteeSummary[]> {
             name: `${i.first_name} ${i.last_name}`,
             code: codeByInvitation.get(i.invitation_id) ?? null,
         }))
+        .concat(COUPLE_INVITEES)
         .sort((a, b) => a.name.localeCompare(b.name));
 }
 
