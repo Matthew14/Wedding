@@ -27,6 +27,7 @@ import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
 import Download from "yet-another-react-lightbox/plugins/download";
 import Captions from "yet-another-react-lightbox/plugins/captions";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/captions.css";
 import type { PublicPhoto, PhotoCategory } from "@/types/photos";
@@ -438,7 +439,8 @@ function Gallery() {
                 slides={lightboxSlides}
                 index={lightboxIndex}
                 on={{ view: ({ index }) => setLightboxIndex(index) }}
-                plugins={invitationCode ? [Captions, Download] : [Captions]}
+                plugins={invitationCode ? [Captions, Download, Zoom] : [Captions, Zoom]}
+                zoom={{ maxZoomPixelRatio: 2 }}
                 render={{
                     iconDownload: () => <IconDownload size={32} />,
                 }}

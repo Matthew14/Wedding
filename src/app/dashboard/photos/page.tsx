@@ -22,6 +22,7 @@ import {
 import { IconAlertCircle, IconCheck, IconX, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import Lightbox from "yet-another-react-lightbox";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 import type { Photo, PhotoCategory } from "@/types/photos";
 
@@ -204,6 +205,8 @@ export default function PhotosModerationPage() {
                     height: p.height ?? undefined,
                     alt: p.file_name,
                 }))}
+                plugins={[Zoom]}
+                zoom={{ maxZoomPixelRatio: 2 }}
             />
         </Stack>
     );
