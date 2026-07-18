@@ -182,6 +182,27 @@ describe("GET /api/photos", () => {
         expect(mockListUploaderNames).not.toHaveBeenCalled();
     });
 
+    it("mine=1 returns only the caller's own uploads", async () => {
+        mockListPhotosByStatus.mockResolvedValue([
+            { ...mockPhoto, id: "mine-1", invitation_code: "ABC123" },
+            { ...mockPhoto, id: "theirs", invitation_code: "XYZ789" },
+            { ...mockPhoto, id: "professional", invitation_code: undefined },
+        ]);
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123&mine=1");
+        const data = await (await GET(req)).json();
+        expect(data.photos.map((p: { id: string }) => p.id)).toEqual(["mine-1"]);
+        expect(data.total).toBe(1);
+    });
+
+    it("mine=1 without a code returns nothing (admin session, no code)", async () => {
+        mockRequireAuth.mockResolvedValue({ success: true, payload: { email: "admin@test.com" } });
+        mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
+        const req = new NextRequest("http://localhost/api/photos?mine=1");
+        const data = await (await GET(req)).json();
+        expect(data.photos).toEqual([]);
+        expect(data.total).toBe(0);
+    });
+
     it("does not expose sensitive fields to public callers", async () => {
         mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
         const req = new NextRequest("http://localhost/api/photos?code=ABC123");
