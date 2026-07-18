@@ -163,6 +163,9 @@ export class WeddingStack extends cdk.Stack {
       tableName: 'wedding-photo-faces',
       partitionKey: { name: 'face_id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      // The table holds weeks of manual labeling work — recoverable if an
+      // automated pass (or an admin slip) ever mangles it.
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
     // photo-processor idempotency ("is this photo already indexed?") and cleanup.

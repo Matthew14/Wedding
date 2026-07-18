@@ -1,4 +1,4 @@
-import { QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { randomUUID } from "crypto";
 import { docClient, FACES_TABLE } from "./dynamo";
@@ -80,18 +80,37 @@ export async function getFacesByInvitees(inviteeIds: number[]): Promise<PhotoFac
 // An admin rejected this face from its person: sever it into a fresh,
 // unassigned singleton cluster. It disappears from the person (and from
 // guest results) immediately, but reappears in the Unassigned tab — if it's
-// really a different guest, it can be labeled correctly from there. Returns
-// false when no such face exists.
+// really a different guest, it can be labeled correctly from there. The
+// rejected person is recorded on the row so automated re-matching can never
+// re-attach the face to them (to Rekognition it still LOOKS like that
+// person — that's why it was mis-clustered — so without this memory the
+// re-matcher would fight the admin's corrections). Returns false when no
+// such face exists.
 export async function detachFace(faceId: string): Promise<boolean> {
+    const current = await docClient.send(
+        new GetCommand({
+            TableName: FACES_TABLE,
+            Key: { face_id: faceId },
+            ProjectionExpression: "invitee_id",
+        })
+    );
+    if (!current.Item) return false;
+    const rejectedFrom = (current.Item as { invitee_id?: number }).invitee_id;
+
     try {
         await docClient.send(
             new UpdateCommand({
                 TableName: FACES_TABLE,
                 Key: { face_id: faceId },
                 UpdateExpression:
-                    "SET cluster_id = :fresh REMOVE invitee_id, invitation_id, ignored",
+                    rejectedFrom != null
+                        ? "SET cluster_id = :fresh, rejected_invitee_ids = list_append(if_not_exists(rejected_invitee_ids, :empty), :rejected) REMOVE invitee_id, invitation_id, ignored"
+                        : "SET cluster_id = :fresh REMOVE invitee_id, invitation_id, ignored",
                 ConditionExpression: "attribute_exists(face_id)",
-                ExpressionAttributeValues: { ":fresh": randomUUID() },
+                ExpressionAttributeValues:
+                    rejectedFrom != null
+                        ? { ":fresh": randomUUID(), ":empty": [], ":rejected": [rejectedFrom] }
+                        : { ":fresh": randomUUID() },
             })
         );
         return true;

@@ -16,6 +16,15 @@ export interface PhotoFace {
     invitee_id?: number;
     invitation_id?: number;
     ignored?: boolean;
+    // People an admin has explicitly said this face is NOT (via the By
+    // Person reject button). Automated re-matching must never re-attach the
+    // face to anyone on this list.
+    rejected_invitee_ids?: number[];
+    // Provenance of the current assignment: set to "rematch" (with a
+    // timestamp) by automated re-match rounds so any round can be enumerated
+    // and undone; absent for human assignments.
+    assigned_by?: "rematch";
+    assigned_at?: string;
     bounding_box: FaceBoundingBox;
     confidence: number;
     indexed_at: string;

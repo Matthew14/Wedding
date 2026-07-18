@@ -76,7 +76,12 @@ export async function handler(event: S3Event | RematchEvent): Promise<void> {
 // that had no decisive match earlier may have one now. Only the still-
 // unlabeled rows are touched — assignments and ignores are never overwritten.
 async function rematchUnassignedFaces(): Promise<void> {
-    const faces: { face_id: string; invitee_id?: number; ignored?: boolean }[] = [];
+    const faces: {
+        face_id: string;
+        invitee_id?: number;
+        ignored?: boolean;
+        rejected_invitee_ids?: number[];
+    }[] = [];
     let lastKey: Record<string, unknown> | undefined;
     do {
         const page = await docClient.send(
@@ -84,7 +89,7 @@ async function rematchUnassignedFaces(): Promise<void> {
                 TableName: FACES_TABLE,
                 // Only the fields the filter needs — no point hauling
                 // bounding boxes for thousands of already-decided rows.
-                ProjectionExpression: "face_id, invitee_id, #ig",
+                ProjectionExpression: "face_id, invitee_id, #ig, rejected_invitee_ids",
                 ExpressionAttributeNames: { "#ig": "ignored" },
                 ExclusiveStartKey: lastKey,
             })
@@ -110,22 +115,32 @@ async function rematchUnassignedFaces(): Promise<void> {
         await Promise.all(
             candidates.slice(i, i + CONCURRENCY).map(async (face) => {
                 try {
-                    const match = await findLabeledMatch(face.face_id);
+                    const match = await findLabeledMatch(
+                        face.face_id,
+                        face.rejected_invitee_ids ?? []
+                    );
                     if (!match) return;
+                    // assigned_by/assigned_at make each re-match round
+                    // enumerable after the fact — an automated round must
+                    // always be precisely undoable (learned the hard way).
                     await docClient.send(
                         new UpdateCommand({
                             TableName: FACES_TABLE,
                             Key: { face_id: face.face_id },
                             UpdateExpression: match.ignored
-                                ? "SET cluster_id = :cluster, ignored = :ignored"
-                                : "SET cluster_id = :cluster, invitee_id = :invitee, invitation_id = :invitation",
-                            ExpressionAttributeValues: match.ignored
-                                ? { ":cluster": match.cluster_id, ":ignored": true }
-                                : {
-                                      ":cluster": match.cluster_id,
-                                      ":invitee": match.invitee_id,
-                                      ":invitation": match.invitation_id,
-                                  },
+                                ? "SET cluster_id = :cluster, ignored = :ignored, assigned_by = :by, assigned_at = :at"
+                                : "SET cluster_id = :cluster, invitee_id = :invitee, invitation_id = :invitation, assigned_by = :by, assigned_at = :at",
+                            ExpressionAttributeValues: {
+                                ":cluster": match.cluster_id,
+                                ":by": "rematch",
+                                ":at": new Date().toISOString(),
+                                ...(match.ignored
+                                    ? { ":ignored": true }
+                                    : {
+                                          ":invitee": match.invitee_id,
+                                          ":invitation": match.invitation_id,
+                                      }),
+                            },
                         })
                     );
                     if (match.ignored) ignored++;
@@ -183,9 +198,19 @@ async function findMatchingRow(
 
 // Only decisive outcomes count for re-matching: the best match that is
 // itself labeled (assigned to a person, or ignored). Matching another
-// unlabeled face wouldn't move the admin's queue forward.
-function findLabeledMatch(faceId: string): Promise<FaceAssignment | null> {
-    return findMatchingRow(faceId, (item) => item.invitee_id != null || !!item.ignored);
+// unlabeled face wouldn't move the admin's queue forward — and a match to
+// anyone the admin explicitly rejected this face from is skipped entirely,
+// so re-matching never undoes a human "that's not them" correction.
+function findLabeledMatch(
+    faceId: string,
+    rejectedInviteeIds: number[]
+): Promise<FaceAssignment | null> {
+    return findMatchingRow(
+        faceId,
+        (item) =>
+            (item.invitee_id != null && !rejectedInviteeIds.includes(item.invitee_id)) ||
+            (item.invitee_id == null && !!item.ignored)
+    );
 }
 
 async function processPhoto(key: string, bucket: string): Promise<void> {
