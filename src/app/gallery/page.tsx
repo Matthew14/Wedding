@@ -12,6 +12,7 @@ import {
     Button,
     Alert,
     Group,
+    Flex,
     Loader,
     Center,
     Paper,
@@ -275,8 +276,14 @@ function Gallery() {
         <main id="main-content">
             <Container size="xl" py="xl">
                 <Stack gap="lg">
-                    <Group justify="space-between" align="flex-end">
-                        <Box>
+                    {/* Stacked and centred on phones, side-by-side on wider screens. */}
+                    <Flex
+                        direction={{ base: "column", sm: "row" }}
+                        align={{ base: "center", sm: "flex-end" }}
+                        justify="space-between"
+                        gap="md"
+                    >
+                        <Box ta={{ base: "center", sm: "left" }}>
                             <Title
                                 order={1}
                                 style={{
@@ -295,7 +302,7 @@ function Gallery() {
                         {/* Both pages are code-gated — dead ends for a
                             codeless visitor staring at the gate. */}
                         {hasAccess && (
-                            <Group gap="sm">
+                            <Group gap="sm" justify="center">
                                 <Button
                                     component={Link}
                                     href="/gallery/my-photos"
@@ -309,7 +316,7 @@ function Gallery() {
                                 </Button>
                             </Group>
                         )}
-                    </Group>
+                    </Flex>
 
                     {error && (
                         <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
@@ -382,13 +389,27 @@ function Gallery() {
                             }}
                             searchable
                             clearable
-                            maw={340}
+                            w="100%"
+                            maw={{ base: "100%", sm: 340 }}
                             value={personFilter}
                             onChange={setPersonFilter}
                         />
                     )}
 
-                    <Tabs value={activeCategory ?? "all"} onChange={(v) => setActiveCategory(v === "all" ? null : v)}>
+                    {/* One swipeable row on phones instead of wrapping into a
+                        ragged grid; desktop fits in a single row anyway. */}
+                    <Tabs
+                        value={activeCategory ?? "all"}
+                        onChange={(v) => setActiveCategory(v === "all" ? null : v)}
+                        styles={{
+                            list: {
+                                flexWrap: "nowrap",
+                                overflowX: "auto",
+                                scrollbarWidth: "none",
+                            },
+                            tab: { whiteSpace: "nowrap", flexShrink: 0 },
+                        }}
+                    >
                         <Tabs.List>
                             <Tabs.Tab value="all">All Photos</Tabs.Tab>
                             {categories.map((c) => (
