@@ -160,10 +160,77 @@ export default function FacesPage() {
                 label: `${v.name} (${v.count} face${v.count === 1 ? "" : "s"})`,
             }));
     }, [clusters]);
+    // The clustering threshold errs toward splitting a person into several
+    // clusters, so the Assigned tab groups by person: one card each, with
+    // every underlying cluster's faces pooled.
+    interface AssignedGroup {
+        invitee_id: number;
+        invitee_name: string | null;
+        face_count: number;
+        cluster_ids: string[];
+        rep_face: ClusterSummary["rep_face"];
+    }
+    const assignedGroups = useMemo<AssignedGroup[]>(() => {
+        const byInvitee = new Map<number, AssignedGroup>();
+        for (const c of clusters) {
+            if (c.invitee_id == null || c.ignored) continue;
+            const group = byInvitee.get(c.invitee_id);
+            if (!group) {
+                byInvitee.set(c.invitee_id, {
+                    invitee_id: c.invitee_id,
+                    invitee_name: c.invitee_name,
+                    face_count: c.face_count,
+                    cluster_ids: [c.cluster_id],
+                    rep_face: c.rep_face,
+                });
+            } else {
+                group.face_count += c.face_count;
+                group.cluster_ids.push(c.cluster_id);
+                if (c.rep_face.confidence > group.rep_face.confidence) {
+                    group.rep_face = c.rep_face;
+                }
+            }
+        }
+        return [...byInvitee.values()].sort((a, b) => b.face_count - a.face_count);
+    }, [clusters]);
+
     const counts: Record<Exclude<FilterTab, "by-person">, number> = {
         unassigned: clusters.length - assigned - ignored,
-        assigned,
+        assigned: assignedGroups.length,
         ignored,
+    };
+
+    // Clear every cluster assigned to a person (sequential — each patch is
+    // an idempotent fan-out server-side, and person cluster counts are small).
+    const clearPerson = async (group: AssignedGroup) => {
+        for (const clusterId of group.cluster_ids) {
+            await patchCluster(clusterId, { invitee_id: null });
+        }
+    };
+
+    // Person-level detail: every face across all their clusters, via the
+    // by-invitee route, rendered in the same modal as cluster detail.
+    const openPersonDetail = async (group: AssignedGroup) => {
+        const requestId = ++detailRequestId.current;
+        setDetailLoading(true);
+        try {
+            const res = await fetch(`/api/dashboard/faces/by-invitee/${group.invitee_id}`);
+            if (!res.ok) throw new Error("Failed to load this person's faces");
+            const json = await res.json();
+            if (detailRequestId.current !== requestId) return;
+            setDetail({
+                cluster_id: "",
+                invitee_id: group.invitee_id,
+                invitee_name: group.invitee_name,
+                ignored: false,
+                faces: json.faces ?? [],
+            });
+        } catch (err) {
+            if (detailRequestId.current !== requestId) return;
+            setError(err instanceof Error ? err.message : "Failed to load this person's faces");
+        } finally {
+            if (detailRequestId.current === requestId) setDetailLoading(false);
+        }
     };
 
     const inviteeOptions = invitees.map((i) => ({
@@ -220,7 +287,7 @@ export default function FacesPage() {
                 <Center py="xl">
                     <Loader color="yellow" />
                 </Center>
-            ) : visible.length === 0 ? (
+            ) : (activeTab === "assigned" ? assignedGroups.length : visible.length) === 0 ? (
                 <Center py="xl">
                     <Text c="dimmed">
                         {activeTab === "unassigned" && clusters.length > 0
@@ -228,6 +295,41 @@ export default function FacesPage() {
                             : `No ${activeTab} faces`}
                     </Text>
                 </Center>
+            ) : activeTab === "assigned" ? (
+                <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 5 }} spacing="md">
+                    {assignedGroups.map((group) => (
+                        <Paper key={group.invitee_id} p="sm" withBorder>
+                            <Stack gap="xs" align="center">
+                                <UnstyledButton
+                                    onClick={() => openPersonDetail(group)}
+                                    title="See every face assigned to them"
+                                >
+                                    <FaceCrop
+                                        src={group.rep_face.thumbnail_url}
+                                        box={group.rep_face.bounding_box}
+                                        imgWidth={group.rep_face.thumbnail_width}
+                                        imgHeight={group.rep_face.thumbnail_height}
+                                        size={120}
+                                    />
+                                </UnstyledButton>
+                                <Badge variant="light" color="gray">
+                                    {group.face_count} photo{group.face_count === 1 ? "" : "s"}
+                                </Badge>
+                                <Badge color="green" variant="light">
+                                    {group.invitee_name ?? `Guest #${group.invitee_id}`}
+                                </Badge>
+                                <Button
+                                    variant="subtle"
+                                    color="gray"
+                                    size="compact-xs"
+                                    onClick={() => clearPerson(group)}
+                                >
+                                    Clear
+                                </Button>
+                            </Stack>
+                        </Paper>
+                    ))}
+                </SimpleGrid>
             ) : (
                 <SimpleGrid cols={{ base: 2, sm: 3, md: 4, lg: 5 }} spacing="md">
                     {visible.map((cluster) => (
