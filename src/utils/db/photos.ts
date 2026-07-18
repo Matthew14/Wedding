@@ -1,4 +1,5 @@
 import {
+    BatchGetCommand,
     GetCommand,
     PutCommand,
     QueryCommand,
@@ -112,6 +113,23 @@ export async function countPhotosByStatus(
         lastKey = result.LastEvaluatedKey;
     } while (lastKey);
     return count;
+}
+
+// BatchGet in 100-key chunks (the DynamoDB per-request cap), retrying any
+// unprocessed keys. Order is not preserved; missing ids are simply absent.
+export async function getPhotosByIds(ids: string[]): Promise<Photo[]> {
+    const photos: Photo[] = [];
+    for (let i = 0; i < ids.length; i += 100) {
+        let keys = ids.slice(i, i + 100).map((id) => ({ id }));
+        while (keys.length > 0) {
+            const result = await docClient.send(
+                new BatchGetCommand({ RequestItems: { [PHOTOS_TABLE]: { Keys: keys } } })
+            );
+            photos.push(...((result.Responses?.[PHOTOS_TABLE] ?? []) as Photo[]));
+            keys = (result.UnprocessedKeys?.[PHOTOS_TABLE]?.Keys ?? []) as { id: string }[];
+        }
+    }
+    return photos;
 }
 
 export interface ModerationUpdate {

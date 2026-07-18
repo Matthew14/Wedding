@@ -117,9 +117,14 @@ export default function PhotosModerationPage() {
                 <Title order={2} style={{ fontWeight: 300, color: "#495057", fontFamily: "serif" }}>
                     Photo Moderation
                 </Title>
-                <Anchor component={Link} href="/dashboard/photos/categories" size="sm" c="dimmed">
-                    Manage categories →
-                </Anchor>
+                <Group gap="md">
+                    <Anchor component={Link} href="/dashboard/photos/faces" size="sm" c="dimmed">
+                        Faces →
+                    </Anchor>
+                    <Anchor component={Link} href="/dashboard/photos/categories" size="sm" c="dimmed">
+                        Manage categories →
+                    </Anchor>
+                </Group>
             </Group>
 
             {error && (
