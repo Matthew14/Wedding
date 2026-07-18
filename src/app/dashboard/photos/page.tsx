@@ -27,6 +27,9 @@ import type { Photo, PhotoCategory } from "@/types/photos";
 
 interface PhotoWithThumbnail extends Photo {
     thumbnail_url: string | null;
+    // Household display names resolved from the invitation code (admin rows
+    // from /api/photos carry this since the attribution feature).
+    uploaded_by: string | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -254,6 +257,7 @@ function PhotoCard({
                         </Badge>
                         <Text size="xs" c="dimmed">
                             {photo.invitation_code}
+                            {photo.uploaded_by && ` · ${photo.uploaded_by}`}
                         </Text>
                     </Group>
                     <Text size="xs" c="dimmed">
