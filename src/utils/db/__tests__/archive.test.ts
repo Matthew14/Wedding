@@ -78,6 +78,7 @@ describe("listAllInvitees", () => {
 
         expect(invitees).toEqual([
             { id: 7, invitation_id: 3, name: "Aoife Byrne", code: "ABC123" },
+            { id: -3, invitation_id: -1, name: "Maggie", code: null },
             { id: -1, invitation_id: -1, name: "Matthew O'Neill", code: null },
             { id: -2, invitation_id: -1, name: "Rebecca O'Neill", code: null },
         ]);
