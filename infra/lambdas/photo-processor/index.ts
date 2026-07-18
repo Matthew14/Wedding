@@ -362,26 +362,69 @@ async function notifyAdminOfUpload(code: string, thumbKey: string): Promise<void
 
     // Debounce marker lives in the photos table under a reserved id. The
     // conditional write is atomic: exactly one concurrent invocation wins
-    // the window and sends.
+    // the window and sends. The previous value is captured so the window
+    // can be handed back if the send fails.
     const now = Date.now();
+    const claimedAt = new Date(now).toISOString();
+    let previousSentAt: string | undefined;
     try {
-        await docClient.send(
+        const claim = await docClient.send(
             new UpdateCommand({
                 TableName: PHOTOS_TABLE,
                 Key: { id: "NOTIFICATION#uploads" },
                 UpdateExpression: "SET last_sent_at = :now",
                 ConditionExpression: "attribute_not_exists(last_sent_at) OR last_sent_at < :cutoff",
                 ExpressionAttributeValues: {
-                    ":now": new Date(now).toISOString(),
+                    ":now": claimedAt,
                     ":cutoff": new Date(now - NOTIFY_DEBOUNCE_MS).toISOString(),
                 },
+                ReturnValues: "UPDATED_OLD",
             })
         );
+        previousSentAt = (claim.Attributes as { last_sent_at?: string } | undefined)
+            ?.last_sent_at;
     } catch (err) {
         if (err instanceof ConditionalCheckFailedException) return; // already notified recently
         throw err;
     }
 
+    try {
+        await sendUploadEmail(recipients, invitationId, thumbKey);
+    } catch (err) {
+        // Hand the window back so a later upload in the same window retries —
+        // otherwise a transient SES failure silently eats the notification
+        // for 30 minutes. Conditional on our own claim so a legitimately
+        // newer window (won after the debounce elapsed) is never clobbered.
+        try {
+            await docClient.send(
+                new UpdateCommand({
+                    TableName: PHOTOS_TABLE,
+                    Key: { id: "NOTIFICATION#uploads" },
+                    UpdateExpression: previousSentAt
+                        ? "SET last_sent_at = :prev"
+                        : "REMOVE last_sent_at",
+                    ConditionExpression: "last_sent_at = :ours",
+                    ExpressionAttributeValues: previousSentAt
+                        ? { ":ours": claimedAt, ":prev": previousSentAt }
+                        : { ":ours": claimedAt },
+                })
+            );
+        } catch (rollbackErr) {
+            if (!(rollbackErr instanceof ConditionalCheckFailedException)) {
+                console.error("Failed to roll back notification window:", rollbackErr);
+            }
+        }
+        throw err;
+    }
+}
+
+// Compose and send the actual email; separated so the caller can treat any
+// failure here as "the claimed window was not used".
+async function sendUploadEmail(
+    recipients: string[],
+    invitationId: number,
+    thumbKey: string
+): Promise<void> {
     // Household first names for the greeting, pending count for the summary.
     const [inviteeRows, pending] = await Promise.all([
         docClient.send(
