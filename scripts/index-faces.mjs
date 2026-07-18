@@ -70,7 +70,7 @@ const threshold = thresholdIdx !== -1 ? Number(args[thresholdIdx + 1]) : 95;
 const reclusterIdx = args.indexOf("--recluster");
 const reclusterId = reclusterIdx !== -1 ? args[reclusterIdx + 1] : null;
 
-if (!bucket && !clusterOnly) {
+if (!bucket && !clusterOnly && !reclusterId) {
     console.error("S3_PHOTOS_BUCKET is required");
     process.exit(1);
 }
