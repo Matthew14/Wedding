@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isValidInvitationCode, listAllInvitees } from "@/utils/db/archive";
 import { listAllFaces } from "@/utils/db/faces";
-import { getPhotosByIds } from "@/utils/db/photos";
+import { listPhotosByStatus } from "@/utils/db/photos";
 import { requireAuth } from "@/utils/auth/requireAuth";
 import { cdnUrl } from "@/utils/storage";
 import type { GalleryPerson } from "@/types/faces";
@@ -27,14 +27,22 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const [faces, invitees] = await Promise.all([listAllFaces(), listAllInvitees()]);
+        const [faces, invitees, approvedPhotos] = await Promise.all([
+            listAllFaces(),
+            listAllInvitees(),
+            listPhotosByStatus("approved"),
+        ]);
         const nameById = new Map(invitees.map((i) => [i.id, i.name]));
+        const photoById = new Map(approvedPhotos.map((p) => [p.id, p]));
 
-        // Best (highest-confidence) face and distinct photo count per person.
+        // Best (highest-confidence) face and distinct photo count per person —
+        // approved photos only, so the advertised count matches what selecting
+        // the person in the gallery (which serves approved photos) shows.
         const bestFace = new Map<number, PhotoFace>();
         const photoIds = new Map<number, Set<string>>();
         for (const face of faces) {
             if (face.invitee_id == null || face.ignored) continue;
+            if (!photoById.has(face.photo_id)) continue; // pending/rejected
             const current = bestFace.get(face.invitee_id);
             if (!current || face.confidence > current.confidence) {
                 bestFace.set(face.invitee_id, face);
@@ -43,11 +51,6 @@ export async function GET(request: NextRequest) {
             ids.add(face.photo_id);
             photoIds.set(face.invitee_id, ids);
         }
-
-        const photos = await getPhotosByIds([
-            ...new Set([...bestFace.values()].map((f) => f.photo_id)),
-        ]);
-        const photoById = new Map(photos.map((p) => [p.id, p]));
 
         const people: GalleryPerson[] = [...bestFace.entries()]
             .map(([inviteeId, face]) => {

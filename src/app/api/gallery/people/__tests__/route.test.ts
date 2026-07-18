@@ -6,7 +6,7 @@ const mockRequireAuth = vi.fn();
 const mockIsValidInvitationCode = vi.fn();
 const mockListAllInvitees = vi.fn();
 const mockListAllFaces = vi.fn();
-const mockGetPhotosByIds = vi.fn();
+const mockListPhotosByStatus = vi.fn();
 
 vi.mock("@/utils/auth/requireAuth", () => ({
     requireAuth: (...args: unknown[]) => mockRequireAuth(...args),
@@ -19,7 +19,7 @@ vi.mock("@/utils/db/faces", () => ({
     listAllFaces: (...args: unknown[]) => mockListAllFaces(...args),
 }));
 vi.mock("@/utils/db/photos", () => ({
-    getPhotosByIds: (...args: unknown[]) => mockGetPhotosByIds(...args),
+    listPhotosByStatus: (...args: unknown[]) => mockListPhotosByStatus(...args),
 }));
 vi.mock("@/utils/storage", () => ({
     cdnUrl: (k: string) => `https://cdn/${k}`,
@@ -49,8 +49,8 @@ describe("GET /api/gallery/people", () => {
             { id: 7, invitation_id: 3, name: "Aoife Byrne", code: "ABC123" },
             { id: -3, invitation_id: -1, name: "Maggie", code: null },
         ]);
-        mockGetPhotosByIds.mockResolvedValue([
-            { id: "p1", thumbnail_key: "t/p1.jpg", width: 1200, height: 800 },
+        mockListPhotosByStatus.mockResolvedValue([
+            { id: "p1", thumbnail_key: "t/p1.jpg", width: 1200, height: 800, status: "approved" },
         ]);
     });
 
@@ -76,9 +76,9 @@ describe("GET /api/gallery/people", () => {
             face({ face_id: "f3", invitee_id: 7, confidence: 99, photo_id: "p2" }),
             face({ face_id: "f4", invitee_id: 7, confidence: 60, photo_id: "p2" }),
         ]);
-        mockGetPhotosByIds.mockResolvedValue([
-            { id: "p1", thumbnail_key: "t/p1.jpg", width: 1200, height: 800 },
-            { id: "p2", thumbnail_key: "t/p2.jpg", width: 900, height: 600 },
+        mockListPhotosByStatus.mockResolvedValue([
+            { id: "p1", thumbnail_key: "t/p1.jpg", width: 1200, height: 800, status: "approved" },
+            { id: "p2", thumbnail_key: "t/p2.jpg", width: 900, height: 600, status: "approved" },
         ]);
 
         const body = await (await GET(req("?code=ABC123"))).json();
@@ -100,5 +100,28 @@ describe("GET /api/gallery/people", () => {
         ]);
         const body = await (await GET(req("?code=ABC123"))).json();
         expect(body.people).toEqual([]);
+    });
+
+    it("only counts approved photos, and drops people with none", async () => {
+        mockListAllFaces.mockResolvedValue([
+            // Aoife: one approved, one pending photo → count 1, best face
+            // must come from the approved one even though pending scores higher
+            face({ face_id: "f1", invitee_id: 7, confidence: 99, photo_id: "p-pending" }),
+            face({ face_id: "f2", invitee_id: 7, confidence: 80, photo_id: "p1" }),
+            // Maggie: only a pending photo → not searchable at all
+            face({ face_id: "f3", invitee_id: -3, confidence: 95, photo_id: "p-pending" }),
+        ]);
+        // listPhotosByStatus("approved") only ever returns approved rows.
+        mockListPhotosByStatus.mockResolvedValue([
+            { id: "p1", thumbnail_key: "t/p1.jpg", width: 1200, height: 800, status: "approved" },
+        ]);
+
+        const body = await (await GET(req("?code=ABC123"))).json();
+
+        expect(mockListPhotosByStatus).toHaveBeenCalledWith("approved");
+        expect(body.people).toHaveLength(1);
+        expect(body.people[0].name).toBe("Aoife Byrne");
+        expect(body.people[0].photo_count).toBe(1);
+        expect(body.people[0].face.face_id).toBe("f2");
     });
 });

@@ -65,10 +65,12 @@ export async function GET(request: NextRequest) {
         // protects the photos protects who's in them.
         const personParam = searchParams.get("person");
         if (personParam !== null) {
-            const personId = Number(personParam);
-            if (!Number.isInteger(personId)) {
+            // Strict digit check: Number() would coerce "", whitespace, and
+            // hex strings into integers that silently query the wrong id.
+            if (!/^-?\d+$/.test(personParam)) {
                 return NextResponse.json({ error: "Invalid person id" }, { status: 400 });
             }
+            const personId = Number(personParam);
             const personFaces = await getFacesByInvitees([personId]);
             const personPhotoIds = new Set(personFaces.map((f) => f.photo_id));
             matching = matching.filter((p) => personPhotoIds.has(p.id));

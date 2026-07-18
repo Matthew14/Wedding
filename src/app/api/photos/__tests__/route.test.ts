@@ -133,11 +133,15 @@ describe("GET /api/photos", () => {
         expect(data.total).toBe(1);
     });
 
-    it("rejects a non-numeric person param", async () => {
+    it("rejects non-numeric person params, including coercible ones", async () => {
         mockListPhotosByStatus.mockResolvedValue([mockPhoto]);
-        const req = new NextRequest("http://localhost/api/photos?code=ABC123&person=abc");
-        const res = await GET(req);
-        expect(res.status).toBe(400);
+        for (const bad of ["abc", "", " 7", "0x7", "7.5"]) {
+            const req = new NextRequest(
+                `http://localhost/api/photos?code=ABC123&person=${encodeURIComponent(bad)}`
+            );
+            const res = await GET(req);
+            expect(res.status, `person=${JSON.stringify(bad)}`).toBe(400);
+        }
         expect(mockGetFacesByInvitees).not.toHaveBeenCalled();
     });
 
