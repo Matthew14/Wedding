@@ -7,6 +7,7 @@ import {
     GetCommand,
     PutCommand,
     QueryCommand,
+    ScanCommand,
     UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import {
@@ -47,8 +48,18 @@ const MAX_INPUT_PIXELS = 100_000_000;
 // exponential backoff before giving up.
 const MAX_UPDATE_ATTEMPTS = 5;
 
-export async function handler(event: S3Event): Promise<void> {
-    for (const record of event.Records) {
+// Direct-invoke payload from the dashboard's "Re-match unassigned" button
+// (the Next.js app has no Rekognition permissions, so it delegates here).
+interface RematchEvent {
+    action: "rematch_faces";
+}
+
+export async function handler(event: S3Event | RematchEvent): Promise<void> {
+    if ("action" in event && event.action === "rematch_faces") {
+        await rematchUnassignedFaces();
+        return;
+    }
+    for (const record of (event as S3Event).Records) {
         const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
         try {
             await processPhoto(key, record.s3.bucket.name);
@@ -57,6 +68,111 @@ export async function handler(event: S3Event): Promise<void> {
             console.error(`Failed to process ${key}:`, err);
         }
     }
+}
+
+// Give every unassigned, unignored face another chance to be matched: as the
+// admin labels clusters, the collection fills with labeled anchors, so faces
+// that had no decisive match earlier may have one now. Only the still-
+// unlabeled rows are touched — assignments and ignores are never overwritten.
+async function rematchUnassignedFaces(): Promise<void> {
+    const faces: { face_id: string; invitee_id?: number; ignored?: boolean }[] = [];
+    let lastKey: Record<string, unknown> | undefined;
+    do {
+        const page = await docClient.send(
+            new ScanCommand({ TableName: FACES_TABLE, ExclusiveStartKey: lastKey })
+        );
+        faces.push(...((page.Items ?? []) as typeof faces));
+        lastKey = page.LastEvaluatedKey;
+    } while (lastKey);
+
+    const candidates = faces.filter(
+        (f) =>
+            f.invitee_id == null &&
+            !f.ignored &&
+            // Dog detections are DetectLabels output, not collection members —
+            // SearchFaces on their synthetic ids would fail.
+            !f.face_id.startsWith("dog-")
+    );
+    console.log(`Re-matching ${candidates.length} unassigned faces of ${faces.length} total`);
+
+    let assigned = 0;
+    let ignored = 0;
+    const CONCURRENCY = 3;
+    for (let i = 0; i < candidates.length; i += CONCURRENCY) {
+        await Promise.all(
+            candidates.slice(i, i + CONCURRENCY).map(async (face) => {
+                try {
+                    const match = await findLabeledMatch(face.face_id);
+                    if (!match) return;
+                    await docClient.send(
+                        new UpdateCommand({
+                            TableName: FACES_TABLE,
+                            Key: { face_id: face.face_id },
+                            UpdateExpression: match.ignored
+                                ? "SET cluster_id = :cluster, ignored = :ignored"
+                                : "SET cluster_id = :cluster, invitee_id = :invitee, invitation_id = :invitation",
+                            ExpressionAttributeValues: match.ignored
+                                ? { ":cluster": match.cluster_id, ":ignored": true }
+                                : {
+                                      ":cluster": match.cluster_id,
+                                      ":invitee": match.invitee_id,
+                                      ":invitation": match.invitation_id,
+                                  },
+                        })
+                    );
+                    if (match.ignored) ignored++;
+                    else assigned++;
+                } catch (err) {
+                    console.error(`Re-match failed for face ${face.face_id}:`, err);
+                }
+            })
+        );
+    }
+    console.log(`Re-match done: ${assigned} auto-assigned, ${ignored} auto-ignored`);
+}
+
+// Like findClusterForFace, but only decisive outcomes count: the best match
+// that is itself labeled (assigned to a person, or ignored). Matching another
+// unlabeled face wouldn't move the admin's queue forward.
+async function findLabeledMatch(faceId: string): Promise<{
+    cluster_id: string;
+    invitee_id?: number;
+    invitation_id?: number;
+    ignored?: boolean;
+} | null> {
+    const search = await rekognition.send(
+        new SearchFacesCommand({
+            CollectionId: COLLECTION_ID,
+            FaceId: faceId,
+            FaceMatchThreshold: FACE_MATCH_THRESHOLD,
+            MaxFaces: 10,
+        })
+    );
+    for (const match of search.FaceMatches ?? []) {
+        const matchedId = match.Face?.FaceId;
+        if (!matchedId) continue;
+        const row = await docClient.send(
+            new GetCommand({ TableName: FACES_TABLE, Key: { face_id: matchedId } })
+        );
+        const item = row.Item as
+            | {
+                  cluster_id?: string;
+                  invitee_id?: number;
+                  invitation_id?: number;
+                  ignored?: boolean;
+              }
+            | undefined;
+        if (!item?.cluster_id) continue;
+        if (item.invitee_id != null || item.ignored) {
+            return {
+                cluster_id: item.cluster_id,
+                invitee_id: item.invitee_id,
+                invitation_id: item.invitation_id,
+                ignored: item.ignored,
+            };
+        }
+    }
+    return null;
 }
 
 async function processPhoto(key: string, bucket: string): Promise<void> {

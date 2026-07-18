@@ -49,6 +49,7 @@ export default function FacesPage() {
     const [error, setError] = useState<string | null>(null);
     const [detail, setDetail] = useState<ClusterDetailResponse | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+    const [rematchState, setRematchState] = useState<"idle" | "starting" | "running">("idle");
     // Monotonic id per detail fetch: closing the modal (or opening another
     // cluster) bumps it, so a stale response can neither reopen a dismissed
     // modal nor overwrite a newer cluster's data.
@@ -137,6 +138,25 @@ export default function FacesPage() {
         setDetailLoading(false);
     };
 
+    // Fire the Lambda's re-match pass: every unassigned face gets another
+    // SearchFaces look now that more of the collection is labeled. It runs in
+    // the background — refresh the cluster list after a while to see results.
+    const startRematch = async () => {
+        setRematchState("starting");
+        try {
+            const res = await fetch("/api/dashboard/faces/rematch", { method: "POST" });
+            if (!res.ok) throw new Error("Failed to start re-matching");
+            setRematchState("running");
+            setTimeout(() => {
+                fetchClusters();
+                setRematchState("idle");
+            }, 30000);
+        } catch (err) {
+            setRematchState("idle");
+            setError(err instanceof Error ? err.message : "Failed to start re-matching");
+        }
+    };
+
     const assigned = clusters.filter((c) => c.invitee_id != null).length;
     const ignored = clusters.filter((c) => c.ignored).length;
     const visible = clusters.filter((c) => clusterTab(c) === activeTab);
@@ -177,10 +197,32 @@ export default function FacesPage() {
                 <Title order={2} style={{ fontWeight: 300, color: "#495057", fontFamily: "serif" }}>
                     Faces
                 </Title>
-                <Anchor component={Link} href="/dashboard/photos" size="sm" c="dimmed">
-                    ← Photo moderation
-                </Anchor>
+                <Group gap="md">
+                    <Tooltip label="Try to auto-assign every unassigned face using the people you've already labeled">
+                        <Button
+                            variant="light"
+                            color="yellow"
+                            size="xs"
+                            loading={rematchState === "starting"}
+                            disabled={rematchState === "running"}
+                            onClick={startRematch}
+                        >
+                            {rematchState === "running" ? "Re-matching…" : "Re-match unassigned"}
+                        </Button>
+                    </Tooltip>
+                    <Anchor component={Link} href="/dashboard/photos" size="sm" c="dimmed">
+                        ← Photo moderation
+                    </Anchor>
+                </Group>
             </Group>
+
+            {rematchState === "running" && (
+                <Alert color="yellow" variant="light">
+                    Re-matching runs in the background — this page will refresh itself in about
+                    half a minute. Faces that now match a labeled person move to Assigned
+                    automatically.
+                </Alert>
+            )}
 
             <Text c="dimmed" size="sm">
                 {assigned} of {clusters.length - ignored} people identified · {ignored} ignored
