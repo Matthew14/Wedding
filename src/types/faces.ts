@@ -26,3 +26,43 @@ export type ClusterAssignment =
     | { invitee_id: number; invitation_id: number }
     | { ignored: true }
     | null; // clear assignment
+
+// A face as rendered by the admin UI: enough to CSS-crop it out of the
+// photo's thumbnail (width/height are the thumbnail's dimensions, which is
+// what the relative bounding box was measured against).
+export interface FaceView {
+    face_id: string;
+    photo_id: string;
+    thumbnail_url: string | null;
+    thumbnail_width: number | null;
+    thumbnail_height: number | null;
+    bounding_box: FaceBoundingBox;
+    confidence: number;
+}
+
+export interface ClusterSummary {
+    cluster_id: string;
+    face_count: number;
+    invitee_id: number | null;
+    invitee_name: string | null;
+    ignored: boolean;
+    rep_face: FaceView;
+}
+
+export interface ClustersResponse {
+    clusters: ClusterSummary[];
+    progress: {
+        total: number; // clusters with a face, excluding ignored
+        assigned: number;
+        ignored: number;
+        unclustered_faces: number; // rows awaiting the clustering phase
+    };
+}
+
+export interface ClusterDetailResponse {
+    cluster_id: string;
+    invitee_id: number | null;
+    invitee_name: string | null;
+    ignored: boolean;
+    faces: FaceView[];
+}

@@ -55,6 +55,13 @@ export interface InvitationCodeSummary {
     invitee_names: string[];
 }
 
+export interface InviteeSummary {
+    id: number;
+    invitation_id: number;
+    name: string;
+    code: string | null;
+}
+
 // The bride & groom's master code lives in an env var, not the frozen
 // archive — it validates everywhere a guest code does, and /api/auth/me
 // hands it to logged-in admins so the gallery can auto-fill it.
@@ -140,6 +147,27 @@ export async function getArchiveSummary(): Promise<ArchiveSummary> {
             undecided: invitees.filter((g) => g.coming === null).length,
         },
     };
+}
+
+// Every archived invitee with their invitation's code, for the face-cluster
+// assignment picker. Alphabetical by full name.
+export async function listAllInvitees(): Promise<InviteeSummary[]> {
+    const items = await scanArchive();
+
+    const codeByInvitation = new Map<number, string>();
+    for (const item of items) {
+        if (item.entity === "code") codeByInvitation.set(item.invitation_id, item.code);
+    }
+
+    return items
+        .filter((i): i is InviteeItem => i.entity === "invitee")
+        .map((i) => ({
+            id: i.id,
+            invitation_id: i.invitation_id,
+            name: `${i.first_name} ${i.last_name}`,
+            code: codeByInvitation.get(i.invitation_id) ?? null,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function listInvitationCodes(): Promise<InvitationCodeSummary[]> {
