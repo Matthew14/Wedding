@@ -42,6 +42,7 @@ const nextConfig = {
         DDB_ARCHIVE_TABLE: process.env.DDB_ARCHIVE_TABLE ?? "",
         DDB_PHOTOS_TABLE: process.env.DDB_PHOTOS_TABLE ?? "",
         DDB_CATEGORIES_TABLE: process.env.DDB_CATEGORIES_TABLE ?? "",
+        DDB_FACES_TABLE: process.env.DDB_FACES_TABLE ?? "",
         LAMBDA_AWS_KEY_ID: process.env.LAMBDA_AWS_KEY_ID ?? "",
         LAMBDA_AWS_SECRET: process.env.LAMBDA_AWS_SECRET ?? "",
         S3_PHOTOS_BUCKET: process.env.S3_PHOTOS_BUCKET ?? "",

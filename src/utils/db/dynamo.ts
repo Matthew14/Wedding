@@ -27,3 +27,4 @@ export const docClient = DynamoDBDocumentClient.from(client, {
 export const ARCHIVE_TABLE = process.env["DDB_ARCHIVE_TABLE"] ?? "wedding-archive";
 export const PHOTOS_TABLE = process.env["DDB_PHOTOS_TABLE"] ?? "wedding-photos";
 export const CATEGORIES_TABLE = process.env["DDB_CATEGORIES_TABLE"] ?? "wedding-photo-categories";
+export const FACES_TABLE = process.env["DDB_FACES_TABLE"] ?? "wedding-photo-faces";
