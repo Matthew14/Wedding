@@ -223,11 +223,12 @@ export class WeddingStack extends cdk.Stack {
             `${facesTable.tableArn}/index/*`,
           ],
         }),
-        // Face rows are the only items the app ever deletes (admin re-cluster
-        // and cleanup), so the DeleteItem grant is scoped to that table alone.
+        // App-side deletes: face rows (re-cluster/cleanup, and cascade when a
+        // photo is deleted) and photo rows (admin permanently deleting a
+        // rejected photo). The frozen archive stays undeletable.
         new iam.PolicyStatement({
           actions: ['dynamodb:DeleteItem'],
-          resources: [facesTable.tableArn],
+          resources: [facesTable.tableArn, photosTable.tableArn],
         }),
         // Presigned URLs (guest photo downloads and uploads) are signed as
         // this user, so S3 evaluates ITS permissions when the URL is used —
@@ -236,6 +237,15 @@ export class WeddingStack extends cdk.Stack {
         new iam.PolicyStatement({
           actions: ['s3:GetObject', 's3:PutObject'],
           resources: [`${photosBucket.bucketArn}/uploads/original/*`],
+        }),
+        // Permanently deleting a rejected photo removes its original AND its
+        // generated thumbnail.
+        new iam.PolicyStatement({
+          actions: ['s3:DeleteObject'],
+          resources: [
+            `${photosBucket.bucketArn}/uploads/original/*`,
+            `${photosBucket.bucketArn}/uploads/thumbnail/*`,
+          ],
         }),
       ],
     });

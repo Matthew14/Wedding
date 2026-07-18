@@ -1,4 +1,10 @@
-import { GetCommand, QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import {
+    DeleteCommand,
+    GetCommand,
+    QueryCommand,
+    ScanCommand,
+    UpdateCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import { randomUUID } from "crypto";
 import { docClient, FACES_TABLE } from "./dynamo";
@@ -75,6 +81,20 @@ export async function getFacesByInvitees(inviteeIds: number[]): Promise<PhotoFac
         })
     );
     return results.flat();
+}
+
+// Cascade for photo deletion: remove every face row belonging to the photo.
+// The Rekognition vectors stay in the collection (the app has no Rekognition
+// permissions by design); orphaned vectors are harmless — any future match
+// against one finds no row and is skipped. Returns the number removed.
+export async function deleteFacesByPhoto(photoId: string): Promise<number> {
+    const faces = await getFacesByPhoto(photoId);
+    for (const face of faces) {
+        await docClient.send(
+            new DeleteCommand({ TableName: FACES_TABLE, Key: { face_id: face.face_id } })
+        );
+    }
+    return faces.length;
 }
 
 // An admin rejected this face from its person: sever it into a fresh,

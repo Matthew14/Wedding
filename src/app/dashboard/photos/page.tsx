@@ -19,7 +19,7 @@ import {
     Anchor,
     UnstyledButton,
 } from "@mantine/core";
-import { IconAlertCircle, IconCheck, IconX } from "@tabler/icons-react";
+import { IconAlertCircle, IconCheck, IconX, IconTrash } from "@tabler/icons-react";
 import Link from "next/link";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -94,6 +94,20 @@ export default function PhotosModerationPage() {
     useEffect(() => {
         fetchPhotos(activeStatus);
     }, [activeStatus, fetchPhotos]);
+
+    // Permanent delete of a rejected photo: S3 objects, face rows, and the
+    // photo row all go — hence the confirm.
+    const deletePhoto = async (id: string) => {
+        if (!window.confirm("Permanently delete this photo? This cannot be undone.")) return;
+        try {
+            const res = await fetch(`/api/photos/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Delete failed");
+            setPhotos((prev) => prev.filter((p) => p.id !== id));
+            fetchCounts();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to delete photo");
+        }
+    };
 
     const updatePhoto = async (id: string, status: "approved" | "rejected", categoryId?: string) => {
         try {
@@ -171,6 +185,7 @@ export default function PhotosModerationPage() {
                             categoryOptions={categoryOptions}
                             onApprove={(categoryId) => updatePhoto(photo.id, "approved", categoryId)}
                             onReject={() => updatePhoto(photo.id, "rejected")}
+                            onDelete={() => deletePhoto(photo.id)}
                             onView={() =>
                                 setLightboxIndex(viewablePhotos.findIndex((p) => p.id === photo.id))
                             }
@@ -199,20 +214,24 @@ function PhotoCard({
     categoryOptions,
     onApprove,
     onReject,
+    onDelete,
     onView,
 }: {
     photo: PhotoWithThumbnail;
     categoryOptions: { value: string; label: string }[];
     onApprove: (categoryId?: string) => void;
     onReject: () => void;
+    onDelete: () => void;
     onView: () => void;
 }) {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(photo.category_id);
 
     // Status changes are allowed in both directions: a photo can be approved
-    // unless it already is, and rejected unless it already is.
+    // unless it already is, and rejected unless it already is. Permanent
+    // deletion is only offered once a photo is rejected.
     const canApprove = photo.status !== "approved";
     const canReject = photo.status !== "rejected";
+    const canDelete = photo.status === "rejected";
 
     return (
         <Paper shadow="sm" radius="md" p="sm" withBorder>
@@ -297,6 +316,17 @@ function PhotoCard({
                             onClick={onReject}
                         >
                             Reject
+                        </Button>
+                    )}
+                    {canDelete && (
+                        <Button
+                            size="xs"
+                            color="red"
+                            leftSection={<IconTrash size={12} />}
+                            flex={1}
+                            onClick={onDelete}
+                        >
+                            Delete
                         </Button>
                     )}
                 </Group>

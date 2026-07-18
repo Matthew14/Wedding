@@ -1,11 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { PATCH } from "../route";
+import { PATCH, DELETE } from "../route";
 
 const mockUpdatePhotoModeration = vi.fn();
+const mockGetPhotoById = vi.fn();
+const mockDeletePhotoRow = vi.fn();
+const mockDeleteFacesByPhoto = vi.fn();
+const mockS3Send = vi.fn();
 
 vi.mock("@/utils/db/photos", () => ({
     updatePhotoModeration: (...args: unknown[]) => mockUpdatePhotoModeration(...args),
+    getPhotoById: (...args: unknown[]) => mockGetPhotoById(...args),
+    deletePhotoRow: (...args: unknown[]) => mockDeletePhotoRow(...args),
+}));
+
+vi.mock("@/utils/db/faces", () => ({
+    deleteFacesByPhoto: (...args: unknown[]) => mockDeleteFacesByPhoto(...args),
+}));
+
+vi.mock("@/utils/storage", () => ({
+    getS3: () => ({ send: (...args: unknown[]) => mockS3Send(...args) }),
+    BUCKET: "test-bucket",
 }));
 
 vi.mock("@/utils/auth/requireAuth", () => ({
@@ -97,5 +112,80 @@ describe("PATCH /api/photos/[id]", () => {
         mockUpdatePhotoModeration.mockRejectedValue(new Error("DB error"));
         const res = await PATCH(makeRequest({ status: "approved" }), { params });
         expect(res.status).toBe(500);
+    });
+});
+
+describe("DELETE /api/photos/[id]", () => {
+    const rejectedPhoto = {
+        id: "photo-1",
+        s3_key: "uploads/original/ABC123/uuid.heic",
+        thumbnail_key: "uploads/thumbnail/ABC123/uuid.jpg",
+        status: "rejected",
+    };
+    const deleteRequest = () =>
+        new NextRequest("http://localhost/api/photos/photo-1", { method: "DELETE" });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockGetPhotoById.mockResolvedValue(rejectedPhoto);
+        mockS3Send.mockResolvedValue({});
+        mockDeleteFacesByPhoto.mockResolvedValue(2);
+        mockDeletePhotoRow.mockResolvedValue(undefined);
+    });
+
+    it("returns 401 without auth", async () => {
+        unauthenticated();
+        const res = await DELETE(deleteRequest(), { params });
+        expect(res.status).toBe(401);
+        expect(mockDeletePhotoRow).not.toHaveBeenCalled();
+    });
+
+    it("deletes S3 objects, face rows, and the photo row", async () => {
+        authenticated();
+        const res = await DELETE(deleteRequest(), { params });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({ id: "photo-1", deleted: true });
+
+        const s3Keys = mockS3Send.mock.calls.map(
+            (c) => (c[0] as { input: { Key: string } }).input.Key
+        );
+        expect(s3Keys).toEqual([
+            "uploads/original/ABC123/uuid.heic",
+            "uploads/thumbnail/ABC123/uuid.jpg",
+        ]);
+        expect(mockDeleteFacesByPhoto).toHaveBeenCalledWith("photo-1");
+        expect(mockDeletePhotoRow).toHaveBeenCalledWith("photo-1");
+    });
+
+    it("skips the thumbnail delete when none exists (stuck photos)", async () => {
+        authenticated();
+        mockGetPhotoById.mockResolvedValue({ ...rejectedPhoto, thumbnail_key: null });
+        const res = await DELETE(deleteRequest(), { params });
+        expect(res.status).toBe(200);
+        expect(mockS3Send).toHaveBeenCalledTimes(1);
+    });
+
+    it("refuses to delete photos that are not rejected", async () => {
+        authenticated();
+        mockGetPhotoById.mockResolvedValue({ ...rejectedPhoto, status: "approved" });
+        const res = await DELETE(deleteRequest(), { params });
+        expect(res.status).toBe(400);
+        expect(mockS3Send).not.toHaveBeenCalled();
+        expect(mockDeletePhotoRow).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 for a non-existent photo", async () => {
+        authenticated();
+        mockGetPhotoById.mockResolvedValue(null);
+        const res = await DELETE(deleteRequest(), { params });
+        expect(res.status).toBe(404);
+    });
+
+    it("keeps the photo row when S3 deletion fails (retryable)", async () => {
+        authenticated();
+        mockS3Send.mockRejectedValue(new Error("S3 error"));
+        const res = await DELETE(deleteRequest(), { params });
+        expect(res.status).toBe(500);
+        expect(mockDeletePhotoRow).not.toHaveBeenCalled();
     });
 });

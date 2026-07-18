@@ -1,5 +1,6 @@
 import {
     BatchGetCommand,
+    DeleteCommand,
     GetCommand,
     PutCommand,
     QueryCommand,
@@ -138,6 +139,12 @@ export async function getPhotosByIds(ids: string[]): Promise<Photo[]> {
         }
     }
     return photos;
+}
+
+// Remove the photo row itself. Callers own the wider cascade (S3 objects,
+// face rows) — see DELETE /api/photos/[id].
+export async function deletePhotoRow(id: string): Promise<void> {
+    await docClient.send(new DeleteCommand({ TableName: PHOTOS_TABLE, Key: { id } }));
 }
 
 export interface ModerationUpdate {
