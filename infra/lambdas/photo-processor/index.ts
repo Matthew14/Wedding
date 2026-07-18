@@ -120,20 +120,27 @@ async function rematchUnassignedFaces(): Promise<void> {
                         face.rejected_invitee_ids ?? []
                     );
                     if (!match) return;
+                    // assigned_by/assigned_at make each re-match round
+                    // enumerable after the fact — an automated round must
+                    // always be precisely undoable (learned the hard way).
                     await docClient.send(
                         new UpdateCommand({
                             TableName: FACES_TABLE,
                             Key: { face_id: face.face_id },
                             UpdateExpression: match.ignored
-                                ? "SET cluster_id = :cluster, ignored = :ignored"
-                                : "SET cluster_id = :cluster, invitee_id = :invitee, invitation_id = :invitation",
-                            ExpressionAttributeValues: match.ignored
-                                ? { ":cluster": match.cluster_id, ":ignored": true }
-                                : {
-                                      ":cluster": match.cluster_id,
-                                      ":invitee": match.invitee_id,
-                                      ":invitation": match.invitation_id,
-                                  },
+                                ? "SET cluster_id = :cluster, ignored = :ignored, assigned_by = :by, assigned_at = :at"
+                                : "SET cluster_id = :cluster, invitee_id = :invitee, invitation_id = :invitation, assigned_by = :by, assigned_at = :at",
+                            ExpressionAttributeValues: {
+                                ":cluster": match.cluster_id,
+                                ":by": "rematch",
+                                ":at": new Date().toISOString(),
+                                ...(match.ignored
+                                    ? { ":ignored": true }
+                                    : {
+                                          ":invitee": match.invitee_id,
+                                          ":invitation": match.invitation_id,
+                                      }),
+                            },
                         })
                     );
                     if (match.ignored) ignored++;
