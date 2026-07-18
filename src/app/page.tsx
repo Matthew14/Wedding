@@ -65,7 +65,7 @@ export default function HomePage() {
                                 lineHeight: 1.6,
                             }}
                         >
-                            Check back soon to see the photos
+                            Click the link we sent you to see the photos
                         </Text>
                     </Stack>
                 </Container>
