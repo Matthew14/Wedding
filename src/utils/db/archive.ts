@@ -118,7 +118,7 @@ export async function getInviteesWithIds(
 // exist. Returning names behind a valid code is fine — the code is the
 // guest's credential.
 export async function getInviteesByCode(code: string): Promise<string[] | null> {
-    if (isMasterCode(code)) return ["Matthew", "Rebecca"];
+    if (isMasterCode(code)) return COUPLE_INVITEES.map((c) => c.name.split(" ")[0]);
     const codeResult = await docClient.send(
         new GetCommand({
             TableName: ARCHIVE_TABLE,
