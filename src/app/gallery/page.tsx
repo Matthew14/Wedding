@@ -292,19 +292,23 @@ function Gallery() {
                                 Share your memories from our special day
                             </Text>
                         </Box>
-                        <Group gap="sm">
-                            <Button
-                                component={Link}
-                                href="/gallery/my-photos"
-                                variant="light"
-                                color="yellow"
-                            >
-                                Find My Photos
-                            </Button>
-                            <Button component={Link} href="/gallery/upload" variant="light" color="yellow">
-                                Upload Photos
-                            </Button>
-                        </Group>
+                        {/* Both pages are code-gated — dead ends for a
+                            codeless visitor staring at the gate. */}
+                        {hasAccess && (
+                            <Group gap="sm">
+                                <Button
+                                    component={Link}
+                                    href="/gallery/my-photos"
+                                    variant="light"
+                                    color="yellow"
+                                >
+                                    Find My Photos
+                                </Button>
+                                <Button component={Link} href="/gallery/upload" variant="light" color="yellow">
+                                    Upload Photos
+                                </Button>
+                            </Group>
+                        )}
                     </Group>
 
                     {error && (
