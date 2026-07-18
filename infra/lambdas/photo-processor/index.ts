@@ -3,6 +3,7 @@ import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3
 import sharp from "sharp";
 import heicConvert from "heic-convert";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 import { DynamoDBClient, ConditionalCheckFailedException } from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
@@ -27,6 +28,7 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
 });
 const rekognition = new RekognitionClient({});
 const sesClient = new SESv2Client({});
+const ssmClient = new SSMClient({});
 
 const PHOTOS_TABLE = process.env.PHOTOS_TABLE ?? "wedding-photos";
 const FACES_TABLE = process.env.FACES_TABLE ?? "wedding-photo-faces";
@@ -34,14 +36,48 @@ const ARCHIVE_TABLE = process.env.ARCHIVE_TABLE ?? "wedding-archive";
 const COLLECTION_ID = process.env.REKOGNITION_COLLECTION_ID ?? "wedding-faces-2026";
 const FACE_MATCH_THRESHOLD = Number(process.env.FACE_MATCH_THRESHOLD ?? "95");
 
-// Admin notification email; unset NOTIFY_TO disables it entirely.
+// Admin notification email. Recipients live in an SSM parameter (a
+// StringList of addresses) so personal emails never appear in the codebase
+// and the list can be edited in the console without a deploy. Empty or
+// missing parameter disables notifications.
 const NOTIFY_FROM = process.env.NOTIFY_FROM ?? "";
-const NOTIFY_TO = process.env.NOTIFY_TO ?? "";
+const NOTIFY_RECIPIENTS_PARAM = process.env.NOTIFY_RECIPIENTS_PARAM ?? "";
 const SITE_URL = process.env.SITE_URL ?? "https://oneill.wedding";
 const CDN_URL = process.env.CDN_URL ?? "";
 // One email per burst: a guest selecting 40 photos triggers 40 invocations,
 // but only the first inside this window sends.
 const NOTIFY_DEBOUNCE_MS = 30 * 60 * 1000;
+
+// Cache the recipient list across invocations of a warm Lambda; a parameter
+// edit takes effect within this window (or on the next cold start).
+const RECIPIENTS_CACHE_MS = 5 * 60 * 1000;
+let cachedRecipients: string[] | null = null;
+let recipientsCachedAt = 0;
+
+async function getNotifyRecipients(): Promise<string[]> {
+    if (!NOTIFY_RECIPIENTS_PARAM) return [];
+    if (cachedRecipients && Date.now() - recipientsCachedAt < RECIPIENTS_CACHE_MS) {
+        return cachedRecipients;
+    }
+    try {
+        const result = await ssmClient.send(
+            new GetParameterCommand({ Name: NOTIFY_RECIPIENTS_PARAM })
+        );
+        cachedRecipients = (result.Parameter?.Value ?? "")
+            .split(",")
+            .map((a) => a.trim())
+            .filter((a) => a.includes("@"));
+    } catch (err) {
+        // Missing parameter = notifications off; anything else is logged but
+        // must not break photo processing.
+        if ((err as Error).name !== "ParameterNotFound") {
+            console.error("Failed to read notify recipients:", err);
+        }
+        cachedRecipients = [];
+    }
+    recipientsCachedAt = Date.now();
+    return cachedRecipients;
+}
 
 // Upper bound on the original file we will buffer into memory, so a single
 // oversized object cannot OOM-crash the function. Guest uploads are capped at
@@ -307,7 +343,9 @@ async function processPhoto(key: string, bucket: string): Promise<void> {
 // Email the admin that guest photos are waiting for review — at most one
 // email per debounce window, no matter how large the upload burst.
 async function notifyAdminOfUpload(code: string, thumbKey: string): Promise<void> {
-    if (!NOTIFY_TO || !NOTIFY_FROM) return;
+    if (!NOTIFY_FROM) return;
+    const recipients = await getNotifyRecipients();
+    if (recipients.length === 0) return;
 
     // Guest uploads only: the key's code segment must be a real archived
     // invitation code. Professional imports use category slugs there, and
@@ -381,7 +419,7 @@ async function notifyAdminOfUpload(code: string, thumbKey: string): Promise<void
     await sesClient.send(
         new SendEmailCommand({
             FromEmailAddress: `Wedding Gallery <${NOTIFY_FROM}>`,
-            Destination: { ToAddresses: [NOTIFY_TO] },
+            Destination: { ToAddresses: recipients },
             Content: {
                 Simple: {
                     Subject: {

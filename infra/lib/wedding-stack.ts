@@ -254,19 +254,19 @@ export class WeddingStack extends cdk.Stack {
 
     // ── SES (admin upload notifications) ─────────────────────────────────────
     // The domain identity lets photos@oneill.wedding send; DKIM CNAMEs land
-    // in the Route53 zone automatically. The account stays in the SES
-    // sandbox, which is fine because the ONLY recipient is the admin — whose
-    // address is verified by the second identity (a confirmation email
-    // arrives on first deploy; click it once).
+    // in the Route53 zone automatically. Recipients deliberately live OUTSIDE
+    // the codebase, in the SSM parameter /wedding/notify/recipients
+    // (StringList of addresses) — edit it in the console, no deploy needed.
+    // While the account is in the SES sandbox each recipient must also be
+    // verified once:
+    //   aws sesv2 create-email-identity --email-identity someone@example.com
+    // (a confirmation email arrives; click it).
     const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'WeddingZone', {
       hostedZoneId: 'Z0934871XWIQZAKBW951',
       zoneName: 'oneill.wedding',
     });
     new ses.EmailIdentity(this, 'SesDomainIdentity', {
       identity: ses.Identity.publicHostedZone(zone),
-    });
-    new ses.EmailIdentity(this, 'SesAdminRecipient', {
-      identity: ses.Identity.email('matthew@matthewoneill.com'),
     });
 
     // ── photo-processor Lambda ───────────────────────────────────────────────
@@ -313,7 +313,7 @@ export class WeddingStack extends cdk.Stack {
         ARCHIVE_TABLE: archiveTable.tableName,
         CDN_URL: `https://${distribution.distributionDomainName}`,
         NOTIFY_FROM: 'photos@oneill.wedding',
-        NOTIFY_TO: 'matthew@matthewoneill.com',
+        NOTIFY_RECIPIENTS_PARAM: '/wedding/notify/recipients',
         SITE_URL: 'https://oneill.wedding',
       },
     });
@@ -331,9 +331,18 @@ export class WeddingStack extends cdk.Stack {
     photoProcessor.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['ses:SendEmail'],
+        // Resource = the SENDING identity; recipients aren't IAM resources
+        // (in sandbox they're gated by SES verification instead).
         resources: [
           `arn:aws:ses:${this.region}:${this.account}:identity/oneill.wedding`,
-          `arn:aws:ses:${this.region}:${this.account}:identity/matthew@matthewoneill.com`,
+        ],
+      })
+    );
+    photoProcessor.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ssm:GetParameter'],
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter/wedding/notify/*`,
         ],
       })
     );
