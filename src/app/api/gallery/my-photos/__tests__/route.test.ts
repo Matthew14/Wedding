@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { GET } from "../route";
 
 const mockRequireAuth = vi.fn();
-const mockIsValidInvitationCode = vi.fn();
+const mockIsMasterCode = vi.fn();
 const mockGetInvitationIdByCode = vi.fn();
 const mockGetInviteesWithIds = vi.fn();
 const mockGetFacesByInvitees = vi.fn();
@@ -14,7 +14,7 @@ vi.mock("@/utils/auth/requireAuth", () => ({
     requireAuth: (...args: unknown[]) => mockRequireAuth(...args),
 }));
 vi.mock("@/utils/db/archive", () => ({
-    isValidInvitationCode: (...args: unknown[]) => mockIsValidInvitationCode(...args),
+    isMasterCode: (...args: unknown[]) => mockIsMasterCode(...args),
     getInvitationIdByCode: (...args: unknown[]) => mockGetInvitationIdByCode(...args),
     getInviteesWithIds: (...args: unknown[]) => mockGetInviteesWithIds(...args),
 }));
@@ -58,7 +58,7 @@ describe("GET /api/gallery/my-photos", () => {
             success: false,
             response: new Response(null, { status: 401 }),
         });
-        mockIsValidInvitationCode.mockResolvedValue(true);
+        mockIsMasterCode.mockReturnValue(false);
         mockGetInvitationIdByCode.mockResolvedValue(3);
         mockGetInviteesWithIds.mockResolvedValue([
             { id: 7, first_name: "Aoife" },
@@ -73,10 +73,11 @@ describe("GET /api/gallery/my-photos", () => {
         expect(mockGetFacesByInvitees).not.toHaveBeenCalled();
     });
 
-    it("rejects an invalid code", async () => {
-        mockIsValidInvitationCode.mockResolvedValue(false);
+    it("rejects an invalid code with a single archive read", async () => {
+        mockGetInvitationIdByCode.mockResolvedValue(null);
         const res = await GET(req("?code=ZZZZZZ"));
         expect(res.status).toBe(401);
+        expect(mockGetInvitationIdByCode).toHaveBeenCalledTimes(1);
     });
 
     it("dedupes photos when several household members appear in the same photo", async () => {
@@ -127,10 +128,11 @@ describe("GET /api/gallery/my-photos", () => {
         expect(body.photos[0].thumbnail_url).toBe("https://cdn/uploads/thumbnail/x/p1.jpg");
     });
 
-    it("returns an empty result for the master code (no household)", async () => {
-        mockGetInvitationIdByCode.mockResolvedValue(null);
+    it("returns an empty result for the master code without touching the archive", async () => {
+        mockIsMasterCode.mockReturnValue(true);
         const body = await (await GET(req("?code=RM2026"))).json();
         expect(body).toEqual({ photos: [], invitees: [], page: 1, limit: 200, total: 0 });
+        expect(mockGetInvitationIdByCode).not.toHaveBeenCalled();
         expect(mockGetFacesByInvitees).not.toHaveBeenCalled();
     });
 

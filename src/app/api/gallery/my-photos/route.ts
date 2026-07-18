@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-    isValidInvitationCode,
-    getInvitationIdByCode,
-    getInviteesWithIds,
-} from "@/utils/db/archive";
+import { isMasterCode, getInvitationIdByCode, getInviteesWithIds } from "@/utils/db/archive";
 import { getFacesByInvitees } from "@/utils/db/faces";
 import { getPhotosByIds } from "@/utils/db/photos";
 import { listCategories } from "@/utils/db/categories";
@@ -24,16 +20,22 @@ export async function GET(request: NextRequest) {
 
         const code = searchParams.get("code")?.trim().toUpperCase() ?? "";
         const auth = await requireAuth(request);
-        if (!auth.success && (!code || !(await isValidInvitationCode(code)))) {
+
+        // One archive read serves both the auth gate and the household
+        // lookup: a non-master code with no invitation behind it IS an
+        // invalid code. (isMasterCode is an env check, not a DB call.)
+        const isMaster = !!code && isMasterCode(code);
+        const invitationId = code && !isMaster ? await getInvitationIdByCode(code) : null;
+
+        if (!auth.success && !isMaster && invitationId === null) {
             return NextResponse.json(
                 { error: "A valid invitation code is required" },
                 { status: 401 }
             );
         }
 
-        // The master code (and an admin session without a code) has no
+        // The master code (and an admin session without a guest code) has no
         // archived household behind it — nothing to match, empty result.
-        const invitationId = code ? await getInvitationIdByCode(code) : null;
         if (invitationId === null) {
             return NextResponse.json({ photos: [], invitees: [], page, limit, total: 0 });
         }
