@@ -17,7 +17,7 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle, IconDownload } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
-import { useTracking, GalleryEvents } from "@/hooks/useTracking";
+import { useTracking, GalleryEvents, SiteEvents } from "@/hooks/useTracking";
 import { RowsPhotoAlbum } from "react-photo-album";
 import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
@@ -64,6 +64,14 @@ export default function MyPhotosPage() {
     const hasAccess = !!invitationCode || isAdmin;
     const showCodeGate = codeChecked && !invitationCode && sessionStatus === "unauthenticated";
 
+    // One event for every CTA on the page, keyed by the `cta` slug.
+    const trackCta = (cta: string) =>
+        trackEvent(SiteEvents.CTA_CLICK, {
+            cta,
+            page: "my-photos",
+            ...(invitationCode && { invitation_code: invitationCode }),
+        });
+
     // Same storage key as the main gallery: guests who've been through the
     // gate once are already recognised here.
     useEffect(() => {
@@ -78,7 +86,9 @@ export default function MyPhotosPage() {
         setInvitationCode(masterCode);
     }, [isAdmin, invitationCode, masterCode]);
 
+    // Tracked here rather than on the button so Enter-key submits count too.
     const handleCodeSubmit = async () => {
+        trackCta("code_submit");
         const trimmed = codeInput.trim().toUpperCase();
         if (!/^[A-Z0-9]{6}$/.test(trimmed)) {
             setCodeError("Please enter your 6-character invitation code");
@@ -188,7 +198,13 @@ export default function MyPhotosPage() {
                                     : "Every photo from the day that you appear in"}
                             </Text>
                         </Box>
-                        <Button component={Link} href="/gallery" variant="light" color="yellow">
+                        <Button
+                            component={Link}
+                            href="/gallery"
+                            variant="light"
+                            color="yellow"
+                            onClick={() => trackCta("full_gallery")}
+                        >
                             Full Gallery
                         </Button>
                     </Flex>

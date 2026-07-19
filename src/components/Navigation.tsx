@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useGalleryFlag } from "@/hooks/useGalleryFlag";
 import { useSession } from "@/hooks/useSession";
+import { useTracking, SiteEvents } from "@/hooks/useTracking";
 import classes from "./Navigation.module.css";
 
 const navLinkStyle = {
@@ -18,6 +19,8 @@ const navLinkStyle = {
 export function Navigation() {
     const galleryFlag = useGalleryFlag();
     const { status, refresh } = useSession();
+    const { trackEvent } = useTracking();
+    const trackNav = (target: string) => trackEvent(SiteEvents.NAV_CLICK, { target });
     const router = useRouter();
     const pathname = usePathname();
     const [loggingOut, setLoggingOut] = useState(false);
@@ -68,12 +71,20 @@ export function Navigation() {
                         letterSpacing: "0.02em",
                         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
+                    onClick={() => trackNav("home")}
                 >
                     Rebecca & Matthew
                 </Anchor>
                 <Group gap="md" wrap="nowrap">
                     {galleryFlag === "on" && (
-                        <Anchor component={Link} href="/gallery" size="sm" fw={400} style={navLinkStyle}>
+                        <Anchor
+                            component={Link}
+                            href="/gallery"
+                            size="sm"
+                            fw={400}
+                            style={navLinkStyle}
+                            onClick={() => trackNav("gallery")}
+                        >
                             Gallery
                         </Anchor>
                     )}
@@ -84,14 +95,24 @@ export function Navigation() {
                                     {logoutError}
                                 </Text>
                             )}
-                            <Anchor component={Link} href="/dashboard" size="sm" fw={400} style={navLinkStyle}>
+                            <Anchor
+                                component={Link}
+                                href="/dashboard"
+                                size="sm"
+                                fw={400}
+                                style={navLinkStyle}
+                                onClick={() => trackNav("dashboard")}
+                            >
                                 Dashboard
                             </Anchor>
                             <Button
                                 variant="subtle"
                                 color="gray"
                                 size="compact-sm"
-                                onClick={handleLogout}
+                                onClick={() => {
+                                    trackNav("logout");
+                                    handleLogout();
+                                }}
                                 loading={loggingOut}
                             >
                                 Logout

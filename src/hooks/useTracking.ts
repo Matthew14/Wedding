@@ -161,6 +161,10 @@ export const SiteEvents = {
     NAV_CLICK: 'nav_click',
     EXTERNAL_LINK_CLICK: 'external_link_click',
 
+    // Any call-to-action button; distinguished by the `cta` property
+    // (plus `page`, and `invitation_code` when the caller has one).
+    CTA_CLICK: 'cta_click',
+
     // Pages
     PAGE_404: 'page_404',
 
