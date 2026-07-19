@@ -30,6 +30,7 @@ import {
     IconChevronLeft,
 } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
+import { useTracking, GalleryEvents } from "@/hooks/useTracking";
 import { useCategoryCardsFlag } from "@/hooks/useCategoryCardsFlag";
 import { FaceCrop } from "@/components/FaceCrop";
 import type { GalleryPerson } from "@/types/faces";
@@ -90,6 +91,7 @@ function Gallery() {
     const [myUploadsOnly, setMyUploadsOnly] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
     const { status: sessionStatus, masterCode } = useSession();
+    const { trackEvent } = useTracking();
     const isAdmin = sessionStatus === "authenticated";
     const LIMIT = 40;
 
@@ -604,7 +606,18 @@ function Gallery() {
                         <RowsPhotoAlbum
                             photos={photos}
                             targetRowHeight={240}
-                            onClick={({ index }) => setLightboxIndex(index)}
+                            onClick={({ index }) => {
+                                setLightboxIndex(index);
+                                // Opening the lightbox is the download
+                                // button's impression — it only renders
+                                // there, and only with a code present.
+                                if (invitationCode) {
+                                    trackEvent(GalleryEvents.DOWNLOAD_BUTTON_IMPRESSION, {
+                                        invitation_code: invitationCode,
+                                        page: "gallery",
+                                    });
+                                }
+                            }}
                         />
                     )}
 

@@ -17,6 +17,7 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle, IconDownload } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
+import { useTracking, GalleryEvents } from "@/hooks/useTracking";
 import { RowsPhotoAlbum } from "react-photo-album";
 import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
@@ -57,6 +58,7 @@ export default function MyPhotosPage() {
     const [validatingCode, setValidatingCode] = useState(false);
     const [loaded, setLoaded] = useState(false);
     const { status: sessionStatus, masterCode } = useSession();
+    const { trackEvent } = useTracking();
     const isAdmin = sessionStatus === "authenticated";
 
     const hasAccess = !!invitationCode || isAdmin;
@@ -241,7 +243,18 @@ export default function MyPhotosPage() {
                         <RowsPhotoAlbum
                             photos={photos}
                             targetRowHeight={240}
-                            onClick={({ index }) => setLightboxIndex(index)}
+                            onClick={({ index }) => {
+                                setLightboxIndex(index);
+                                // Opening the lightbox is the download
+                                // button's impression — it only renders
+                                // there, and only with a code present.
+                                if (invitationCode) {
+                                    trackEvent(GalleryEvents.DOWNLOAD_BUTTON_IMPRESSION, {
+                                        invitation_code: invitationCode,
+                                        page: "my-photos",
+                                    });
+                                }
+                            }}
                         />
                     )}
                 </Stack>

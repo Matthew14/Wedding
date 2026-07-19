@@ -148,6 +148,14 @@ export const InvitationEvents = {
     INVALID_LINK: 'invitation_invalid_link',
 } as const;
 
+// Gallery tracking events
+export const GalleryEvents = {
+    // The lightbox toolbar is the only place the download button renders,
+    // and only for callers with an invitation code — so one impression per
+    // lightbox open, carrying the code.
+    DOWNLOAD_BUTTON_IMPRESSION: 'gallery_download_button_impression',
+} as const;
+
 // Site-wide tracking events
 export const SiteEvents = {
     // Navigation
