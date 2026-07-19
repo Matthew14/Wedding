@@ -243,18 +243,7 @@ export default function MyPhotosPage() {
                         <RowsPhotoAlbum
                             photos={photos}
                             targetRowHeight={240}
-                            onClick={({ index }) => {
-                                setLightboxIndex(index);
-                                // Opening the lightbox is the download
-                                // button's impression — it only renders
-                                // there, and only with a code present.
-                                if (invitationCode) {
-                                    trackEvent(GalleryEvents.DOWNLOAD_BUTTON_IMPRESSION, {
-                                        invitation_code: invitationCode,
-                                        page: "my-photos",
-                                    });
-                                }
-                            }}
+                            onClick={({ index }) => setLightboxIndex(index)}
                         />
                     )}
                 </Stack>
@@ -265,7 +254,15 @@ export default function MyPhotosPage() {
                 close={() => setLightboxIndex(-1)}
                 slides={lightboxSlides}
                 index={lightboxIndex}
-                on={{ view: ({ index }) => setLightboxIndex(index) }}
+                on={{
+                    view: ({ index }) => setLightboxIndex(index),
+                    download: ({ index }) =>
+                        trackEvent(GalleryEvents.DOWNLOAD_CLICKED, {
+                            invitation_code: invitationCode,
+                            photo_id: photos[index]?.id,
+                            page: "my-photos",
+                        }),
+                }}
                 plugins={invitationCode ? [Captions, Download, Zoom] : [Captions, Zoom]}
                 zoom={{ maxZoomPixelRatio: 2 }}
                 render={{

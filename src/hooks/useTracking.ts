@@ -150,10 +150,9 @@ export const InvitationEvents = {
 
 // Gallery tracking events
 export const GalleryEvents = {
-    // The lightbox toolbar is the only place the download button renders,
-    // and only for callers with an invitation code — so one impression per
-    // lightbox open, carrying the code.
-    DOWNLOAD_BUTTON_IMPRESSION: 'gallery_download_button_impression',
+    // Fired when the lightbox download button is pressed; carries the
+    // guest's invitation code and the photo id.
+    DOWNLOAD_CLICKED: 'gallery_download_clicked',
 } as const;
 
 // Site-wide tracking events
