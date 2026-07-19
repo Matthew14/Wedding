@@ -19,9 +19,18 @@ import {
     TextInput,
     Select,
     SegmentedControl,
+    UnstyledButton,
+    Image,
 } from "@mantine/core";
-import { IconAlertCircle, IconDownload, IconTrash, IconSearch } from "@tabler/icons-react";
+import {
+    IconAlertCircle,
+    IconDownload,
+    IconTrash,
+    IconSearch,
+    IconChevronLeft,
+} from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
+import { useCategoryCardsFlag } from "@/hooks/useCategoryCardsFlag";
 import { FaceCrop } from "@/components/FaceCrop";
 import type { GalleryPerson } from "@/types/faces";
 import { RowsPhotoAlbum } from "react-photo-album";
@@ -244,6 +253,17 @@ function Gallery() {
     // so flipping tabs and back doesn't lose the selection).
     const mineActive = myUploadsOnly && activeCategory === GUEST_PHOTOS_SLUG;
 
+    // Guest Photos is pulled out of the category list so it can lead the
+    // card strip (or tab row) with its own styling.
+    const guestCategory = categories.find((c) => c.slug === GUEST_PHOTOS_SLUG);
+    const otherCategories = categories.filter((c) => c.slug !== GUEST_PHOTOS_SLUG);
+    const orderedCategories = guestCategory ? [guestCategory, ...otherCategories] : otherCategories;
+    const activeCategoryData = categories.find((c) => c.slug === activeCategory);
+
+    // The cover-photo category cards are rolling out behind a PostHog flag;
+    // flag off keeps the tab row.
+    const cardsEnabled = useCategoryCardsFlag();
+
     useEffect(() => {
         // Don't fetch until code resolution has run, and never fetch without
         // access — the API would just 401.
@@ -410,26 +430,148 @@ function Gallery() {
                         />
                     )}
 
-                    {/* One swipeable row on phones instead of wrapping into a
-                        ragged grid; desktop fits in a single row anyway. */}
-                    <Tabs
-                        value={activeCategory ?? "all"}
-                        onChange={(v) => setActiveCategory(v === "all" ? null : v)}
-                        classNames={{ list: "no-scrollbar" }}
-                        styles={{
-                            list: { flexWrap: "nowrap", overflowX: "auto" },
-                            tab: { whiteSpace: "nowrap", flexShrink: 0 },
-                        }}
-                    >
-                        <Tabs.List>
-                            <Tabs.Tab value="all">All Photos</Tabs.Tab>
-                            {categories.map((c) => (
-                                <Tabs.Tab key={c.id} value={c.slug}>
-                                    {c.name}
-                                </Tabs.Tab>
-                            ))}
-                        </Tabs.List>
-                    </Tabs>
+                    {cardsEnabled ? (
+                        activeCategory === null ? (
+                            /* Cover-photo cards: a swipeable strip guests can't
+                               mistake for decoration, with Guest Photos leading
+                               in gold. All Photos (the stream below) stays the
+                               default view. */
+                            orderedCategories.length > 0 && (
+                                <Stack gap={6}>
+                                    <Text size="sm" fw={500} c="dimmed">
+                                        Browse by moment
+                                    </Text>
+                                    <Box
+                                        className="no-scrollbar"
+                                        style={{
+                                            display: "flex",
+                                            gap: 12,
+                                            overflowX: "auto",
+                                            scrollSnapType: "x proximity",
+                                            paddingBottom: 4,
+                                        }}
+                                    >
+                                        {orderedCategories.map((c) => {
+                                            const isGuest = c.slug === GUEST_PHOTOS_SLUG;
+                                            return (
+                                                <UnstyledButton
+                                                    key={c.id}
+                                                    onClick={() => setActiveCategory(c.slug)}
+                                                    aria-label={`Browse ${c.name}`}
+                                                    style={{ flexShrink: 0, scrollSnapAlign: "start" }}
+                                                >
+                                                    <Box
+                                                        style={{
+                                                            position: "relative",
+                                                            width: 148,
+                                                            height: 104,
+                                                            borderRadius: 12,
+                                                            overflow: "hidden",
+                                                            border: isGuest
+                                                                ? "2px solid var(--gold-dark)"
+                                                                : "1px solid #e9ecef",
+                                                            backgroundColor: "#f1f3f5",
+                                                        }}
+                                                    >
+                                                        {c.cover_thumbnail_url && (
+                                                            <Image
+                                                                src={c.cover_thumbnail_url}
+                                                                alt=""
+                                                                w="100%"
+                                                                h="100%"
+                                                                fit="cover"
+                                                            />
+                                                        )}
+                                                        <Box
+                                                            style={{
+                                                                position: "absolute",
+                                                                inset: 0,
+                                                                background:
+                                                                    "linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0) 55%)",
+                                                            }}
+                                                        />
+                                                        <Text
+                                                            style={{
+                                                                position: "absolute",
+                                                                bottom: 6,
+                                                                left: 10,
+                                                                right: 8,
+                                                                color: "#fff",
+                                                                fontWeight: 600,
+                                                                fontSize: 13,
+                                                                lineHeight: 1.2,
+                                                                textShadow: "0 1px 2px rgba(0,0,0,0.4)",
+                                                            }}
+                                                        >
+                                                            {c.name}
+                                                        </Text>
+                                                    </Box>
+                                                </UnstyledButton>
+                                            );
+                                        })}
+                                    </Box>
+                                </Stack>
+                            )
+                        ) : (
+                            /* Inside a category: back to the full stream. */
+                            <Group gap="xs" align="center">
+                                <Button
+                                    variant="subtle"
+                                    color="gray"
+                                    size="compact-sm"
+                                    leftSection={<IconChevronLeft size={16} />}
+                                    onClick={() => setActiveCategory(null)}
+                                >
+                                    All photos
+                                </Button>
+                                <Title
+                                    order={3}
+                                    style={{
+                                        fontFamily: "var(--font-playfair), serif",
+                                        fontWeight: 400,
+                                        color: "var(--gold-dark)",
+                                    }}
+                                >
+                                    {activeCategoryData?.name ?? ""}
+                                </Title>
+                            </Group>
+                        )
+                    ) : (
+                        /* Flag off: the tab row. One swipeable row on phones
+                           instead of wrapping into a ragged grid; desktop fits
+                           in a single row anyway. */
+                        <Tabs
+                            value={activeCategory ?? "all"}
+                            onChange={(v) => setActiveCategory(v === "all" ? null : v)}
+                            classNames={{ list: "no-scrollbar" }}
+                            styles={{
+                                list: { flexWrap: "nowrap", overflowX: "auto" },
+                                tab: { whiteSpace: "nowrap", flexShrink: 0 },
+                            }}
+                        >
+                            <Tabs.List>
+                                {/* Guest Photos leads the row with the gold
+                                    highlight to invite sharing — but All Photos
+                                    (the Tabs default above) stays selected until
+                                    the guest taps it. */}
+                                {guestCategory && (
+                                    <Tabs.Tab
+                                        value={guestCategory.slug}
+                                        color="yellow"
+                                        style={{ color: "var(--gold-dark)", fontWeight: 600 }}
+                                    >
+                                        {guestCategory.name}
+                                    </Tabs.Tab>
+                                )}
+                                <Tabs.Tab value="all">All Photos</Tabs.Tab>
+                                {otherCategories.map((c) => (
+                                    <Tabs.Tab key={c.id} value={c.slug}>
+                                        {c.name}
+                                    </Tabs.Tab>
+                                ))}
+                            </Tabs.List>
+                        </Tabs>
+                    )}
 
                     {activeCategory === GUEST_PHOTOS_SLUG && (
                         <SegmentedControl
