@@ -195,8 +195,9 @@ function Gallery() {
                 const params = new URLSearchParams({ page: String(pg), limit: String(LIMIT) });
                 if (category) params.set("category", category);
                 // The All Photos tab shows the professional sets only —
-                // guest uploads live on the Guest Photos tab.
-                else params.set("professional", "1");
+                // guest uploads live on the Guest Photos tab. A person search
+                // is the exception: it spans everything, guest uploads too.
+                else if (!person) params.set("professional", "1");
                 if (person) params.set("person", person);
                 if (mine) params.set("mine", "1");
                 if (invitationCode) params.set("code", invitationCode);
@@ -426,7 +427,13 @@ function Gallery() {
                             w="100%"
                             maw={{ base: "100%", sm: 340 }}
                             value={personFilter}
-                            onChange={setPersonFilter}
+                            onChange={(v) => {
+                                setPersonFilter(v);
+                                // A person search spans the whole gallery —
+                                // drop any category selection so results
+                                // aren't hidden by the current tab/card.
+                                if (v) setActiveCategory(null);
+                            }}
                         />
                     )}
 
@@ -467,9 +474,7 @@ function Gallery() {
                                                             height: 104,
                                                             borderRadius: 12,
                                                             overflow: "hidden",
-                                                            border: isGuest
-                                                                ? "2px solid var(--gold-dark)"
-                                                                : "1px solid #e9ecef",
+                                                            border: "1px solid #e9ecef",
                                                             backgroundColor: "#f1f3f5",
                                                         }}
                                                     >
@@ -490,6 +495,26 @@ function Gallery() {
                                                                     "linear-gradient(to top, rgba(0,0,0,0.55), rgba(0,0,0,0) 55%)",
                                                             }}
                                                         />
+                                                        {/* A chip, not a border — a gold outline
+                                                            reads as a selected state. */}
+                                                        {isGuest && (
+                                                            <Text
+                                                                style={{
+                                                                    position: "absolute",
+                                                                    top: 6,
+                                                                    left: 6,
+                                                                    backgroundColor: "var(--gold-dark)",
+                                                                    color: "#fff",
+                                                                    fontWeight: 600,
+                                                                    fontSize: 10,
+                                                                    lineHeight: 1,
+                                                                    padding: "4px 8px",
+                                                                    borderRadius: 999,
+                                                                }}
+                                                            >
+                                                                Share yours
+                                                            </Text>
+                                                        )}
                                                         <Text
                                                             style={{
                                                                 position: "absolute",

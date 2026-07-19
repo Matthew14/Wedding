@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listCategories, createCategory } from "@/utils/db/categories";
-import { getPhotoById } from "@/utils/db/photos";
+import { getPhotoById, listPhotosByStatus } from "@/utils/db/photos";
 import { requireAuth } from "@/utils/auth/requireAuth";
 import { cdnUrl } from "@/utils/storage";
 import type { PhotoCategory } from "@/types/photos";
@@ -9,11 +9,24 @@ export async function GET() {
     try {
         const rows = await listCategories();
 
+        // Categories without a curated cover fall back to their newest
+        // approved photo, so the gallery's category cards never render blank.
+        const fallbackByCategory = new Map<string, string>();
+        if (rows.some((r) => !r.cover_photo_id)) {
+            for (const p of await listPhotosByStatus("approved")) {
+                // First hit wins — photos arrive uploaded_at DESC.
+                if (p.category_id && p.thumbnail_key && !fallbackByCategory.has(p.category_id)) {
+                    fallbackByCategory.set(p.category_id, p.thumbnail_key);
+                }
+            }
+        }
+
         // Resolve cover thumbnails from the photos table (few categories, so
         // per-cover lookups are fine).
         const categories: PhotoCategory[] = await Promise.all(
             rows.map(async (r) => {
                 const cover = r.cover_photo_id ? await getPhotoById(r.cover_photo_id) : null;
+                const thumbKey = cover?.thumbnail_key ?? fallbackByCategory.get(r.id) ?? null;
                 return {
                     id: r.id,
                     name: r.name,
@@ -22,7 +35,7 @@ export async function GET() {
                     event_day: r.event_day,
                     cover_photo_id: r.cover_photo_id,
                     sort_order: r.sort_order,
-                    cover_thumbnail_url: cover?.thumbnail_key ? cdnUrl(cover.thumbnail_key) : null,
+                    cover_thumbnail_url: thumbKey ? cdnUrl(thumbKey) : null,
                 };
             })
         );
