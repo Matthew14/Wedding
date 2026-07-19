@@ -30,7 +30,7 @@ import {
     IconChevronLeft,
 } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
-import { useTracking, GalleryEvents } from "@/hooks/useTracking";
+import { useTracking, GalleryEvents, SiteEvents } from "@/hooks/useTracking";
 import { useCategoryCardsFlag } from "@/hooks/useCategoryCardsFlag";
 import { FaceCrop } from "@/components/FaceCrop";
 import type { GalleryPerson } from "@/types/faces";
@@ -101,6 +101,14 @@ function Gallery() {
     const hasAccess = !!invitationCode || isAdmin;
     const showCodeGate = codeChecked && !invitationCode && sessionStatus === "unauthenticated";
 
+    // One event for every CTA on the page, keyed by the `cta` slug.
+    const trackCta = (cta: string) =>
+        trackEvent(SiteEvents.CTA_CLICK, {
+            cta,
+            page: "gallery",
+            ...(invitationCode && { invitation_code: invitationCode }),
+        });
+
     // The photo list as of the latest render — rejectCurrent reads it after
     // an await, by which point the closed-over `photos` may be stale (e.g.
     // infinite scroll appended a page while the PATCH was in flight).
@@ -160,8 +168,10 @@ function Gallery() {
         setInvitationCode(masterCode);
     }, [isAdmin, invitationCode, masterCode]);
 
-    // Manual entry on the code gate.
+    // Manual entry on the code gate. Tracked here rather than on the button
+    // so Enter-key submits count too.
     const handleCodeSubmit = async () => {
+        trackCta("code_submit");
         const trimmed = codeInput.trim().toUpperCase();
         if (!/^[A-Z0-9]{6}$/.test(trimmed)) {
             setCodeError("Please enter your 6-character invitation code");
@@ -345,10 +355,17 @@ function Gallery() {
                                     href="/gallery/my-photos"
                                     variant="light"
                                     color="yellow"
+                                    onClick={() => trackCta("find_my_photos")}
                                 >
                                     Find My Photos
                                 </Button>
-                                <Button component={Link} href="/gallery/upload" variant="light" color="yellow">
+                                <Button
+                                    component={Link}
+                                    href="/gallery/upload"
+                                    variant="light"
+                                    color="yellow"
+                                    onClick={() => trackCta("upload_photos")}
+                                >
                                     Upload Photos
                                 </Button>
                             </Group>

@@ -21,6 +21,7 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle, IconUpload, IconX, IconCheck } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
+import { useTracking, SiteEvents } from "@/hooks/useTracking";
 import type { UploadUrlResponse } from "@/types/photos";
 
 interface FileUploadState {
@@ -69,6 +70,7 @@ export default function UploadPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { masterCode } = useSession();
+    const { trackEvent } = useTracking();
 
     // Logged-in admins get the bride & groom's master code auto-filled, same
     // as on the gallery page (useSession resolves it; guests get null).
@@ -102,7 +104,16 @@ export default function UploadPage() {
             .catch(() => {}); // greeting falls back to the code itself
     }, [code]);
 
+    // One event for every CTA on the page, keyed by the `cta` slug.
+    const trackCta = (cta: string) =>
+        trackEvent(SiteEvents.CTA_CLICK, {
+            cta,
+            page: "upload",
+            ...(code && { invitation_code: code }),
+        });
+
     const validateCode = async () => {
+        trackCta("code_submit");
         const trimmed = codeInput.trim().toUpperCase();
         if (trimmed.length !== 6) {
             setCodeError("Please enter your 6-character invitation code");
@@ -315,10 +326,22 @@ export default function UploadPage() {
                                     justify="center"
                                     w="100%"
                                 >
-                                    <Button color="yellow" onClick={resetForMoreUploads}>
+                                    <Button
+                                        color="yellow"
+                                        onClick={() => {
+                                            trackCta("upload_more");
+                                            resetForMoreUploads();
+                                        }}
+                                    >
                                         Upload more photos
                                     </Button>
-                                    <Button component={Link} href="/gallery" variant="light" color="yellow">
+                                    <Button
+                                        component={Link}
+                                        href="/gallery"
+                                        variant="light"
+                                        color="yellow"
+                                        onClick={() => trackCta("view_gallery")}
+                                    >
                                         View the gallery
                                     </Button>
                                 </Flex>
@@ -350,7 +373,15 @@ export default function UploadPage() {
                                 <Text size="sm" c="dimmed">
                                     Uploading as <strong>{names.length > 0 ? formatNames(names) : code}</strong>
                                 </Text>
-                                <Button size="xs" variant="subtle" color="gray" onClick={() => setCodeValidated(false)}>
+                                <Button
+                                    size="xs"
+                                    variant="subtle"
+                                    color="gray"
+                                    onClick={() => {
+                                        trackCta("change_code");
+                                        setCodeValidated(false);
+                                    }}
+                                >
                                     Change code
                                 </Button>
                             </Group>
@@ -368,7 +399,10 @@ export default function UploadPage() {
                                 leftSection={<IconUpload size={16} />}
                                 variant="outline"
                                 color="yellow"
-                                onClick={() => fileInputRef.current?.click()}
+                                onClick={() => {
+                                    trackCta("choose_photos");
+                                    fileInputRef.current?.click();
+                                }}
                                 disabled={uploading}
                             >
                                 Choose photos {files.length > 0 && `(${files.length} selected)`}
@@ -414,7 +448,10 @@ export default function UploadPage() {
                             {files.filter((f) => f.status === "pending").length > 0 && (
                                 <Button
                                     color="yellow"
-                                    onClick={handleUpload}
+                                    onClick={() => {
+                                        trackCta("upload_submit");
+                                        handleUpload();
+                                    }}
                                     loading={uploading}
                                 >
                                     Upload {files.filter((f) => f.status === "pending").length} photo
