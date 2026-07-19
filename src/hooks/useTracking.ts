@@ -148,6 +148,13 @@ export const InvitationEvents = {
     INVALID_LINK: 'invitation_invalid_link',
 } as const;
 
+// Gallery tracking events
+export const GalleryEvents = {
+    // Fired when the lightbox download button is pressed; carries the
+    // guest's invitation code and the photo id.
+    DOWNLOAD_CLICKED: 'gallery_download_clicked',
+} as const;
+
 // Site-wide tracking events
 export const SiteEvents = {
     // Navigation

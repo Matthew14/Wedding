@@ -30,6 +30,7 @@ import {
     IconChevronLeft,
 } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
+import { useTracking, GalleryEvents } from "@/hooks/useTracking";
 import { useCategoryCardsFlag } from "@/hooks/useCategoryCardsFlag";
 import { FaceCrop } from "@/components/FaceCrop";
 import type { GalleryPerson } from "@/types/faces";
@@ -90,6 +91,7 @@ function Gallery() {
     const [myUploadsOnly, setMyUploadsOnly] = useState(false);
     const sentinelRef = useRef<HTMLDivElement | null>(null);
     const { status: sessionStatus, masterCode } = useSession();
+    const { trackEvent } = useTracking();
     const isAdmin = sessionStatus === "authenticated";
     const LIMIT = 40;
 
@@ -651,7 +653,15 @@ function Gallery() {
                 close={() => setLightboxIndex(-1)}
                 slides={lightboxSlides}
                 index={lightboxIndex}
-                on={{ view: ({ index }) => setLightboxIndex(index) }}
+                on={{
+                    view: ({ index }) => setLightboxIndex(index),
+                    download: ({ index }) =>
+                        trackEvent(GalleryEvents.DOWNLOAD_CLICKED, {
+                            invitation_code: invitationCode,
+                            photo_id: photos[index]?.id,
+                            page: "gallery",
+                        }),
+                }}
                 plugins={invitationCode ? [Captions, Download, Zoom] : [Captions, Zoom]}
                 zoom={{ maxZoomPixelRatio: 2 }}
                 render={{

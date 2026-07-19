@@ -17,6 +17,7 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle, IconDownload } from "@tabler/icons-react";
 import { useSession } from "@/hooks/useSession";
+import { useTracking, GalleryEvents } from "@/hooks/useTracking";
 import { RowsPhotoAlbum } from "react-photo-album";
 import "react-photo-album/rows.css";
 import Lightbox from "yet-another-react-lightbox";
@@ -57,6 +58,7 @@ export default function MyPhotosPage() {
     const [validatingCode, setValidatingCode] = useState(false);
     const [loaded, setLoaded] = useState(false);
     const { status: sessionStatus, masterCode } = useSession();
+    const { trackEvent } = useTracking();
     const isAdmin = sessionStatus === "authenticated";
 
     const hasAccess = !!invitationCode || isAdmin;
@@ -252,7 +254,15 @@ export default function MyPhotosPage() {
                 close={() => setLightboxIndex(-1)}
                 slides={lightboxSlides}
                 index={lightboxIndex}
-                on={{ view: ({ index }) => setLightboxIndex(index) }}
+                on={{
+                    view: ({ index }) => setLightboxIndex(index),
+                    download: ({ index }) =>
+                        trackEvent(GalleryEvents.DOWNLOAD_CLICKED, {
+                            invitation_code: invitationCode,
+                            photo_id: photos[index]?.id,
+                            page: "my-photos",
+                        }),
+                }}
                 plugins={invitationCode ? [Captions, Download, Zoom] : [Captions, Zoom]}
                 zoom={{ maxZoomPixelRatio: 2 }}
                 render={{
