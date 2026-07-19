@@ -95,7 +95,9 @@ export async function getInvitationIdByCode(code: string): Promise<number | null
     return (result.Item as CodeItem | undefined)?.invitation_id ?? null;
 }
 
-// The invitees of an invitation with their ids, for face-match lookups.
+// The attending invitees of an invitation with their ids, for face-match
+// lookups. Invitees who didn't come have no faces in the photos and
+// shouldn't be named in the photo flow.
 export async function getInviteesWithIds(
     invitationId: number
 ): Promise<{ id: number; first_name: string }[]> {
@@ -110,13 +112,15 @@ export async function getInviteesWithIds(
         })
     );
     return ((result.Items ?? []) as InviteeItem[])
+        .filter((i) => i.coming === true)
         .map((i) => ({ id: i.id, first_name: i.first_name }))
         .sort((a, b) => a.first_name.localeCompare(b.first_name));
 }
 
-// First names of the invitees behind a code, or null when the code doesn't
-// exist. Returning names behind a valid code is fine — the code is the
-// guest's credential.
+// First names of the attending invitees behind a code, or null when the code
+// doesn't exist. Only guests who RSVP'd yes are named — "Alice & John"
+// becomes just "Alice" when John didn't come. Returning names behind a valid
+// code is fine — the code is the guest's credential.
 export async function getInviteesByCode(code: string): Promise<string[] | null> {
     if (isMasterCode(code)) return COUPLE_INVITEES.map((c) => c.name.split(" ")[0]);
     const codeResult = await docClient.send(
@@ -139,7 +143,10 @@ export async function getInviteesByCode(code: string): Promise<string[] | null> 
         })
     );
     const invitees = (result.Items ?? []) as InviteeItem[];
-    return invitees.map((i) => i.first_name).sort((a, b) => a.localeCompare(b));
+    return invitees
+        .filter((i) => i.coming === true)
+        .map((i) => i.first_name)
+        .sort((a, b) => a.localeCompare(b));
 }
 
 async function scanArchive(): Promise<ArchiveItem[]> {
@@ -211,15 +218,17 @@ function joinFirstNames(names: string[]): string {
 }
 
 // Upload attribution: display names for the household behind each invitation
-// code ("Aoife & Brian"), plus the master code mapped to the couple. Guest
-// uploads carry their code on the photo row; photos without a code (the
-// professional imports) simply aren't in this map. One archive scan.
+// code ("Aoife & Brian"), plus the master code mapped to the couple. Only
+// guests who actually came are named — an invitee who declined shouldn't
+// appear in photo captions. Guest uploads carry their code on the photo row;
+// photos without a code (the professional imports) simply aren't in this
+// map. One archive scan.
 export async function listUploaderNames(): Promise<Map<string, string>> {
     const items = await scanArchive();
 
     const firstNamesByInvitation = new Map<number, string[]>();
     for (const item of items) {
-        if (item.entity !== "invitee") continue;
+        if (item.entity !== "invitee" || item.coming !== true) continue;
         const names = firstNamesByInvitation.get(item.invitation_id) ?? [];
         names.push(item.first_name);
         firstNamesByInvitation.set(item.invitation_id, names);
@@ -280,9 +289,14 @@ export async function listInvitationCodes(): Promise<InvitationCodeSummary[]> {
         }
     }
 
+    // Only households with at least one attending guest get a row — there's
+    // no point handing a photo link to an invitation that declined (or never
+    // replied), and the names shown are the attending guests only.
     return codes
         .map((c) => {
-            const invitees = inviteesByInvitation.get(c.invitation_id) ?? [];
+            const invitees = (inviteesByInvitation.get(c.invitation_id) ?? []).filter(
+                (i) => i.coming === true
+            );
             invitees.sort((a, b) => a.first_name.localeCompare(b.first_name));
             return {
                 code: c.code,
@@ -291,5 +305,6 @@ export async function listInvitationCodes(): Promise<InvitationCodeSummary[]> {
                 invitee_names: invitees.map((i) => `${i.first_name} ${i.last_name}`),
             };
         })
+        .filter((c) => c.invitee_names.length > 0)
         .sort((a, b) => a.invitation_id - b.invitation_id);
 }

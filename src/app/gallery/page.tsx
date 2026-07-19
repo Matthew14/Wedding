@@ -185,6 +185,9 @@ function Gallery() {
             try {
                 const params = new URLSearchParams({ page: String(pg), limit: String(LIMIT) });
                 if (category) params.set("category", category);
+                // The All Photos tab shows the professional sets only —
+                // guest uploads live on the Guest Photos tab.
+                else params.set("professional", "1");
                 if (person) params.set("person", person);
                 if (mine) params.set("mine", "1");
                 if (invitationCode) params.set("code", invitationCode);

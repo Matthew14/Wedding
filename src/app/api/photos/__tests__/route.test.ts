@@ -182,6 +182,17 @@ describe("GET /api/photos", () => {
         expect(mockListUploaderNames).not.toHaveBeenCalled();
     });
 
+    it("professional=1 excludes guest uploads (the gallery's All Photos tab)", async () => {
+        mockListPhotosByStatus.mockResolvedValue([
+            { ...mockPhoto, id: "guest-upload", invitation_code: "ABC123" },
+            { ...mockPhoto, id: "professional", invitation_code: undefined },
+        ]);
+        const req = new NextRequest("http://localhost/api/photos?code=ABC123&professional=1");
+        const data = await (await GET(req)).json();
+        expect(data.photos.map((p: { id: string }) => p.id)).toEqual(["professional"]);
+        expect(data.total).toBe(1);
+    });
+
     it("mine=1 returns only the caller's own uploads", async () => {
         mockListPhotosByStatus.mockResolvedValue([
             { ...mockPhoto, id: "mine-1", invitation_code: "ABC123" },
