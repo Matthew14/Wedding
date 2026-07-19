@@ -76,6 +76,15 @@ export async function GET(request: NextRequest) {
             matching = matching.filter((p) => personPhotoIds.has(p.id));
         }
 
+        // Guest uploads belong on the Guest Photos tab only: the gallery's
+        // All Photos tab sends professional=1 to keep them out of the
+        // professional sets. Opt-in per request (not blanket) because the
+        // moderation dashboard hits this same endpoint and must always see
+        // guest uploads.
+        if (searchParams.get("professional") === "1") {
+            matching = matching.filter((p) => !p.invitation_code);
+        }
+
         // "My uploads": only photos uploaded under the caller's OWN code —
         // the same already-validated code that granted access, so there's no
         // new exposure and no way to view another household's uploads.

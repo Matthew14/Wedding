@@ -58,7 +58,7 @@ export default function InvitationsPage() {
                     Photo Gallery Codes
                 </Title>
                 <Text size="lg" style={{ color: "#6c757d" }}>
-                    Photo upload access codes for each invitation
+                    Photo upload access codes for each invitation with attending guests
                 </Text>
             </Box>
 
