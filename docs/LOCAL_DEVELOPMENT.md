@@ -2,29 +2,32 @@
 
 The app depends on three AWS services — **S3** (photo storage / presigned URLs),
 **DynamoDB** (all database access), and **Cognito** (admin
-auth). For local development these are emulated with [LocalStack](https://localstack.cloud),
-so you can run the full stack — including the photo gallery — without touching
-real AWS.
+auth). For local development S3 and DynamoDB are emulated with the free
+[LocalStack](https://localstack.cloud) **community image**, so the guest flows —
+gallery, uploads, invitation codes — run without touching real AWS.
+
+Cognito is a LocalStack paid-tier feature, so **admin dashboard login is not
+available locally** on the community image. Photo approval has a CLI stand-in
+(below); anything else admin-only needs the paid tier (the bootstrap script
+still provisions Cognito automatically when it's available).
 
 ## Prerequisites
 
-- **Docker** running (Docker Desktop or colima).
-- A **LocalStack Base+ subscription**. Cognito is a paid-tier feature (S3 and
-  DynamoDB are free-tier). After subscribing, copy your auth token from the
-  LocalStack dashboard.
+- **Docker** running (Docker Desktop or colima). No LocalStack account or
+  token needed.
 
-## One-time setup
+## Setup
 
 ```bash
-# 1. Make your LocalStack token available (shell, or a local .env for compose)
-export LOCALSTACK_AUTH_TOKEN=ls-...
-
-# 2. Start LocalStack
+# 1. Start LocalStack
 npm run localstack:up
 
-# 3. Provision resources and seed test data
+# 2. Provision resources and seed test data
 npm run localstack:bootstrap
 ```
+
+State does **not** persist across container restarts on the community image —
+re-run `npm run localstack:bootstrap` after every `localstack:up`.
 
 `bootstrap` is idempotent-ish and creates:
 
@@ -34,10 +37,11 @@ npm run localstack:bootstrap
   GSIs), and `wedding-photo-categories` — plus seed items:
   - invitation code **`TEST01`**
   - the seven photo categories
-- A Cognito user pool with a confirmed admin user
+- On the paid tier only: a Cognito user pool with a confirmed admin user
+  (skipped with a warning on the community image)
 
-It writes everything it discovers (table names, Cognito IDs/secret) to
-**`.env.localstack`** (git-ignored).
+It writes everything it discovers (table names, and Cognito IDs/secret when
+provisioned) to **`.env.localstack`** (git-ignored).
 
 ## Running the app
 
@@ -45,8 +49,9 @@ It writes everything it discovers (table names, Cognito IDs/secret) to
 npm run dev      # Next.js on http://localhost:3022, wired to LocalStack
 ```
 
-- **Admin login:** `admin@oneill.wedding` / `WeddingLocal123!`
 - **Invitation code (uploads):** `TEST01`
+- **Admin login:** unavailable on the community image (paid tier only:
+  `admin@oneill.wedding` / `WeddingLocal123!`)
 
 ## Photo gallery flow
 
@@ -55,13 +60,14 @@ on demand:
 
 ```bash
 # 1. Upload a photo at /gallery/upload using code TEST01
-# 2. Generate thumbnails (emulates the photo-processor Lambda)
-npm run localstack:process
-# 3. Approve it in /dashboard/photos
-# 4. View it in /gallery
+# 2. Generate thumbnails (emulates the photo-processor Lambda) and approve
+#    them in one go — there's no admin login locally to do it in the dashboard
+npm run localstack:process -- --approve
+# 3. View it in /gallery
 ```
 
-You can also approve a photo directly without logging in:
+Omit `--approve` to leave photos pending (e.g. to exercise the pending state).
+You can also approve a photo directly:
 
 ```bash
 # Find the pending photo's id
@@ -87,8 +93,8 @@ LocalStack stamps into its tokens. None of these affect production behaviour.
 ## Teardown
 
 ```bash
-npm run localstack:down    # stop the container (state persists in ./.localstack)
+npm run localstack:down    # stop the container
 ```
 
-If the DynamoDB tables look empty after a restart, just re-run
-`npm run localstack:bootstrap`.
+The community image doesn't persist state, so every fresh start needs
+`npm run localstack:bootstrap` again.

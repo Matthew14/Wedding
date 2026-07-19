@@ -141,24 +141,33 @@ seed_category "cat-rebecca-and-matthew" "Rebecca & Matthew"  "rebecca-and-matthe
 seed_category "cat-guest-photos"        "Guest Photos"       "guest-photos"        7
 
 # ----------------------------------------------------------------------------
-# Cognito — user pool, app client (with secret), confirmed admin user
+# Cognito — user pool, app client (with secret), confirmed admin user.
+# Paid-tier only: on the community image the calls fail and we skip admin
+# auth entirely (guest flows don't need it).
 # ----------------------------------------------------------------------------
 echo "→ Creating Cognito user pool + admin user (${ADMIN_EMAIL})..."
-POOL_ID="$(awsl cognito-idp create-user-pool --pool-name wedding-local \
-  --query 'UserPool.Id' --output text)"
+POOL_ID=""
+CLIENT_ID=""
+CLIENT_SECRET=""
+if POOL_ID="$(awsl cognito-idp create-user-pool --pool-name wedding-local \
+  --query 'UserPool.Id' --output text 2>/dev/null)"; then
+  CLIENT_JSON="$(awsl cognito-idp create-user-pool-client \
+    --user-pool-id "$POOL_ID" --client-name web --generate-secret \
+    --explicit-auth-flows ALLOW_USER_PASSWORD_AUTH ALLOW_REFRESH_TOKEN_AUTH ALLOW_USER_SRP_AUTH \
+    --output json)"
+  CLIENT_ID="$(printf '%s' "$CLIENT_JSON" | python3 -c 'import sys,json;print(json.load(sys.stdin)["UserPoolClient"]["ClientId"])')"
+  CLIENT_SECRET="$(printf '%s' "$CLIENT_JSON" | python3 -c 'import sys,json;print(json.load(sys.stdin)["UserPoolClient"]["ClientSecret"])')"
 
-CLIENT_JSON="$(awsl cognito-idp create-user-pool-client \
-  --user-pool-id "$POOL_ID" --client-name web --generate-secret \
-  --explicit-auth-flows ALLOW_USER_PASSWORD_AUTH ALLOW_REFRESH_TOKEN_AUTH ALLOW_USER_SRP_AUTH \
-  --output json)"
-CLIENT_ID="$(printf '%s' "$CLIENT_JSON" | python3 -c 'import sys,json;print(json.load(sys.stdin)["UserPoolClient"]["ClientId"])')"
-CLIENT_SECRET="$(printf '%s' "$CLIENT_JSON" | python3 -c 'import sys,json;print(json.load(sys.stdin)["UserPoolClient"]["ClientSecret"])')"
-
-awsl cognito-idp admin-create-user --user-pool-id "$POOL_ID" \
-  --username "$ADMIN_EMAIL" --message-action SUPPRESS \
-  --user-attributes Name=email,Value="$ADMIN_EMAIL" Name=email_verified,Value=true >/dev/null
-awsl cognito-idp admin-set-user-password --user-pool-id "$POOL_ID" \
-  --username "$ADMIN_EMAIL" --password "$ADMIN_PASSWORD" --permanent >/dev/null
+  awsl cognito-idp admin-create-user --user-pool-id "$POOL_ID" \
+    --username "$ADMIN_EMAIL" --message-action SUPPRESS \
+    --user-attributes Name=email,Value="$ADMIN_EMAIL" Name=email_verified,Value=true >/dev/null
+  awsl cognito-idp admin-set-user-password --user-pool-id "$POOL_ID" \
+    --username "$ADMIN_EMAIL" --password "$ADMIN_PASSWORD" --permanent >/dev/null
+else
+  POOL_ID=""
+  echo "  ⚠ Cognito unavailable (paid-tier feature — fine on the community image)."
+  echo "    Skipping admin auth: dashboard login won't work locally."
+fi
 
 # ----------------------------------------------------------------------------
 # Write .env.localstack
@@ -191,27 +200,38 @@ DDB_ARCHIVE_TABLE=${ARCHIVE_TABLE}
 DDB_PHOTOS_TABLE=${PHOTOS_TABLE}
 DDB_CATEGORIES_TABLE=${CATEGORIES_TABLE}
 
+# Don't throttle uploads locally
+DISABLE_RATE_LIMITING=true
+EOF
+
+if [ -n "$POOL_ID" ]; then
+cat >> "$ENV_FILE" <<EOF
+
 # Cognito (admin auth)
 COGNITO_USER_POOL_ID=${POOL_ID}
 COGNITO_CLIENT_ID=${CLIENT_ID}
 COGNITO_CLIENT_SECRET=${CLIENT_SECRET}
 COGNITO_ISSUER=${ISSUER_ENDPOINT}/${POOL_ID}
-
-# Don't throttle uploads locally
-DISABLE_RATE_LIMITING=true
 EOF
+fi
+
+if [ -n "$POOL_ID" ]; then
+  ADMIN_LINE="Admin login:     ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}"
+else
+  ADMIN_LINE="Admin login:     unavailable (Cognito needs the paid LocalStack tier)"
+fi
 
 cat <<EOF
 
 ✅ LocalStack bootstrapped.
 
-   Admin login:     ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}
+   ${ADMIN_LINE}
    Invitation code: ${SEED_CODE}
    Bucket:          ${BUCKET}
 
 Next:
    npm run dev                             # start Next.js against LocalStack
    # upload a photo at /gallery/upload using code ${SEED_CODE}
-   npm run localstack:process              # generate thumbnails (emulates the Lambda)
-   # approve it in /dashboard/photos, then view it in /gallery
+   npm run localstack:process -- --approve # thumbnails + approval (emulates Lambda + dashboard)
+   # then view it in /gallery
 EOF

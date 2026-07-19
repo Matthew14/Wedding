@@ -6,6 +6,10 @@
 // a 1200px JPEG thumbnail (EXIF stripped), upload it, and backfill the item.
 //
 // Run via: npm run localstack:process  (loads .env.localstack)
+//
+// Pass --approve to also mark the processed photos approved. The community
+// LocalStack image has no Cognito, so there's no admin session to approve
+// uploads in /dashboard/photos — this is the local stand-in for that step.
 
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -19,6 +23,8 @@ const photosTable = process.env.DDB_PHOTOS_TABLE ?? "wedding-photos";
 
 const s3 = new S3Client({ region, endpoint, forcePathStyle: true });
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({ region, endpoint }));
+
+const approve = process.argv.includes("--approve");
 
 async function streamToBuffer(stream) {
     const chunks = [];
@@ -62,11 +68,20 @@ for (const { id, s3_key: key } of pending) {
             new UpdateCommand({
                 TableName: photosTable,
                 Key: { id },
-                UpdateExpression: "SET thumbnail_key = :thumb, width = :w, height = :h",
-                ExpressionAttributeValues: { ":thumb": thumbKey, ":w": info.width, ":h": info.height },
+                // "status" is a DynamoDB reserved word, hence the #st alias.
+                UpdateExpression: approve
+                    ? "SET thumbnail_key = :thumb, width = :w, height = :h, #st = :approved"
+                    : "SET thumbnail_key = :thumb, width = :w, height = :h",
+                ...(approve && { ExpressionAttributeNames: { "#st": "status" } }),
+                ExpressionAttributeValues: {
+                    ":thumb": thumbKey,
+                    ":w": info.width,
+                    ":h": info.height,
+                    ...(approve && { ":approved": "approved" }),
+                },
             })
         );
-        console.log(`✓ processed ${key} → ${thumbKey}`);
+        console.log(`✓ processed ${key} → ${thumbKey}${approve ? " (approved)" : ""}`);
     } catch (err) {
         console.error(`✗ failed ${key}:`, err.message);
     }
