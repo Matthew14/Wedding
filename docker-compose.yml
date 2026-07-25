@@ -1,24 +1,25 @@
-# LocalStack for local development of the AWS-backed features (S3, RDS Data API,
-# Cognito). Requires a LocalStack Base+ subscription — set LOCALSTACK_AUTH_TOKEN
-# in your shell or a local .env file before `docker compose up`.
+# LocalStack for local development of the AWS-backed features (S3, DynamoDB).
+# Community image — no subscription/token needed. Cognito is a paid-tier
+# feature, so admin dashboard login isn't available locally; the guest flows
+# (gallery, uploads, invitation codes) work fully.
 #
-#   export LOCALSTACK_AUTH_TOKEN=ls-...
+# Pinned to the 4.x line: from 2026 the unified `latest` image demands an
+# auth token even for free usage (its setup_pro_infra hook exits with code
+# 55 when no LOCALSTACK_AUTH_TOKEN is set); 4.x is the last tokenless line.
+#
 #   npm run localstack:up
 #   npm run localstack:bootstrap
-#   npm run dev:local
+#   npm run dev
 services:
   localstack:
-    image: localstack/localstack-pro:latest
+    image: localstack/localstack:4
     container_name: wedding-localstack
     ports:
       - "4566:4566" # edge gateway (all services)
     environment:
-      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?LOCALSTACK_AUTH_TOKEN must be set (LocalStack Base+ token)}
       - DEBUG=${LOCALSTACK_DEBUG:-0}
-      # Persist state across restarts so you don't have to re-bootstrap every time.
-      # Note: RDS persistence is "limited support" on LocalStack — if the DB looks
-      # empty after a restart, re-run `npm run localstack:bootstrap`.
-      - PERSISTENCE=1
+      # Persistence is a paid-tier feature: the community image starts empty
+      # every time, so re-run `npm run localstack:bootstrap` after a restart.
     volumes:
       - "./.localstack:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
